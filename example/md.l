@@ -23,7 +23,9 @@ italic \*{letter}+\*
 
 %%
 
-{title} {yylval = strdup(yytext + 2); return (TITLE);}
+{title} {
+  yylval = strdup(yytext + 2); return (TITLE);
+}
 {bold} {yylval = substr(yytext, 2, strlen(yytext) - 2); return (BOLD);}
 {italic} {yylval = substr(yytext, 2, strlen(yytext) - 1); return (ITALIC);}
 
