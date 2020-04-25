@@ -1,81 +1,80 @@
 /**
+ * beautify.js
  * 美化C代码
  */
 
-let level = 0;
-let LOOP_SIZE = 100;
+let level = 0
+let FORWARD_LEN = 100
 function finishTabifier(code) {
   code = code.replace(/\n\s*\n/g, '\n')
   code = code.replace(/^[\s\n]*/, '')
   code = code.replace(/[\s\n]*$/, '')
-  level = 0;
+  level = 0
 }
 
-
 function tabs() {
-  return ' '.repeat(level * 2);
+  return ' '.repeat(level * 2)
 }
 
 
 function cleanCStyle(code) {
-  let i = 0;
+  let i = 0
   function cleanAsync() {
     let iStart = i;
-    for (; i < code.length && i < iStart + LOOP_SIZE; i++) {
+    for (; i < code.length && i < iStart + FORWARD_LEN; i++) {
       c = code.charAt(i);
-
       if (incomment) {
-        if ('//' == incomment && '\n' == c) {
-          incomment = false;
+        if (incomment == '//' && c == '\n') {
+          incomment = false
         } else if ('/*' == incomment && '*/' == code.substr(i, 2)) {
-          incomment = false;
-          c = '*/\n';
-          i++;
+          incomment = false
+          c = '*/\n'
+          i++
         }
         if (!incomment) {
-          while (code.charAt(++i).match(/\s/));; i--;
-          c += tabs();
+          while (code.charAt(++i).match(/\s/));
+          i--
+          c += tabs()
         }
         out += c;
       } else if (instring) {
-        if (instring == c && // this string closes at the next matching quote
-          // unless it was escaped, or the escape is escaped
-          ('\\' != code.charAt(i - 1) || '\\' == code.charAt(i - 2))
+        if (instring == c && ('\\' != code.charAt(i - 1) || '\\' == code.charAt(i - 2))
         ) {
           instring = false;
         }
         out += c;
       } else if (infor && '(' == c) {
-        infor++;
-        out += c;
+        infor++
+        out += c
       } else if (infor && ')' == c) {
-        infor--;
-        out += c;
+        infor--
+        out += c
       } else if ('else' == code.substr(i, 4)) {
         out = out.replace(/\s*$/, '') + ' e';
       } else if (code.substr(i).match(/^for\s*\(/)) {
-        infor = 1;
+        infor = 1
         out += 'for (';
         while ('(' != code.charAt(++i));;
       } else if ('//' == code.substr(i, 2)) {
-        incomment = '//';
-        out += '//';
-        i++;
+        incomment = '//'
+        out += '//'
+        i++
       } else if ('/*' == code.substr(i, 2)) {
-        incomment = '/*';
-        out += '\n' + tabs() + '/*';
-        i++;
+        incomment = '/*'
+        out += '\n' + tabs() + '/*'
+        i++
       } else if ('"' == c || "'" == c) {
         if (instring && c == instring) {
-          instring = false;
+          instring = false
         } else {
-          instring = c;
+          instring = c
         }
-        out += c;
+        out += c
       } else if ('{' == c) {
-        level++;
-        out = out.replace(/\s*$/, '') + ' {\n' + tabs();
-        while (code.charAt(++i).match(/\s/));; i--;
+        level++
+        out = out.replace(/\s*$/, '') + ' {\n' + tabs()
+        while (code.charAt(++i).match(/\s/));
+        i--
       } else if ('}' == c) {
         out = out.replace(/\s*$/, '');
         level--;
@@ -100,19 +99,13 @@ function cleanCStyle(code) {
     }
   }
 
-  code = code.replace(/^[\s\n]*/, ''); //leading space
-  code = code.replace(/[\s\n]*$/, ''); //trailing space
-  code = code.replace(/[\n\r]+/g, '\n'); //collapse newlines
+  code = code.replace(/^[\s\n]*/, '')
+  code = code.replace(/[\s\n]*$/, '')
+  code = code.replace(/[\n\r]+/g, '\n')
 
-  let out = tabs(), li = level, c = '';
-  let infor = false, forcount = 0, instring = false, incomment = false;
-  cleanAsync();
-}
-
-function Empty() {
-  $("#i_code").val("");
-  $("#o_code").val("");
-  $("#i_code").select();
+  let out = tabs(), li = level, c = ''
+  let infor = false, instring = false, incomment = false
+  cleanAsync()
 }
 
 export default cleanCStyle
