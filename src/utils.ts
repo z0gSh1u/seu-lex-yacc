@@ -6,3 +6,7 @@ export function assert(condition: unknown, hint: string): void {
     throw hint
   }
 }
+
+export function stdoutPrint(content: string): void {
+  process.stdout.write(content)
+}

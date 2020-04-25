@@ -9,3 +9,7 @@ function assert(condition, hint) {
     }
 }
 exports.assert = assert;
+function stdoutPrint(content) {
+    process.stdout.write(content);
+}
+exports.stdoutPrint = stdoutPrint;

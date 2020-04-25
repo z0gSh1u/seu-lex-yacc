@@ -9,45 +9,67 @@ class LexParser {
     constructor(filePath) {
         this._filePath = filePath;
         this._rawContent = fs_1.default
-            .readFileSync(filePath)
+            .readFileSync(this._filePath)
             .toString()
-            .replace('\r\n', '\n');
-        this._splitParts();
+            .replace(/\r\n/g, '\n'); // 换行一律LF，没有CR
+        this._regexAliases = {};
+        this._actions = {};
+        this._fillingParts();
+        this._analyse();
     }
-    _splitParts() {
-        let pattern;
-        // split copyPart
-        pattern = new RegExp(/^%{\s*$/g);
-        let copyPartStartMatch = pattern.exec(this._rawContent);
-        utils_1.assert(copyPartStartMatch, 'Bad .lex structure. {% not found.');
-        utils_1.assert(!pattern.exec(this._rawContent), 'Bad .lex structure. Duplicate {%.');
-        let copyPartStartPos = copyPartStartMatch === null || copyPartStartMatch === void 0 ? void 0 : copyPartStartMatch.index;
-        pattern = new RegExp(/^%{\s*$/g);
-        let copyPartEndMatch = pattern.exec(this._rawContent);
-        utils_1.assert(copyPartEndMatch, 'Bad .lex structure. %} not found.');
-        utils_1.assert(!pattern.exec(this._rawContent), 'Bad .lex structure. Duplicate %}.');
-        let copyPartEndPos = copyPartStartMatch === null || copyPartStartMatch === void 0 ? void 0 : copyPartStartMatch.index;
-        this._copyPart = this._rawContent
-            .substring(copyPartStartPos + 2, copyPartEndPos)
-            .trim();
-        // split cCodePart
-        pattern = new RegExp(/^%%\s+$/g);
-        let twoPercentMatch1 = pattern.exec(this._rawContent);
-        let twoPercentMatch2 = pattern.exec(this._rawContent);
-        utils_1.assert(twoPercentMatch1 && twoPercentMatch2, 'Bad .lex structure. No enough %%.');
-        let twoPercentPos1 = twoPercentMatch1 === null || twoPercentMatch1 === void 0 ? void 0 : twoPercentMatch1.index;
-        let twoPercentPos2 = twoPercentMatch2 === null || twoPercentMatch2 === void 0 ? void 0 : twoPercentMatch2.index;
-        utils_1.assert(!pattern.exec(this._rawContent), 'Bad .lex structure. Duplicate %%.');
-        this._cCodePart = this._rawContent.substring(twoPercentPos2 + 2).trim();
-        // split actionPart
-        this._actionPart = this._rawContent
-            .substring(twoPercentPos1 + 2, twoPercentPos2)
-            .trim();
-        // split regexAliasPart
-        this._regexAliasPart = this._rawContent
-            .substring(0, twoPercentPos1)
-            .trim()
-            .replace(/^%{$.*^%}$/, '');
+    get regexAliases() {
+        return this._regexAliases;
+    }
+    get actions() {
+        return this._actions;
+    }
+    _analyse() {
+        // 分析正则别名
+        this._regexAliasPart.split('\n').forEach((v) => {
+            if (v.trim() !== '') {
+                v = v.trim();
+                let spaceTest = /\s+/.exec(v);
+                utils_1.assert(spaceTest, `Invalid regex alias line: ${v}`);
+                let alias = v.substring(0, spaceTest === null || spaceTest === void 0 ? void 0 : spaceTest.index);
+                utils_1.assert((spaceTest === null || spaceTest === void 0 ? void 0 : spaceTest.index) < v.length - 1, `Invalid regex alias line: ${v}`);
+                let regex = v.substring(spaceTest === null || spaceTest === void 0 ? void 0 : spaceTest.index).trimLeft();
+                utils_1.assert(!(alias in this._regexAliases), `Regex alias re-definition found: ${v}`);
+                this._regexAliases[alias] = regex;
+            }
+        });
+        // 分析规则与动作
+    }
+    _fillingParts() {
+        this._splitContent = this._rawContent.split('\n');
+        let copyPartStart = -1, copyPartEnd = -1, twoPercent = [];
+        this._splitContent.forEach((v, i) => {
+            switch (v.trimRight() // 要求左侧顶格
+            ) {
+                case '%{':
+                    utils_1.assert(copyPartStart === -1, 'Bad .lex structure. Duplicate %{.');
+                    copyPartStart = i;
+                    break;
+                case '%}':
+                    utils_1.assert(copyPartEnd === -1, 'Bad .lex structure. Duplicate %}.');
+                    copyPartEnd = i;
+                    break;
+                case '%%':
+                    utils_1.assert(twoPercent.length < 2, 'Bad .lex structure. Duplicate %%.');
+                    twoPercent.push(i);
+                    break;
+            }
+        });
+        utils_1.assert(twoPercent.length === 2, 'Bad .lex structure. No enough %%.');
+        this._cCodePart = this._splitContent.slice(twoPercent[1] + 1).join('\n');
+        this._copyPart = this._splitContent
+            .slice(copyPartStart + 1, copyPartEnd)
+            .join('\n');
+        this._actionPart = this._splitContent
+            .slice(twoPercent[0] + 1, twoPercent[1])
+            .join('\n');
+        this._regexAliasPart =
+            this._splitContent.slice(0, copyPartStart).join('\n') +
+                this._splitContent.slice(copyPartEnd + 1, twoPercent[0]).join('\n');
     }
 }
 exports.LexParser = LexParser;

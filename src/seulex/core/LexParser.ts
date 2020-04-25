@@ -14,22 +14,57 @@ export class LexParser {
   private _actionPart!: string
   private _cCodePart!: string
   // Reformed data
-  private _regexAlias!: { [key: string]: string }
-  private _action!: { [key: string]: string }
+  public _regexAliases!: { [key: string]: string }
+  private _actions!: { [key: string]: string }
+
+  get regexAliases() {
+    return this._regexAliases
+  }
+  get actions() {
+    return this._actions
+  }
 
   constructor(filePath: string) {
     this._filePath = filePath
     this._rawContent = fs
-      .readFileSync(filePath)
+      .readFileSync(this._filePath)
       .toString()
-      .replace('\r\n', '\n')
-    this._splitParts()
+      .replace(/\r\n/g, '\n') // 换行一律LF，没有CR
+    this._regexAliases = {}
+    this._actions = {}
+    this._fillingParts()
+    this._analyse()
   }
 
-  private _splitParts() {
+  private _analyse() {
+    // 分析正则别名
+    this._regexAliasPart.split('\n').forEach((v) => {
+      if (v.trim() !== '') {
+        v = v.trim()
+        let spaceTest = /\s+/.exec(v)
+        assert(spaceTest, `Invalid regex alias line: ${v}`)
+        let alias = v.substring(0, spaceTest?.index as number)
+        assert(
+          (spaceTest?.index as number) < v.length - 1,
+          `Invalid regex alias line: ${v}`
+        )
+        let regex = v.substring(spaceTest?.index as number).trimLeft()
+        assert(
+          !(alias in this._regexAliases),
+          `Regex alias re-definition found: ${v}`
+        )
+        this._regexAliases[alias] = regex
+      }
+    })
+    // 分析规则与动作
+    
+  }
+
+  private _fillingParts() {
     this._splitContent = this._rawContent.split('\n')
     let copyPartStart = -1,
-      copyPartEnd = -1
+      copyPartEnd = -1,
+      twoPercent: number[] = []
     this._splitContent.forEach((v, i) => {
       switch (
         v.trimRight() // 要求左侧顶格
@@ -42,7 +77,22 @@ export class LexParser {
         assert(copyPartEnd === -1, 'Bad .lex structure. Duplicate %}.')
         copyPartEnd = i
         break
+      case '%%':
+        assert(twoPercent.length < 2, 'Bad .lex structure. Duplicate %%.')
+        twoPercent.push(i)
+        break
       }
     })
+    assert(twoPercent.length === 2, 'Bad .lex structure. No enough %%.')
+    this._cCodePart = this._splitContent.slice(twoPercent[1] + 1).join('\n')
+    this._copyPart = this._splitContent
+      .slice(copyPartStart + 1, copyPartEnd)
+      .join('\n')
+    this._actionPart = this._splitContent
+      .slice(twoPercent[0] + 1, twoPercent[1])
+      .join('\n')
+    this._regexAliasPart =
+      this._splitContent.slice(0, copyPartStart).join('\n') +
+      this._splitContent.slice(copyPartEnd + 1, twoPercent[0]).join('\n')
   }
 }

@@ -10,6 +10,9 @@ module.exports = {
   rules: {
     'indent': [
       'error', 2
+    ],
+    'prefer-const': [
+      'off'
     ]
   }
 }

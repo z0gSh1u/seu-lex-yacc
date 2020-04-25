@@ -8,7 +8,6 @@
     "tsc:full": "tsc",
     "clean": "node ./script/clean.js",
     "lint": "eslint src --fix --ext .ts",
-    "precommit": "node ./script/precommit.js",
     "test": "npm run lint",
     "build": "npm run clean && tsc"
   },
@@ -25,7 +24,8 @@
     "@types/node": "^13.13.2",
     "@typescript-eslint/eslint-plugin": "^2.29.0",
     "@typescript-eslint/parser": "^2.29.0",
-    "eslint": "^6.8.0"
+    "eslint": "^6.8.0",
+    "minimist": "^1.2.5"
   },
   "husky": {
     "hooks": {
