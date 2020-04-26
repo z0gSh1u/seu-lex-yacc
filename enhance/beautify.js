@@ -15,8 +15,8 @@ function finishTabifier(code) {
 function tabs() {
   return ' '.repeat(level * 2)
 }
-
-
+let out = tabs(), li = level, c = ''
+let infor = false, instring = false, incomment = false
 function cleanCStyle(code) {
   let i = 0
   function cleanAsync() {
@@ -103,8 +103,8 @@ function cleanCStyle(code) {
   code = code.replace(/[\s\n]*$/, '')
   code = code.replace(/[\n\r]+/g, '\n')
 
-  let out = tabs(), li = level, c = ''
-  let infor = false, instring = false, incomment = false
+
+
   cleanAsync()
 }
 

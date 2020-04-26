@@ -56,8 +56,8 @@ export class LexParser {
         this._regexAliases[alias] = regex
       }
     })
-    // 分析规则与动作
-    
+    // TODO: 分析规则与动作
+
   }
 
   private _fillingParts() {

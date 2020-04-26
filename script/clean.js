@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 /**
  * clean.js
  * 删除dist文件夹下所有内容以准备构建
