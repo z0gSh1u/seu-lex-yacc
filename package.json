@@ -8,7 +8,7 @@
     "tsc:full": "tsc",
     "clean": "node ./script/clean.js",
     "lint": "eslint src --fix --ext .ts",
-    "test": "npm run lint",
+    "test": "npm run lint && jest",
     "build": "npm run clean && tsc"
   },
   "author": "z0gSh1u",
@@ -16,14 +16,18 @@
   "devDependencies": {
     "@commitlint/cli": "^8.3.5",
     "@commitlint/config-conventional": "^8.3.4",
+    "@types/jest": "^25.2.1",
     "husky": "^4.2.5",
+    "jest": "^25.5.1",
     "lint-staged": "^10.1.7",
+    "ts-jest": "^25.4.0",
     "typescript": "^3.8.3"
   },
   "dependencies": {
     "@types/node": "^13.13.2",
     "@typescript-eslint/eslint-plugin": "^2.29.0",
     "@typescript-eslint/parser": "^2.29.0",
+    "dagre-d3": "^0.6.4",
     "eslint": "^6.8.0",
     "minimist": "^1.2.5"
   },

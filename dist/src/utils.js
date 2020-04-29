@@ -29,6 +29,7 @@ function splitAndKeep(str, delims) {
             part += str[i];
         }
     }
+    part.length !== 0 && res.push(part);
     return res;
 }
 exports.splitAndKeep = splitAndKeep;

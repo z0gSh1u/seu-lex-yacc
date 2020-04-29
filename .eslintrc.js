@@ -13,6 +13,7 @@ module.exports = {
     ],
     'prefer-const': [
       'off'
-    ]
+    ],
+    '@typescript-eslint/explicit-function-return-type': ['off']
   }
 }
