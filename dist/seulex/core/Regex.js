@@ -39,8 +39,9 @@ class Regex {
                 // 该策略不会影响空格识别，因为空格被要求输入为" "
                 continue;
             }
-            else if (part[0] === '|')
-                ;
+            else if (part[0] === '|') {
+                // TODO: 继续逻辑
+            }
         }
     }
 }
