@@ -1,5 +1,11 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const LexParser_1 = require("./seulex/core/LexParser");
-let lp = new LexParser_1.LexParser('F:\\seulexyacc\\example\\md.l');
-console.log(lp.regexAliases);
+class TClass {
+    constructor() {
+        this._uuid = Symbol();
+    }
+}
+let obj1 = new TClass();
+let obj2 = new TClass();
+let arr = [obj1, obj2];
+console.log(arr.indexOf(obj1));
+console.log(arr.indexOf(obj2));
