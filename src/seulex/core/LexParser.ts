@@ -77,18 +77,18 @@ export class LexParser {
       switch (
         v.trimRight() // 要求左侧顶格
       ) {
-      case '%{':
-        assert(copyPartStart === -1, 'Bad .lex structure. Duplicate %{.')
-        copyPartStart = i
-        break
-      case '%}':
-        assert(copyPartEnd === -1, 'Bad .lex structure. Duplicate %}.')
-        copyPartEnd = i
-        break
-      case '%%':
-        assert(twoPercent.length < 2, 'Bad .lex structure. Duplicate %%.')
-        twoPercent.push(i)
-        break
+        case '%{':
+          assert(copyPartStart === -1, 'Bad .lex structure. Duplicate %{.')
+          copyPartStart = i
+          break
+        case '%}':
+          assert(copyPartEnd === -1, 'Bad .lex structure. Duplicate %}.')
+          copyPartEnd = i
+          break
+        case '%%':
+          assert(twoPercent.length < 2, 'Bad .lex structure. Duplicate %%.')
+          twoPercent.push(i)
+          break
       }
     })
     assert(twoPercent.length === 2, 'Bad .lex structure. No enough %%.')

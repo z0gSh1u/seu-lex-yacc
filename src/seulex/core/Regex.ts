@@ -2,6 +2,7 @@
 // by z0gSh1u @ 2020-05
 
 import { inStr, splitAndKeep, isAlpha } from '../../utils'
+import { NFA } from './NFA'
 
 /**
  * 正则表达式类
@@ -15,6 +16,10 @@ export class Regex {
     this._raw = regex
     this._addDots()
     this._toPostfix()
+  }
+
+  get raw() {
+    return this._raw
   }
 
   get postFix() {
@@ -98,5 +103,26 @@ export class Regex {
       res += stack.pop() + ' '
     }
     this._postFix = res
+  }
+
+  constructNFA() {
+    let parts = splitAndKeep(this._postFix, '().|*') // 分离特殊符号
+    let stack: NFA[] = []
+    for (let i = 0; i < parts.length; i++) {
+      let part = parts[i].trim()
+      if (part.length === 0) {
+        continue
+      }
+      switch (part[0]) {
+        case '|':
+        case '.':
+          break
+        case '*':
+          stack[stack.length - 1].kleene()
+        default:
+          stack.push(new NFA(part[0]))
+          break
+      }
+    }
   }
 }

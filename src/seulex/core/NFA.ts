@@ -19,6 +19,13 @@ export class NFA extends FiniteAutomata {
   }
 
   /**
+   * Kleene闭包
+   */
+  kleene() {
+    return
+  }
+
+  /**
    * 尝试识别字符串
    * @param sentence 待识别字符串，请打散成char[]
    */
@@ -27,7 +34,7 @@ export class NFA extends FiniteAutomata {
     for (let startState of this._startStates) {
       let currentState = startState, // 本轮深搜当前状态
         matchedWordCount = 0, // 符合的字符数
-        history: State[] = [] // DFS辅助数组，记录历史状态
+        maybeStates: State[] = [] // DFS辅助数组，记录历史状态
       while (matchedWordCount <= sentence.length) {
         if (
           // 目前匹配了全句
@@ -39,49 +46,55 @@ export class NFA extends FiniteAutomata {
         } else if (matchedWordCount === sentence.length) {
           // 全部匹配完成但是未到达接收态，说明应换一个开始状态再次试验
           break
+        } else if (!this._alphabet.includes(sentence[matchedWordCount])) {
+          // 字母表不存在该字符
+          // 注意此时matchedWordCount一定小于sentence.length
+          return false
         } else {
-          if (this._alphabet.indexOf(sentence[matchedWordCount]) === -1) {
-            // 字母表不存在该字符
-            return false
-          } else {
-            let isWordRecognized = this.expand(
-              currentState,
-              matchedWordCount,
-              history
-            )
-            if (isWordRecognized) {
-              matchedWordCount += 1
-            }
+          // 剩余情况则向外推进，继续搜索
+          let { result, notEpsilon } = this.expand(
+            currentState,
+            this._alphabet.indexOf(sentence[matchedWordCount])
+          )
+          // TODO: epsilon下是否增加matchedWordCount？
+          if (notEpsilon) {
+            matchedWordCount += 1
+          }
+          for (let newState of result) {
+            !maybeStates.includes(newState) && maybeStates.push(newState)
           }
         }
-        if (!history.length) {
+        if (!maybeStates.length) {
+          // 没有可选的进一步状态了
           break
         } else {
-          currentState = history.pop() as State
+          // 选一个可选的进一步状态
+          currentState = maybeStates.pop() as State
         }
       }
     }
     return false
   }
 
-  expand(state: State, alpha: number, stack: State[]) {
-    let stateRow = this._transformMatrix[this._states.indexOf(state)]
-    let states: State[] = []
-    let isWordRecognized = false
-    for (let transfrom of stateRow) {
+  /**
+   * 返回从当前状态收到一个字母后能到达的所有其他状态（考虑了epsilon边）
+   * @param state 当前状态
+   * @param alpha 字母下标
+   * @returns `{结果状态数组, 是否消耗字符}`
+   */
+  expand(state: State, alpha: number) {
+    let transforms = this.getTransforms(state),
+      result: State[] = [],
+      notEpsilon = false
+    for (let transfrom of transforms) {
       if (transfrom.alpha === alpha) {
-        states.push(this._startStates[transfrom.target])
-        isWordRecognized = true
-      } else if (transfrom.alpha === -1) {
-        states.push(this._states[transfrom.target])
+        result.push(this._states[transfrom.target])
+        notEpsilon = true
+      } else if (transfrom.alpha === -1 /* epsilon */) {
+        result.push(this._states[transfrom.target])
       }
     }
-    for (let curState of states) {
-      if (stack.indexOf(curState) === -1) {
-        stack.push(curState)
-      }
-    }
-    return isWordRecognized
+    return { result, notEpsilon }
   }
 
   /**
@@ -107,8 +120,16 @@ export class NFA extends FiniteAutomata {
     return false
   }
 
-  static merge(nfa1: NFA, nfa2: NFA) {
-    let newNFA = new NFA()
-    newNFA._startStates = Object.assign(nfa1._startStates)
+  /**
+   * 串联两个NFA
+   * `NFA1 --epsilon--> NFA2`
+   */
+  static concat(nfa1: NFA, nfa2: NFA) {
+    let res = new NFA()
+    res._startStates = nfa1._startStates
+    res._acceptStates = nfa2._acceptStates
+    res._alphabet = [...new Set([...nfa1._alphabet, ...nfa2._alphabet])]
+    res._states = [...nfa1._states, ...nfa2._states]
+    // TODO: 处理状态转移矩阵
   }
 }
