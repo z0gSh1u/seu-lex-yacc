@@ -1,3 +1,5 @@
-const os = require('os')
-
-console.log(os.arch)
+let a
+switch (a) {
+  case 'x':
+    break
+}

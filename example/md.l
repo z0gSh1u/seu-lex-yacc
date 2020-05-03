@@ -28,7 +28,12 @@ italic \*{letter}+\*
 {bold} {
   yylval = substr(yytext, 2, strlen(yytext) - 2); return (BOLD);
 }
-{italic} {yylval = substr(yytext, 2, strlen(yytext) - 1); return (ITALIC);}
+{italic} { yylval = substr(yytext, 2, strlen(yytext) - 1); return (ITALIC); }
+[ab] ;
+[cd] yylval = "Hello";
+[ef] |
+[gh] |
+[i] { return 233; }
 
 %%
 
