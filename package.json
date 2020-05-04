@@ -4,11 +4,11 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "tsc:watch": "tsc.cmd -p tsconfig.json --watch",
+    "tsc:watch": "tsc -p tsconfig.json --watch",
     "tsc:full": "tsc",
     "clean": "node ./script/clean.js",
     "lint": "eslint src --fix --ext .ts",
-    "test": "npm run lint && jest",
+    "test": "jest",
     "build": "npm run clean && tsc"
   },
   "author": "z0gSh1u",
@@ -34,7 +34,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run lint"
+      "pre-commit": "npm run lint && npm run test && npm run clean && npm run build"
     }
   },
   "directories": {
@@ -44,11 +44,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Withod/seu-lex-yacc.git"
+    "url": "git+https://github.com/z0gSh1u/seu-lex-yacc.git"
   },
   "keywords": [],
   "bugs": {
-    "url": "https://github.com/Withod/seu-lex-yacc/issues"
+    "url": "https://github.com/z0gSh1u/seu-lex-yacc/issues"
   },
-  "homepage": "https://github.com/Withod/seu-lex-yacc#readme"
+  "homepage": "https://github.com/z0gSh1u/seu-lex-yacc#readme"
 }
