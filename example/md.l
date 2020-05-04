@@ -35,6 +35,7 @@ italic \*{letter}+\*
 [gh] |
 [i] { return 233; }
 
+
 %%
 
 int yywrap(void) {

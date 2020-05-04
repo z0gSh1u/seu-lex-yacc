@@ -41,11 +41,57 @@ inline char* trim(const char* str) {
 }
 
 inline char* replaceOnce(const char* str, const char* from, const char* to) {
-
+    char *p;
+    p = (char *)strstr(str, from);
+    if (p == NULL) {
+        return strdup(str);
+    }
+    int str_len = strlen(str), from_len = strlen(from), to_len = strlen(to);
+    char *ret = new char[str_len - from_len + to_len + 1];
+    char *strptr, *retptr;
+    for (strptr = (char *)str, retptr = ret; *strptr != '\0'; strptr++, retptr++) {
+        if (strptr != p) {
+            *retptr = *strptr;
+        } else {
+            strcpy(retptr, to);
+            retptr += to_len;
+            strptr += from_len;
+        }
+    }
+    *retptr = '\0';
+    return ret;
 }
 
 inline char* replaceAll(const char* str, const char* from, const char* to) {
-
+    int str_len = strlen(str), from_len = strlen(from), to_len = strlen(to);
+    int p_cnt = 0;
+    char **ps = new char*[str_len];
+    char *strptr = (char *)str;
+    while (strptr != NULL) {
+        strptr = strstr(strptr, from);
+        if (strptr != NULL) {
+            ps[p_cnt] = strptr;
+            strptr += from_len;
+        }
+    }
+    if (p_cnt == 0) {
+        return strdup(str);
+    }
+    char *ret = new char[str_len - p_cnt * from_len + p_cnt * to_len + 1];
+    char *retptr = ret;
+    int pptr = 0;
+    for (strptr = (char *)str; *strptr != '\0'; strptr++, retptr++) {
+        if (pptr >= p_cnt || strptr != ps[pptr]) {
+            *retptr = *strptr;
+        } else {
+            strcpy(retptr, to);
+            retptr += to_len;
+            strptr += from_len;
+            pptr++;
+        }
+    }
+    *retptr = '\0';
+    return ret;
 }
 
 inline char* reverse(const char* str) {
