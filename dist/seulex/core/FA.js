@@ -33,5 +33,8 @@ class FiniteAutomata {
         else
             return res;
     }
+    setTransforms(state, transfroms) {
+        this._transformMatrix[this._states.indexOf(state)] = transfroms;
+    }
 }
 exports.FiniteAutomata = FiniteAutomata;

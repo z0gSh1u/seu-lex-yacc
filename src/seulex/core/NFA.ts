@@ -1,4 +1,4 @@
-import { FiniteAutomata, State } from './FA'
+import { FiniteAutomata, State, Transform } from './FA'
 
 /**
  * 非确定有限状态自动机
@@ -19,10 +19,43 @@ export class NFA extends FiniteAutomata {
   }
 
   /**
-   * Kleene闭包
+   * Kleene闭包（星闭包）
    */
   kleene() {
-    return
+    // new_start --epsilon--> old_start
+    let oldStartStates = this._startStates,
+      newStartState = new State()
+    this._startStates = [newStartState]
+    this._states.push(newStartState)
+    this._transformMatrix.push([])
+    this.linkEpsilon(this._startStates, oldStartStates)
+    // old_accept --epsilon--> new_accept
+    let oldAcceptStates = this._acceptStates,
+      newAcceptState = new State()
+    this._acceptStates = [newAcceptState]
+    this._states.push(newAcceptState)
+    this._transformMatrix.push([])
+    this.linkEpsilon(oldAcceptStates, this._acceptStates)
+    // new_start --epsilon--> new_accept
+    this.linkEpsilon(this._startStates, this._acceptStates)
+    // old_accept --epsilon--> old_start
+    this.linkEpsilon(oldAcceptStates, oldStartStates)
+  }
+
+  /**
+   * 把`from`中的每个状态到`to`中的每个状态建立epsilon边
+   */
+  linkEpsilon(from: State[], to: State[]) {
+    for (let i = 0; i < from.length; i++) {
+      let transforms = this.getTransforms(from[i])
+      for (let j = 0; j < to.length; j++) {
+        transforms.push({
+          alpha: -1,
+          target: this._states.indexOf(to[j]),
+        })
+      }
+      this.setTransforms(from[i], transforms)
+    }
   }
 
   /**
@@ -122,14 +155,66 @@ export class NFA extends FiniteAutomata {
 
   /**
    * 串联两个NFA
-   * `NFA1 --epsilon--> NFA2`
+   * ```
+   * NFA1 --epsilon--> NFA2
+   * ```
    */
-  static concat(nfa1: NFA, nfa2: NFA) {
+  static serial(nfa1: NFA, nfa2: NFA) {
     let res = new NFA()
+    // 处理开始状态、接收状态、状态、字母表
     res._startStates = nfa1._startStates
     res._acceptStates = nfa2._acceptStates
-    res._alphabet = [...new Set([...nfa1._alphabet, ...nfa2._alphabet])]
     res._states = [...nfa1._states, ...nfa2._states]
+    res._alphabet = [...new Set([...nfa1._alphabet, ...nfa2._alphabet])]
     // TODO: 处理状态转移矩阵
+    res._transformMatrix = [
+
+    ]
+
+    res.linkEpsilon(nfa1._acceptStates, nfa2._startStates)
+
+    return res
+  }
+
+  /**
+   * 并联两个NFA
+   * ```
+   *             ε  NFA1  ε
+   * new_start <             > new_accept
+   *             ε  NFA2  ε
+   * ```
+   */
+  static parallel(nfa1: NFA, nfa2: NFA) {
+    let res = new NFA()
+    res._startStates = [new State()]
+    res._acceptStates = [new State()]
+    res._alphabet = [...new Set([...nfa1._alphabet, ...nfa2._alphabet])]
+    res._states = [
+      ...res._startStates,
+      ...nfa1._states,
+      ...nfa2._states,
+      ...res._acceptStates,
+    ]
+    // TODO: 处理状态转移
+    // 下面这个不太对
+    let newTransformMatrix: Transform[][] = [[]] // 开始状态
+    newTransformMatrix = newTransformMatrix.concat(nfa1._transformMatrix)
+    let targetOffset = nfa1._transformMatrix.length,
+      alphaOffset = nfa1._alphabet.length
+    let offsetMatrix = nfa2._transformMatrix.map((transforms) =>
+      transforms.map((transform) => ({
+        alpha: transform.alpha + alphaOffset,
+        target: transform.target + targetOffset,
+      }))
+    )
+    newTransformMatrix = newTransformMatrix.concat(offsetMatrix)
+    newTransformMatrix.push([]) // 结束状态
+    res._transformMatrix = newTransformMatrix
+    //
+    res.linkEpsilon(res._startStates, nfa1._startStates)
+    res.linkEpsilon(res._startStates, nfa2._startStates)
+    res.linkEpsilon(nfa1._acceptStates, res._acceptStates)
+    res.linkEpsilon(nfa2._acceptStates, res._acceptStates)
+    return res
   }
 }

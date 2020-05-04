@@ -1,7 +1,8 @@
 import { Regex } from '../../src/seulex/core/Regex'
 
-test('Regex To Postfix', () => {
-  let regex = new Regex('ab.c+(de)?g|f')
-  let okRegex = regex.postFix
-  expect(okRegex).toBe('something')
+test('Regex Adddot', () => {
+  expect(new Regex(`AB(C|D)*EFG`).dotRaw).toBe(`A.B.(C|D)*.E.F.G`)
+})
+test('Regex ToPostFix', () => {
+  expect(new Regex(`AB(C|D)*EFG`).postFix).toBe(`A B . C D | * . E . F . G . `)
 })

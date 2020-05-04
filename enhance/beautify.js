@@ -103,9 +103,9 @@ function cleanCStyle(code) {
   code = code.replace(/[\s\n]*$/, '')
   code = code.replace(/[\n\r]+/g, '\n')
 
-
-
   cleanAsync()
 }
 
-export default cleanCStyle
+module.exports = {
+  cleanCStyle
+}
