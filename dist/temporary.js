@@ -1,11 +1,8 @@
 "use strict";
-class TClass {
-    constructor() {
-        this._uuid = Symbol();
-    }
-}
-let obj1 = new TClass();
-let obj2 = new TClass();
-let arr = [obj1, obj2];
-console.log(arr.indexOf(obj1));
-console.log(arr.indexOf(obj2));
+Object.defineProperty(exports, "__esModule", { value: true });
+const Regex_1 = require("./seulex/core/Regex");
+let re = new Regex_1.Regex('AB(C|D)*EFG');
+console.log(re.dotRaw);
+console.log(re.postFix);
+let nfa = re.constructNFA();
+console.log(nfa.test('ABCDCDCCCEFG'.split('')));

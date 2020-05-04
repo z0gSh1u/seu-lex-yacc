@@ -3,6 +3,7 @@
 // by z0gSh1u @ 2020-05
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../../utils");
+const NFA_1 = require("./NFA");
 /**
  * 正则表达式类
  */
@@ -11,6 +12,12 @@ class Regex {
         this._raw = regex;
         this._addDots();
         this._toPostfix();
+    }
+    get raw() {
+        return this._raw;
+    }
+    get dotRaw() {
+        return this._dotRaw;
     }
     get postFix() {
         return this._postFix;
@@ -25,13 +32,21 @@ class Regex {
         let res = '' + this._raw[0];
         for (let i = 1; i < this._raw.length; i++) {
             // 前中后三个位置的字符
-            let curCh = this._raw[i], prevCh = this._raw[i - 1], nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null;
+            let curCh = this._raw[i], prevCh = this._raw[i - 1];
+            // nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
             // 不加点的情况
-            let shouldNotAddDot = curCh === '\\' || // 当前字符为定义的转义字符
-                (utils_1.inStr(curCh, '(|') && prevCh !== '\\') || // 当前字符为非转义的(和|
-                i === this._raw.length - 1 || // 当前字符为正规表达式最后一个字符
-                (nextCh && utils_1.inStr(curCh, '|)*')); // 当前字符的后一个字符为|)*
-            !shouldNotAddDot && utils_1.isAlpha(curCh) && (res += '.');
+            // TODO: 下面这些情况是否可以取补找到等价？
+            // let shouldNotAddDot =
+            //   curCh === '\\' || // 当前字符为定义的转义字符
+            //   (inStr(curCh, '(|') && prevCh !== '\\') || // 当前字符为非转义的(和|
+            //   i === this._raw.length - 1 || // 当前字符为正规表达式最后一个字符
+            //   (nextCh && inStr(curCh, '|)*')) // 当前字符的后一个字符为|)*
+            // if (!shouldNotAddDot && isAlpha(curCh)) {
+            //   res += '.'
+            // }
+            let shouldAddDot = (curCh === '(' && utils_1.isAlpha(prevCh)) ||
+                (!utils_1.inStr(prevCh, '(|') && utils_1.isAlpha(curCh));
+            shouldAddDot && (res += '.');
             res += curCh;
         }
         this._dotRaw = res;
@@ -44,7 +59,7 @@ class Regex {
         let res = '', // 转换结果
         stack = [], // 转换过程用到的栈
         raw = this._dotRaw, // 加点结果
-        parts = utils_1.splitAndKeep(raw, '().|*'); // 分离特殊符号
+        parts = utils_1.splitAndKeep(raw, '().|* '); // 分离特殊符号
         // 注意，需要输入特殊符号本身时，用的是反斜杠转义，而不是引号引起
         // 因此该策略不会影响引号内内容识别
         for (let i = 0; i < parts.length; i++) {
@@ -94,6 +109,40 @@ class Regex {
             res += stack.pop() + ' ';
         }
         this._postFix = res;
+    }
+    constructNFA() {
+        let parts = utils_1.splitAndKeep(this._postFix, '().|* '); // 分离特殊符号
+        let stack = [], oprand1, oprand2;
+        // console.log('[Stub1]', parts)
+        for (let i = 0; i < parts.length; i++) {
+            let part = parts[i].trim();
+            if (part.length === 0) {
+                // 空格跳过
+                continue;
+            }
+            console.log('[CHAR]', part[0]);
+            switch (part[0]) {
+                case '|':
+                    ;
+                    [oprand1, oprand2] = [stack.pop(), stack.pop()];
+                    stack.push(NFA_1.NFA.parallel(oprand2, oprand1));
+                    break;
+                case '.': // 连接符
+                    ;
+                    [oprand1, oprand2] = [stack.pop(), stack.pop()];
+                    stack.push(NFA_1.NFA.serial(oprand2, oprand1));
+                    break;
+                case '*':
+                    stack[stack.length - 1].kleene();
+                    break;
+                default:
+                    stack.push(new NFA_1.NFA(part[0]));
+                    break;
+            }
+            console.log('[AFTER]', stack);
+        }
+        utils_1.assert(stack.length === 1, 'Stack too big after NFA construction.');
+        return stack.pop();
     }
 }
 exports.Regex = Regex;

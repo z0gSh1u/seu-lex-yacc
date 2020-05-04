@@ -1,14 +1,12 @@
-class TClass {
-  private _uuid: symbol
-  constructor() {
-    this._uuid = Symbol()
-  }
-}
+import { Regex } from './seulex/core/Regex'
 
-let obj1 = new TClass()
-let obj2 = new TClass()
+let re = new Regex('AB(C|D)*EFG')
 
-let arr = [obj1, obj2]
+console.log(re.dotRaw)
+console.log(re.postFix)
 
-console.log(arr.indexOf(obj1))
-console.log(arr.indexOf(obj2))
+
+let nfa = re.constructNFA()
+
+console.log(nfa.test('ABCDCDCCCEFG'.split('')))
+

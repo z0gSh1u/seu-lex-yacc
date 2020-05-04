@@ -33,7 +33,7 @@ export class FiniteAutomata {
   protected _states!: State[] // 全部状态
   protected _startStates!: State[] // 初始状态
   protected _acceptStates!: State[] // 接收状态
-  protected _transformMatrix!: Transform[][] // 状态转移矩阵
+  protected _transformMatrix!: Transform[][] // 状态转移邻接链表
   /**
    * 获得从该状态出发的所有一步转移
    * @param state 出发状态
@@ -43,5 +43,8 @@ export class FiniteAutomata {
     let res = this._transformMatrix[this._states.indexOf(state)]
     if (epsilonOnly) return res.filter((v) => v.alpha === -1)
     else return res
+  }
+  protected setTransforms(state: State, transfroms: Transform[]) {
+    this._transformMatrix[this._states.indexOf(state)] = transfroms
   }
 }
