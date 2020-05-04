@@ -4,6 +4,7 @@
  */
 
 import fs from 'fs'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { assert, splitAndKeep } from '../../utils'
 
 export class LexParser {
@@ -168,9 +169,7 @@ export class LexParser {
       twoPercent: number[] = []
     // 寻找分界符位置
     this._splitContent.forEach((v, i) => {
-      switch (
-        v.trimRight() // 要求左侧顶格
-      ) {
+      switch (v.trimRight()) { // 要求左侧顶格
         case '%{':
           assert(copyPartStart === -1, 'Bad .lex structure. Duplicate %{.')
           copyPartStart = i
