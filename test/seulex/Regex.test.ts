@@ -6,3 +6,4 @@ test('Regex Adddot', () => {
 test('Regex ToPostFix', () => {
   expect(new Regex(`AB(C|D)*EFG`).postFix).toBe(`A B . C D | * . E . F . G . `)
 })
+
