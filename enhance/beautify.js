@@ -3,109 +3,94 @@
  * 美化C代码
  */
 
-let level = 0
-let FORWARD_LEN = 100
-function finishTabifier(code) {
-  code = code.replace(/\n\s*\n/g, '\n')
-  code = code.replace(/^[\s\n]*/, '')
-  code = code.replace(/[\s\n]*$/, '')
-  level = 0
-}
+
+let layer = 0;//大括号层数
 
 function tabs() {
-  return ' '.repeat(level * 2)
+  return ' '.repeat(layer * 2)//制表符函数
 }
-let out = tabs(), li = level, c = ''
-let infor = false, instring = false, incomment = false
-function cleanCStyle(code) {
-  let i = 0
-  function cleanAsync() {
-    let iStart = i;
-    for (; i < code.length && i < iStart + FORWARD_LEN; i++) {
-      c = code.charAt(i);
-      if (incomment) {
-        if (incomment == '//' && c == '\n') {
-          incomment = false
-        } else if ('/*' == incomment && '*/' == code.substr(i, 2)) {
-          incomment = false
-          c = '*/\n'
-          i++
-        }
-        if (!incomment) {
-          while (code.charAt(++i).match(/\s/));
-          i--
-          c += tabs()
-        }
-        out += c;
-      } else if (instring) {
-        if (instring == c && ('\\' != code.charAt(i - 1) || '\\' == code.charAt(i - 2))
-        ) {
-          instring = false;
-        }
-        out += c;
-      } else if (infor && '(' == c) {
-        infor++
-        out += c
-      } else if (infor && ')' == c) {
-        infor--
-        out += c
-      } else if ('else' == code.substr(i, 4)) {
-        out = out.replace(/\s*$/, '') + ' e';
-      } else if (code.substr(i).match(/^for\s*\(/)) {
-        infor = 1
-        out += 'for (';
-        while ('(' != code.charAt(++i));;
-      } else if ('//' == code.substr(i, 2)) {
-        incomment = '//'
-        out += '//'
-        i++
-      } else if ('/*' == code.substr(i, 2)) {
-        incomment = '/*'
-        out += '\n' + tabs() + '/*'
-        i++
-      } else if ('"' == c || "'" == c) {
-        if (instring && c == instring) {
-          instring = false
-        } else {
-          instring = c
-        }
-        out += c
-      } else if ('{' == c) {
-        level++
-        out = out.replace(/\s*$/, '') + ' {\n' + tabs()
-        while (code.charAt(++i).match(/\s/));
-        i--
-      } else if ('}' == c) {
-        out = out.replace(/\s*$/, '');
-        level--;
-        out += '\n' + tabs() + '}\n' + tabs();
-        while (code.charAt(++i).match(/\s/));; i--;
-      } else if (';' == c && !infor) {
-        out += ';\n' + tabs();
-        while (code.charAt(++i).match(/\s/));; i--;
-      } else if ('\n' == c) {
-        out += '\n' + tabs();
-      } else {
-        out += c;
-      }
-    }
+let result = tabs(), //返回值
+    cursor = '' //指针
+    isFor = false, //指针是否在for循环的条件中     for(;;){}
+    isString = false, //指针是否在string中
+    isAnnotation = false; //指针是否在注释中
+function Beautification(cCode) {
+  let i = 0;
+ 
+  cCode = cCode.replace(/^[\s\n]*/, '');//删除段尾的空白字符
+  cCode = cCode.replace(/[\s\n]*$/, '');//删除段开头的空白字符
+  cCode = cCode.replace(/[\n\r]+/g, '\n');//删除多个连续空行
 
-    if (i < code.length) {
-      setTimeout(cleanAsync, 0);
-    } else {
-      level = li;
-      out = out.replace(/[\s\n]*$/, '');
-      finishTabifier(out);
+  for (; i < cCode.length; i++) {
+    cursor = cCode.charAt(i);//指针位置
+    if (isAnnotation) {
+      if ((isAnnotation == '//') && (cursor == '\n')) {
+        isAnnotation = false; //单行纯注释不做改动
+      } else if ((isAnnotation == '/*') && (cCode.substr(i, 2) == '*/')) {
+        isAnnotation = false;
+        cursor = '*/\n';
+        i++; //多行注释末尾自动换行
+      }
+      if (!isAnnotation) {
+        while (cCode.charAt(++i).match(/\s/));//注释的下一行开头如果是空白字符，则用制表符代替
+        i--;
+        cursor += tabs();
+      }
+      result += cursor;
+    } else if (isString) {
+      if ((isString == cursor) && (cCode.charAt(i - 1) != '\\' || cCode.charAt(i - 2) == '\\')) {//如果是有\注释的引号，则不纳入字符串
+        isString = false;
+      }
+      result += cursor;
+    } else if (isFor && (cursor == '(' )) {//进入for循环条件
+      isFor++;
+      result += cursor;
+    } else if (isFor && (cursor == ')' )) {//退出for循环条件
+      isFor--;
+      result += cursor;
+    } else if (cCode.substr(i, 4) == 'else') {//进入else
+      result = result.replace(/\s*$/, '') + ' e';
+    } else if (cCode.substr(i).match(/^for\s*\(/)) {//匹配for循环标识符
+      isFor = 1;
+      result += 'for (';
+      while (cCode.charAt(++i) != '(');
+    } else if (cCode.substr(i, 2) == '//' ) {//进入单行注释
+      isAnnotation = '//';
+      result += '//';
+      i++;
+    } else if (cCode.substr(i, 2) == '/*' ) {//进入多行注释
+      isAnnotation = '/*';
+      result += '\n' + tabs() + '/*';
+      i++;
+    } else if (cursor == '"' || cursor ==  "'" ) {//进入字符串
+      if (isString && cursor == isString) {//退出字符串
+        isString = false;
+      } else {
+        isString = cursor;
+      }
+      result += cursor;
+    } else if (cursor == '{') {//进入更深一层的花括号
+      layer++;
+      result = result.replace(/\s*$/, '') + ' {\n' + tabs()
+      while (cCode.charAt(++i).match(/\s/));
+      i--;
+    } else if (cursor == '}') {//退出一层花括号
+      result = result.replace(/\s*$/, '');
+      layer--;
+      result += '\n' + tabs() + '}\n' + tabs();
+      while (cCode.charAt(++i).match(/\s/));
+      i--;
+    } else if ((cursor == ';') && !isFor) {//非for循环条件中的分号处理
+      result += ';\n' + tabs();
+      while (cCode.charAt(++i).match(/\s/));
+      i--;
+    } else if (cursor == '\n') {//换行符美化对齐
+      result += '\n' + tabs();
+    } else {//一般情况
+      result += cursor;
     }
   }
-
-  code = code.replace(/^[\s\n]*/, '')
-  code = code.replace(/[\s\n]*$/, '')
-  code = code.replace(/[\n\r]+/g, '\n')
-
-  cleanAsync()
+  return result;
 }
 
-module.exports = {
-  cleanCStyle
-}
+module.exports = {Beautification} 
