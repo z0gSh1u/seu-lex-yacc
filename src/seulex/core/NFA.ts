@@ -4,6 +4,8 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
+// TODO: 支持?、+、.
+
 import { FiniteAutomata, State, Transform } from './FA'
 import { Regex } from './Regex'
 import { splitAndKeep, assert } from '../../utils'
@@ -246,7 +248,6 @@ export class NFA extends FiniteAutomata {
     NFA.mergeTranformAdjList(nfa1, res)
     NFA.mergeTranformAdjList(nfa2, res)
     res._transformAdjList.push([]) // new_accept
-    //
     res.linkEpsilon(res._startStates, nfa1._startStates)
     res.linkEpsilon(res._startStates, nfa2._startStates)
     res.linkEpsilon(nfa1._acceptStates, res._acceptStates)

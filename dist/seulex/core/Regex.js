@@ -34,7 +34,8 @@ class Regex {
         let res = '' + this._raw[0];
         for (let i = 1; i < this._raw.length; i++) {
             // 前中后三个位置的字符
-            let curCh = this._raw[i], prevCh = this._raw[i - 1], nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null;
+            let curCh = this._raw[i], prevCh = this._raw[i - 1];
+            //  nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
             // 不加点的情况
             // TODO: 下面这些情况是否可以取补找到等价？
             // TODO: 加点策略有些问题，去哪里可以找到完整的加点算法描述？

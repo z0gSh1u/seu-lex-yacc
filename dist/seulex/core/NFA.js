@@ -5,6 +5,7 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+// TODO: 支持?、+、.
 const FA_1 = require("./FA");
 const utils_1 = require("../../utils");
 /**
@@ -230,7 +231,6 @@ class NFA extends FA_1.FiniteAutomata {
         NFA.mergeTranformAdjList(nfa1, res);
         NFA.mergeTranformAdjList(nfa2, res);
         res._transformAdjList.push([]); // new_accept
-        //
         res.linkEpsilon(res._startStates, nfa1._startStates);
         res.linkEpsilon(res._startStates, nfa2._startStates);
         res.linkEpsilon(nfa1._acceptStates, res._acceptStates);

@@ -1,3 +1,5 @@
-export class DFA {
+import { FiniteAutomata } from "./FA";
+
+export class DFA extends FiniteAutomata {
   
 }
