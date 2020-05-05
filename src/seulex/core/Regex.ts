@@ -1,9 +1,10 @@
-// 正则表达式相关
-// by z0gSh1u @ 2020-05
+/**
+ * 正则表达式相关
+ * by z0gSh1u
+ * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
+ */
 
-import { inStr, splitAndKeep, isAlpha, assert } from '../../utils'
-import { NFA } from './NFA'
-
+import { inStr, splitAndKeep, isAlpha } from '../../utils'
 /**
  * 正则表达式类
  */
@@ -41,10 +42,11 @@ export class Regex {
     for (let i = 1; i < this._raw.length; i++) {
       // 前中后三个位置的字符
       let curCh = this._raw[i],
-        prevCh = this._raw[i - 1]
-      // nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
+        prevCh = this._raw[i - 1],
+        nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
       // 不加点的情况
       // TODO: 下面这些情况是否可以取补找到等价？
+      // TODO: 加点策略有些问题，去哪里可以找到完整的加点算法描述？
       // let shouldNotAddDot =
       //   curCh === '\\' || // 当前字符为定义的转义字符
       //   (inStr(curCh, '(|') && prevCh !== '\\') || // 当前字符为非转义的(和|
@@ -55,7 +57,8 @@ export class Regex {
       // }
       let shouldAddDot =
         (curCh === '(' && isAlpha(prevCh)) ||
-        (!inStr(prevCh, '(|') && isAlpha(curCh))
+        (!inStr(prevCh, '(|') && isAlpha(curCh)) ||
+        (curCh === '(' && prevCh === '*')
       shouldAddDot && (res += '.')
       res += curCh
     }
@@ -114,46 +117,5 @@ export class Regex {
       res += stack.pop() + ' '
     }
     this._postFix = res
-  }
-
-  constructNFA() {
-    let parts = splitAndKeep(this._postFix, '().|* ') // 分离特殊符号
-    let stack: NFA[] = [],
-      oprand1: NFA,
-      oprand2: NFA
-
-    // console.log('[Stub1]', parts)
-
-    for (let i = 0; i < parts.length; i++) {
-      let part = parts[i].trim()
-      if (part.length === 0) {
-        // 空格跳过
-        continue
-      }
-      
-      console.log('[CHAR]', part[0])
-
-      switch (part[0]) {
-        case '|':
-          ;[oprand1, oprand2] = [stack.pop() as NFA, stack.pop() as NFA]
-          stack.push(NFA.parallel(oprand2, oprand1))
-          break
-        case '.': // 连接符
-          ;[oprand1, oprand2] = [stack.pop() as NFA, stack.pop() as NFA]
-          stack.push(NFA.serial(oprand2, oprand1))
-          break
-        case '*':
-          stack[stack.length - 1].kleene()
-          break
-        default:
-          stack.push(new NFA(part[0]))
-          break
-      }
-      
-      console.log('[AFTER]', stack)
-    }
-
-    assert(stack.length === 1, 'Stack too big after NFA construction.')
-    return stack.pop() as NFA
   }
 }

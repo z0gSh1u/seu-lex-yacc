@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/member-delimiter-style */
 
 /**
+ * FA（有限状态自动机）及状态、转换的声明
+ * by z0gSh1u
+ * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
+ */
+
+/**
  * 自动机状态
  */
 export class State {
@@ -21,7 +27,7 @@ export class State {
  * 自动机状态转换
  */
 export type Transform = {
-  alpha: number // 边上的字母（转换的条件）在this._alphabets中的下标。用-1表示epsilon转换
+  alpha: number // 边上的字母（转换的条件）在this._alphabets中的下标。用-1表示epsilon
   target: number // 目标状态在this._states中的下标
 }
 
@@ -33,18 +39,36 @@ export class FiniteAutomata {
   protected _states!: State[] // 全部状态
   protected _startStates!: State[] // 初始状态
   protected _acceptStates!: State[] // 接收状态
-  protected _transformMatrix!: Transform[][] // 状态转移邻接链表
+  protected _transformAdjList!: Transform[][] // 状态转移邻接链表
+  get startStates() {
+    return this._startStates
+  }
+  get acceptStates() {
+    return this._acceptStates
+  }
+  get states() {
+    return this._states
+  }
+  get alphabet() {
+    return this._alphabet
+  }
+  get transformAdjList() {
+    return this._transformAdjList
+  }
   /**
    * 获得从该状态出发的所有一步转移
    * @param state 出发状态
    * @param epsilonOnly 是否只考虑epsilon转移，默认false
    */
   protected getTransforms(state: State, epsilonOnly = false) {
-    let res = this._transformMatrix[this._states.indexOf(state)]
+    let res = this._transformAdjList[this._states.indexOf(state)]
     if (epsilonOnly) return res.filter((v) => v.alpha === -1)
     else return res
   }
+  /**
+   * 设置从该状态出发的所有一步转移
+   */
   protected setTransforms(state: State, transfroms: Transform[]) {
-    this._transformMatrix[this._states.indexOf(state)] = transfroms
+    this._transformAdjList[this._states.indexOf(state)] = transfroms
   }
 }

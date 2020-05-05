@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Regex_1 = require("./seulex/core/Regex");
-let re = new Regex_1.Regex('AB(C|D)*EFG');
+const NFA_1 = require("./seulex/core/NFA");
+const Visualizer_1 = require("./seulex/core/Visualizer");
+let re = new Regex_1.Regex('A*B*(CD)*');
 console.log(re.dotRaw);
 console.log(re.postFix);
-let nfa = re.constructNFA();
-console.log(nfa.test('ABCDCDCCCEFG'.split('')));
+let nfa = NFA_1.NFA.fromRegex(re);
+Visualizer_1.visualizeFA(nfa);

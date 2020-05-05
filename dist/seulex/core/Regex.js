@@ -1,9 +1,11 @@
 "use strict";
-// 正则表达式相关
-// by z0gSh1u @ 2020-05
+/**
+ * 正则表达式相关
+ * by z0gSh1u
+ * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../../utils");
-const NFA_1 = require("./NFA");
 /**
  * 正则表达式类
  */
@@ -32,10 +34,10 @@ class Regex {
         let res = '' + this._raw[0];
         for (let i = 1; i < this._raw.length; i++) {
             // 前中后三个位置的字符
-            let curCh = this._raw[i], prevCh = this._raw[i - 1];
-            // nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
+            let curCh = this._raw[i], prevCh = this._raw[i - 1], nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null;
             // 不加点的情况
             // TODO: 下面这些情况是否可以取补找到等价？
+            // TODO: 加点策略有些问题，去哪里可以找到完整的加点算法描述？
             // let shouldNotAddDot =
             //   curCh === '\\' || // 当前字符为定义的转义字符
             //   (inStr(curCh, '(|') && prevCh !== '\\') || // 当前字符为非转义的(和|
@@ -45,7 +47,8 @@ class Regex {
             //   res += '.'
             // }
             let shouldAddDot = (curCh === '(' && utils_1.isAlpha(prevCh)) ||
-                (!utils_1.inStr(prevCh, '(|') && utils_1.isAlpha(curCh));
+                (!utils_1.inStr(prevCh, '(|') && utils_1.isAlpha(curCh)) ||
+                (curCh === '(' && prevCh === '*');
             shouldAddDot && (res += '.');
             res += curCh;
         }
@@ -109,40 +112,6 @@ class Regex {
             res += stack.pop() + ' ';
         }
         this._postFix = res;
-    }
-    constructNFA() {
-        let parts = utils_1.splitAndKeep(this._postFix, '().|* '); // 分离特殊符号
-        let stack = [], oprand1, oprand2;
-        // console.log('[Stub1]', parts)
-        for (let i = 0; i < parts.length; i++) {
-            let part = parts[i].trim();
-            if (part.length === 0) {
-                // 空格跳过
-                continue;
-            }
-            console.log('[CHAR]', part[0]);
-            switch (part[0]) {
-                case '|':
-                    ;
-                    [oprand1, oprand2] = [stack.pop(), stack.pop()];
-                    stack.push(NFA_1.NFA.parallel(oprand2, oprand1));
-                    break;
-                case '.': // 连接符
-                    ;
-                    [oprand1, oprand2] = [stack.pop(), stack.pop()];
-                    stack.push(NFA_1.NFA.serial(oprand2, oprand1));
-                    break;
-                case '*':
-                    stack[stack.length - 1].kleene();
-                    break;
-                default:
-                    stack.push(new NFA_1.NFA(part[0]));
-                    break;
-            }
-            console.log('[AFTER]', stack);
-        }
-        utils_1.assert(stack.length === 1, 'Stack too big after NFA construction.');
-        return stack.pop();
     }
 }
 exports.Regex = Regex;
