@@ -27,8 +27,29 @@ export class State {
  * 自动机状态转换
  */
 export type Transform = {
-  alpha: number // 边上的字母（转换的条件）在this._alphabets中的下标。用-1表示epsilon
+  alpha: number // 边上的字母（转换的条件）在this._alphabets中的下标，特殊下标见enum SpAlpha
   target: number // 目标状态在this._states中的下标
+}
+
+/**
+ * 特殊字符枚举
+ */
+export enum SpAlpha {
+  EPSILON = -1, // ε
+  ANY = -2, // . (any character)
+}
+
+/**
+ * 将特殊字符下标转为字符描述
+ */
+export function getSpAlpha(alpha: number) {
+  switch (alpha) {
+    case -1:
+      return 'ε'
+    case -2:
+      return '[any]'
+  }
+  return ''
 }
 
 /**

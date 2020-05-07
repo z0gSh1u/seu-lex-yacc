@@ -1,15 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
   let g = new dagreD3.graphlib.Graph({ multigraph: true }).setGraph({})
-  // A few global attributes
-  if (data.attributes && data.attributes.rankdir) {
-    g.graph().rankDir = data.attributes.rankdir
-  }
-  const disabledShade = '#ccc'
   // 设置点
   for (let node of data.nodes) {
     let defaultBg = 'white',
       defaultFg = '#333',
-      fg,
       bg
     node.color && (bg = node.color)
     let value = {
@@ -17,10 +11,10 @@ document.addEventListener('DOMContentLoaded', function () {
       ry: 3,
       shape: 'circle',
       label: node.label,
-      labelStyle: `fill: ${fg || defaultFg}`,
-      style: `fill: ${bg || defaultBg}; stroke: ${fg || defaultFg}`,
-      description: node.description || node.label,
-      ttText: node.tooltip || node.description || node.label,
+      labelStyle: `fill: ${defaultFg}`,
+      style: `fill: ${bg || defaultBg}; stroke: ${defaultFg}`,
+      description: node.label,
+      ttText: node.label,
     }
     g.setNode(node.label, value)
   }
@@ -28,17 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
   for (let edge of data.edges) {
     let arrowProps = {
       arrowhead: 'vee',
-      label: edge.label === 'epsilon' ? 'ε' : edge.label,
+      label: edge.label,
     }
-    if (edge.attributes && edge.attributes.disabled) {
-      g.setEdge(edge.source, edge.target, {
-        arrowheadStyle: `stroke: ${disabledShade}; fill: ${disabledShade};`,
-        style: `stroke: ${disabledShade}; fill: transparent;`,
-        ...arrowProps,
-      })
-    } else {
-      g.setEdge(edge.source, edge.target, arrowProps)
-    }
+    g.setEdge(edge.source, edge.target, arrowProps, edge.name)
   }
   // 渲染
   let render = new dagreD3.render()
