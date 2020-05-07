@@ -6,7 +6,8 @@
  *      -c: Call gcc to compile after lexing.
  *      -p: Beautify generated C code.
  *      -h: Include seustr.h to compile.
- *      -v: Visualize final DFA with SVG.
+ *      -v: Visualize final DFA.
+ * by z0gSh1u @ 2020-05
  */
 
 import { stdoutPrint } from "../utils"

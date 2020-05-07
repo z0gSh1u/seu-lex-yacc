@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <title>seulex | 自动机可视化</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      svg {
+        height: 100%;
+        width: 100%;
+        font-family: 'Consolas', Courier, monospace;
+        font-size: 20px;
+      }
+      .node rect,
+      .node circle,
+      .node ellipse {
+        stroke: #333;
+        fill: #fff;
+        stroke-width: 1px;
+        cursor: pointer;
+      }
+      .node text {
+        cursor: pointer;
+      }
+      .edgePath path {
+        stroke: #777;
+        fill: #777;
+        stroke-width: 2px;
+      }
+      #side-panel {
+        position: fixed;
+        top: -100px;
+        bottom: -100px;
+        left: -100px;
+        width: 20%;
+        padding: 130px;
+        padding-right: 30px;
+        color: #333;
+        background-color: #eee;
+        box-shadow: 0 0 10px 0 #888 inset;
+      }
+      a {
+        text-decoration: none;
+        font-size: 18px !important;
+      }
+      #side-panel .header {
+        text-transform: uppercase;
+        color: black;
+        font-size: 25px;
+      }
+      .block {
+        width: calc(18px * 4);
+        height: 30px;
+        font-size: 18px;
+        padding: 5px;
+      }
+    </style>
+  </head>
+  <script type="text/javascript" src="./d3.v5.min.js"></script>
+  <script type="text/javascript" src="./dagre-d3.min.js"></script>
+  <script type="text/javascript" src="./data.js"></script>
+  <script type="text/javascript" src="./script.js"></script>
+  <body>
+    <div id="side-panel">
+      <div class="header">
+        seulex | 自动机可视化<br /><br />
+        <a href="https://github.com/z0gSh1u/seu-lex-yacc"
+          >github.com/z0gSh1u/seu-lex-yacc</a
+        ><br /><br />
+        <div class="block" style="background-color: skyblue;">
+          <span>开始状态</span>
+        </div>
+        <div class="block" style="background-color: #fff;">
+          <span>中间状态</span>
+        </div>
+        <div class="block" style="background-color: #00db00;">
+          <span>接收状态</span>
+        </div>
+      </div>
+    </div>
+    <svg></svg>
+  </body>
+</html>

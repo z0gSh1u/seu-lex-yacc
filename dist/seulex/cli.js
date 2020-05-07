@@ -7,7 +7,8 @@
  *      -c: Call gcc to compile after lexing.
  *      -p: Beautify generated C code.
  *      -h: Include seustr.h to compile.
- *      -v: Visualize final DFA with SVG.
+ *      -v: Visualize final DFA.
+ * by z0gSh1u @ 2020-05
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");

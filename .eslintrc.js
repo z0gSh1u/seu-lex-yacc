@@ -8,10 +8,15 @@ module.exports = {
     commonjs: true,
   },
   rules: {
-    'indent': ['error', 2, {
-      "SwitchCase": 1
-    }],
+    indent: [
+      'error',
+      2,
+      {
+        SwitchCase: 1,
+      },
+    ],
     'prefer-const': ['off'],
     '@typescript-eslint/explicit-function-return-type': ['off'],
-  }
+    '@typescript-eslint/ban-ts-ignore': ['off'],
+  },
 }
