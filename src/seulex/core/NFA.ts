@@ -4,12 +4,11 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-// TODO: 支持?、+、.
+// TODO: 支持range、.
 
-import { FiniteAutomata, State, Transform, SpAlpha, getSpAlpha } from './FA'
+import { FiniteAutomata, State, Transform, SpAlpha } from './FA'
 import { Regex } from './Regex'
 import { splitAndKeep, assert } from '../../utils'
-import { visualizeFA } from './Visualizer'
 
 /**
  * 非确定有限状态自动机

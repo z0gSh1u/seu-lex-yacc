@@ -26,6 +26,13 @@ function inStr(ch, str) {
 }
 exports.inStr = inStr;
 /**
+ * Return true if target is in some range of `ranges`.
+ */
+function inRange(ranges, target) {
+    return ranges.some((range) => target >= range[0] && target <= range[1]);
+}
+exports.inRange = inRange;
+/**
  * Split a string using any delim in delims.
  * Return split array with delim remained.
  */

@@ -25,6 +25,13 @@ export function inStr(ch: string, str: string) {
 }
 
 /**
+ * Return true if target is in some range of `ranges`.
+ */
+export function inRange(ranges: [number, number][], target: number) {
+  return ranges.some((range) => target >= range[0] && target <= range[1])
+}
+
+/**
  * Split a string using any delim in delims.
  * Return split array with delim remained.
  */

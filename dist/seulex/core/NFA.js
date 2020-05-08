@@ -5,7 +5,7 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-// TODO: 支持?、+、.
+// TODO: 支持range、.
 const FA_1 = require("./FA");
 const utils_1 = require("../../utils");
 /**

@@ -13,8 +13,13 @@ const utils_1 = require("../../utils");
 class Regex {
     constructor(regex) {
         this._raw = regex;
-        this._addDots();
-        this._toPostfix();
+        // TODO:
+        this._expandRange(); // 展开range
+        // 处理转义字符\d\n
+        // 处理" "
+        // 处理.
+        this._addDots(); // 加点
+        this._toPostfix(); // 转后缀
     }
     get raw() {
         return this._raw;
@@ -25,10 +30,69 @@ class Regex {
     get postFix() {
         return this._postFix;
     }
+    get rangeExpanded() {
+        return this._rangeExpanded;
+    }
+    /**
+     * 展开方框range
+     */
+    _expandRange() {
+        // TODO: 下面的正则其实不是很严格
+        const PATTERN_INSIDEQUOTE_NOTSLASH = /([^\\]|^)(\"[^\"]*[^\\]\")/g; // 在非转义引号之间内容，$0为带引号匹配结果
+        const PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g; // 非转义[]定义的的range，$0为带大括号匹配结果
+        let quoteRanges = [], // 真引号覆盖区间（闭区间）
+        bracketRanges = [], // 真方框覆盖区间（闭区间）
+        result;
+        while ((result = PATTERN_INSIDEQUOTE_NOTSLASH.exec(this._raw)) != null) {
+            result = result;
+            quoteRanges.push([result.index, result.index + result[0].length - 1]);
+        }
+        while ((result = PATTERN_RANGE_NOTSLASH.exec(this._raw)) != null) {
+            result = result;
+            bracketRanges.push([result.index, result.index + result[0].length - 1]);
+        }
+        let replacement = [];
+        bracketRanges.forEach((range) => {
+            // 检查方括号不在引号内才展开
+            if (!utils_1.inRange(quoteRanges, range[0]) && !utils_1.inRange(quoteRanges, range[1])) {
+                let content = this._raw.substring(range[0] + 1, range[1]); // 去掉方框
+                const PATTERN_PAIR = /\S-\S/g;
+                let waitExpand = [], expanded = [];
+                content = content.replace(PATTERN_PAIR, (pair) => {
+                    waitExpand.push([pair[0], pair[2]]);
+                    return '';
+                }); // 剩余单独字符
+                /**
+                 * 从left到right生成之间所有字符（闭区间）
+                 */
+                function generateRange(left, right) {
+                    utils_1.assert(left.charCodeAt(0) <= right.charCodeAt(0), 'Range left is greater than range right.');
+                    return new Array(right.charCodeAt(0) - left.charCodeAt(0) + 1)
+                        .fill('')
+                        .map((_, i) => String.fromCharCode(left.charCodeAt(0) + i));
+                }
+                waitExpand.forEach((lrPair) => {
+                    expanded.push(...generateRange(...lrPair));
+                });
+                // 处理剩余的单独字符
+                expanded.push(...content.split(''));
+                // 去重
+                expanded = [...new Set(expanded)];
+                // 形成(...|...)形式
+                replacement.push(`(${expanded.join('|')})`);
+            }
+            else {
+                // 否则保留
+                replacement.push(this._raw.substring(range[0], range[1] + 1));
+            }
+        });
+        // 替换
+        let ptr = 0;
+        this._rangeExpanded = this._raw.replace(PATTERN_RANGE_NOTSLASH, () => replacement[ptr++]);
+    }
     /**
      * 加点处理
      * 恢复省略的连接符号，如abc本应为a.b.c
-     * https://www.icourse163.org/learn/SEU-1003566002#/learn/content?type=detail&id=1214746334
      */
     _addDots() {
         // TODO: 加点会不会与代表任意字符的.号冲突？
@@ -38,7 +102,6 @@ class Regex {
             let curCh = this._raw[i], prevCh = this._raw[i - 1];
             //  nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
             // 不加点的情况
-            // TODO: 下面这些情况是否可以取补找到等价？
             // TODO: 加点策略有些问题，去哪里可以找到完整的加点算法描述？
             // let shouldNotAddDot =
             //   curCh === '\\' || // 当前字符为定义的转义字符
@@ -58,7 +121,6 @@ class Regex {
     }
     /**
      * 将中缀正则表达式转换为后缀正则表达式
-     * https://www.icourse163.org/learn/SEU-1003566002#/learn/content?type=detail&id=1214746334
      */
     _toPostfix() {
         let res = [], // 转换结果
@@ -92,7 +154,6 @@ class Regex {
             else if (part[0] === '*') {
                 // 没有优先级更低的了，没必要入栈，直接加到后面即可
                 res.push('*');
-                // TODO: 处理+*?的优先级问题，似乎是同级的？
             }
             else if (part[0] === '+') {
                 res.push('+');
@@ -121,9 +182,6 @@ class Regex {
             res.push(stack.pop());
         }
         this._postFix = res.join(' ');
-    }
-    rangeExpand() {
-        let rangePositions = [];
     }
 }
 exports.Regex = Regex;
