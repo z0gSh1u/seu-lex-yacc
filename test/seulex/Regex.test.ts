@@ -1,15 +1,31 @@
 import { Regex } from '../../src/seulex/core/Regex'
 
 test('Regex Adddot', () => {
-  expect(new Regex(`AB(C|D)*EFG`).dotRaw).toBe(`A.B.(C|D)*.E.F.G`)
-  expect(new Regex(`A*B*(CD)*`).dotRaw).toBe(`A*.B*.(C.D)*`)
-  expect(new Regex(`AB?(CD)?(D|E)?`).dotRaw).toBe(`A.B?.(C.D)?.(D|E)?`)
+  expect(new Regex(`AB(C|D)*EFG`).dotAdded).toEqual([
+    'A',
+    'B',
+    '(C|D)*',
+    'E',
+    'F',
+    'G',
+  ])
+  expect(new Regex(`AB+(CD)?(D|E)*..F`).dotAdded).toEqual([
+    'A',
+    'B+',
+    '(C',
+    'D)?',
+    '(D|E)*',
+    '.',
+    '.',
+    'F',
+  ])
 })
 test('Regex ToPostFix', () => {
-  expect(new Regex(`AB(C|D)*EFG`).postFix).toBe(`A B . C D | * . E . F . G .`)
-  expect(new Regex(`A*B*(CD)*`).postFix).toBe(`A * B * . C D . * .`)
-  expect(new Regex(`AB?(CD)?(D|E)?`).postFix).toBe(
-    `A B ? . C D . ? . D E | ? .`
+  expect(new Regex(`AB(C|D)*EFG`).postFix).toBe(
+    `A B [dot] C D | * [dot] E [dot] F [dot] G [dot]`
+  )
+  expect(new Regex(`AB+(CD)?(D|E)*..F`).postFix).toBe(
+    `A B + [dot] C D [dot] ? [dot] D E | * [dot] . [dot] . [dot] F [dot]`
   )
 })
 test('Regex ExpandRange', () => {
@@ -20,5 +36,7 @@ test('Regex ExpandRange', () => {
     new Regex('AB[C-F][A-Cd-b_]')
   }).toThrow()
   expect(new Regex('Hello"[x-z]"').rangeExpanded).toBe(`Hello"[x-z]"`)
-  expect(new Regex('Hello\\"[x-z]\\"').rangeExpanded).toBe(`Hello\\\"(x|y|z)\\\"`)
+  expect(new Regex('Hello\\"[x-z]\\"').rangeExpanded).toBe(
+    `Hello\\\"(x|y|z)\\\"`
+  )
 })

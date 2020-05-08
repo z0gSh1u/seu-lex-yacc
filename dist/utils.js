@@ -26,21 +26,35 @@ function inStr(ch, str) {
 }
 exports.inStr = inStr;
 /**
- * Return true if target is in some range of `ranges`.
+ * Return true if target is in some range of `ranges` (closed).
+ * @param ranges [l, r][]
  */
 function inRange(ranges, target) {
     return ranges.some((range) => target >= range[0] && target <= range[1]);
 }
 exports.inRange = inRange;
 /**
- * Split a string using any delim in delims.
+ * Return all ranges (closed) of matches.
+ * @param regex a RegExp with note `g`
+ */
+function getMatchedRanges(regex, str, resultGroup = 0) {
+    let result, ranges = [];
+    while ((result = regex.exec(str)) != null) {
+        result = result;
+        ranges.push([result.index, result.index + result[resultGroup].length - 1]);
+    }
+    return ranges;
+}
+exports.getMatchedRanges = getMatchedRanges;
+/**
+ * Split a string using any delim (1 character) in delims.
  * Return split array with delim remained.
  */
 function splitAndKeep(str, delims) {
     let res = [], part = '';
     for (let i = 0; i < str.length; i++) {
         if (inStr(str[i], delims)) {
-            part.length !== 0 && res.push(part);
+            !!part && res.push(part);
             part = '';
             res.push(str[i]);
         }

@@ -25,14 +25,15 @@ class NFA extends FA_1.FiniteAutomata {
     }
     /**
      * 构造一个形如`->0 --a--> [1]`的原子NFA（两个状态，之间用初始字母连接）
+     * `initAlpha`也可以为SpAlpha枚举
      */
     static atom(initAlpha) {
         let nfa = new NFA();
         nfa._startStates = [new FA_1.State()]; // 开始状态
         nfa._acceptStates = [new FA_1.State()]; // 接收状态
         nfa._states = [...nfa._startStates, ...nfa._acceptStates]; // 全部状态
-        nfa._alphabet = [initAlpha]; // 字母表
-        nfa._transformAdjList = [[{ alpha: 0, target: 1 }], []]; // []表示接收态没有出边
+        nfa._alphabet = typeof initAlpha === 'string' ? [initAlpha] : []; // 字母表
+        nfa._transformAdjList = [[{ alpha: typeof initAlpha === 'number' ? initAlpha : 0, target: 1 }], []]; // []表示接收态没有出边
         return nfa;
     }
     /**
@@ -276,7 +277,7 @@ class NFA extends FA_1.FiniteAutomata {
      * 根据正则表达式构造NFA
      */
     static fromRegex(regex) {
-        let parts = utils_1.splitAndKeep(regex.postFix, '().|* '); // 分离特殊符号
+        let parts = utils_1.splitAndKeep(regex.postFix, '()|*?+\\. '); // 分离特殊符号
         let stack = [], oprand1, oprand2;
         for (let i = 0; i < parts.length; i++) {
             let part = parts[i].trim();
@@ -284,13 +285,13 @@ class NFA extends FA_1.FiniteAutomata {
                 // 空格跳过
                 continue;
             }
-            switch (part[0]) {
+            switch (part) {
                 case '|': // 或符
                     ;
                     [oprand1, oprand2] = [stack.pop(), stack.pop()];
                     stack.push(NFA.parallel(oprand2, oprand1));
                     break;
-                case '.': // 连接符
+                case '[dot]': // 连接符
                     ;
                     [oprand1, oprand2] = [stack.pop(), stack.pop()];
                     stack.push(NFA.serial(oprand2, oprand1));
@@ -310,8 +311,13 @@ class NFA extends FA_1.FiniteAutomata {
                     oprand1.linkEpsilon(oprand1._startStates, oprand1._acceptStates);
                     stack.push(oprand1);
                     break;
-                default:
-                    // 普通字符
+                case '\\': // 转义符
+                    // TODO: 处理转义符
+                    break;
+                case '.': // 任意字符点（不再是连接符了）
+                    stack.push(NFA.atom(FA_1.SpAlpha.ANY));
+                    break;
+                default: // 普通字符
                     stack.push(NFA.atom(part[0]));
                     break;
             }
