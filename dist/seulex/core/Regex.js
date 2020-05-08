@@ -96,17 +96,17 @@ class Regex {
      */
     _addDots() {
         // TODO: 加点会不会与代表任意字符的.号冲突？
-        let res = '' + this._raw[0];
-        for (let i = 1; i < this._raw.length; i++) {
+        let res = '' + this._rangeExpanded[0];
+        for (let i = 1; i < this._rangeExpanded.length; i++) {
             // 前中后三个位置的字符
-            let curCh = this._raw[i], prevCh = this._raw[i - 1];
-            //  nextCh = i < this._raw.length - 2 ? this._raw[i + 1] : null
+            let curCh = this._rangeExpanded[i], prevCh = this._rangeExpanded[i - 1];
+            //  nextCh = i < this._rangeExpanded.length - 2 ? this._rangeExpanded[i + 1] : null
             // 不加点的情况
             // TODO: 加点策略有些问题，去哪里可以找到完整的加点算法描述？
             // let shouldNotAddDot =
             //   curCh === '\\' || // 当前字符为定义的转义字符
             //   (inStr(curCh, '(|') && prevCh !== '\\') || // 当前字符为非转义的(和|
-            //   i === this._raw.length - 1 || // 当前字符为正规表达式最后一个字符
+            //   i === this._rangeExpanded.length - 1 || // 当前字符为正规表达式最后一个字符
             //   (nextCh && inStr(curCh, '|)*')) // 当前字符的后一个字符为|)*
             // if (!shouldNotAddDot && isAlpha(curCh)) {
             //   res += '.'
