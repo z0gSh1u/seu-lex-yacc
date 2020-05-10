@@ -12,6 +12,7 @@ const fs_1 = __importDefault(require("fs"));
 const utils_1 = require("../../utils");
 /**
  * .l文件解析器
+ * 用于解析出.l文件的各个部分
  */
 class LexParser {
     constructor(filePath) {
@@ -22,8 +23,14 @@ class LexParser {
             .replace(/\r\n/g, '\n'); // 换行一律LF，没有CR
         this._regexAliases = {};
         this._actions = {};
-        this._fillParts();
-        this._analyse();
+        this._fillText();
+        this._fillResult();
+    }
+    get copyPart() {
+        return this._copyPart;
+    }
+    get cCodePart() {
+        return this._cCodePart;
     }
     get regexAliases() {
         return this._regexAliases;
@@ -32,9 +39,9 @@ class LexParser {
         return this._actions;
     }
     /**
-     * 解析出四部分
+     * 解析出四部分的文本
      */
-    _fillParts() {
+    _fillText() {
         this._splitContent = this._rawContent.split('\n');
         let copyPartStart = -1, copyPartEnd = -1, twoPercent = [];
         // 寻找分界符位置
@@ -55,6 +62,8 @@ class LexParser {
                     break;
             }
         });
+        utils_1.assert(copyPartStart !== -1, 'Bad .l structure. {% not found.');
+        utils_1.assert(copyPartEnd !== -1, 'Bad .l structure. %} not found.');
         utils_1.assert(twoPercent.length === 2, 'Bad .l structure. No enough %%.');
         // 最末尾的C代码部分
         this._cCodePart = this._splitContent.slice(twoPercent[1] + 1).join('\n');
@@ -74,7 +83,7 @@ class LexParser {
     /**
      * 填充解析结果
      */
-    _analyse() {
+    _fillResult() {
         // 分析正则别名部分
         this._regexAliasPart.split('\n').forEach((v) => {
             if (v.trim() !== '') {
@@ -88,7 +97,7 @@ class LexParser {
                 this._regexAliases[alias] = regex;
             }
         });
-        // 分析规则与动作部分
+        // 分析规则与动作部分，并作别名展开
         let regexPart = '', // 读取的正则部分
         actionPart = '', // 读取的动作部分
         regexes = [], // 别名展开后的正则列表
@@ -112,14 +121,14 @@ class LexParser {
                 else {
                     if (!isInQuote && !c.trim() && regexPart != '') {
                         // 正则读取完毕
-                        let ptr = 0;
+                        let ptr1 = 0;
                         isSlash = false;
-                        for (; ptr < regexPart.length; ptr++) {
+                        for (; ptr1 < regexPart.length; ptr1++) {
                             // 寻找正则别名的开头{
-                            let char = regexPart.charAt(ptr);
+                            let char = regexPart.charAt(ptr1);
                             if (!isInQuote && !isSlash && char == '{') {
                                 // 开始读取别名
-                                let ptr2 = ptr + 1, alias = '';
+                                let ptr2 = ptr1 + 1, alias = '';
                                 for (; ptr2 < regexPart.length; ptr2++) {
                                     // 寻找别名的结尾}
                                     char = regexPart.charAt(ptr2);
@@ -130,15 +139,15 @@ class LexParser {
                                 utils_1.assert(ptr2 < regexPart.length, `Missing right brace at the end of alias: ${alias}`);
                                 if (alias in this._regexAliases) {
                                     regexPart =
-                                        regexPart.substring(0, ptr) +
+                                        regexPart.substring(0, ptr1) +
                                             '(' +
                                             this._regexAliases[alias] +
                                             ')' +
                                             regexPart.substring(ptr2 + 1);
-                                    ptr -= 1;
+                                    ptr1 -= 1;
                                 }
                                 else
-                                    ptr = ptr2;
+                                    ptr1 = ptr2;
                             }
                             else if (char == '\\')
                                 isSlash = !isSlash;

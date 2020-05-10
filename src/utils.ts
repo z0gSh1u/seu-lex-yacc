@@ -25,7 +25,29 @@ export function inStr(ch: string, str: string) {
 }
 
 /**
- * Split a string using any delim in delims.
+ * Return true if target is in some range of `ranges` (closed).
+ * @param ranges [l, r][]
+ */
+export function inRange(ranges: [number, number][], target: number) {
+  return ranges.some((range) => target >= range[0] && target <= range[1])
+}
+
+/**
+ * Return all ranges (closed) of matches.
+ * @param regex a RegExp with note `g`
+ */
+export function getMatchedRanges(regex: RegExp, str: string, resultGroup = 0) {
+  let result: RegExpExecArray | null,
+    ranges: [number, number][] = []
+  while ((result = regex.exec(str)) != null) {
+    result = result as RegExpExecArray
+    ranges.push([result.index, result.index + result[resultGroup].length - 1])
+  }
+  return ranges
+}
+
+/**
+ * Split a string using any delim (1 character) in delims.
  * Return split array with delim remained.
  */
 export function splitAndKeep(str: string, delims: string) {
@@ -33,7 +55,7 @@ export function splitAndKeep(str: string, delims: string) {
     part = ''
   for (let i = 0; i < str.length; i++) {
     if (inStr(str[i], delims)) {
-      part.length !== 0 && res.push(part)
+      !!part && res.push(part)
       part = ''
       res.push(str[i])
     } else {

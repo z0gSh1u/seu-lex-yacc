@@ -23,6 +23,27 @@ class State {
 }
 exports.State = State;
 /**
+ * 特殊字符枚举
+ */
+var SpAlpha;
+(function (SpAlpha) {
+    SpAlpha[SpAlpha["EPSILON"] = -1] = "EPSILON";
+    SpAlpha[SpAlpha["ANY"] = -2] = "ANY";
+})(SpAlpha = exports.SpAlpha || (exports.SpAlpha = {}));
+/**
+ * 将特殊字符下标转为字符描述
+ */
+function getSpAlpha(alpha) {
+    switch (alpha) {
+        case -1:
+            return 'ε';
+        case -2:
+            return '[any]';
+    }
+    return '';
+}
+exports.getSpAlpha = getSpAlpha;
+/**
  * 有限状态自动机
  */
 class FiniteAutomata {

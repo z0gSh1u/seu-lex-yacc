@@ -9,6 +9,7 @@ import { assert } from '../../utils'
 
 /**
  * .l文件解析器
+ * 用于解析出.l文件的各个部分
  */
 export class LexParser {
   // .l文件内容
@@ -17,13 +18,19 @@ export class LexParser {
   private _splitContent!: string[] // 内容按行分割
   // .l文件的四部分（文本）
   private _copyPart!: string // 直接复制部分
-  private _regexAliasPart!: string // 正则别名部分
+  private _regexAliasPart!: string // 正则别名部分，允许分布在文件%{前或是%%之间两种位置
   private _actionPart!: string // 正则-动作部分
   private _cCodePart!: string // C代码部分
   // 解析结果
   private _regexAliases!: { [key: string]: string } // 正则别名->正则内容
-  private _actions!: { [key: string]: string } // 正则内容->动作
+  private _actions!: { [key: string]: string } // 正则内容->动作，支持{}、单行无{}、无动作;、或|算符
 
+  get copyPart() {
+    return this._copyPart
+  }
+  get cCodePart() {
+    return this._cCodePart
+  }
   get regexAliases() {
     return this._regexAliases
   }
@@ -39,14 +46,14 @@ export class LexParser {
       .replace(/\r\n/g, '\n') // 换行一律LF，没有CR
     this._regexAliases = {}
     this._actions = {}
-    this._fillParts()
-    this._analyse()
+    this._fillText()
+    this._fillResult()
   }
 
   /**
-   * 解析出四部分
+   * 解析出四部分的文本
    */
-  private _fillParts() {
+  private _fillText() {
     this._splitContent = this._rawContent.split('\n')
     let copyPartStart = -1,
       copyPartEnd = -1,
@@ -70,6 +77,8 @@ export class LexParser {
           break
       }
     })
+    assert(copyPartStart !== -1, 'Bad .l structure. {% not found.')
+    assert(copyPartEnd !== -1, 'Bad .l structure. %} not found.')
     assert(twoPercent.length === 2, 'Bad .l structure. No enough %%.')
     // 最末尾的C代码部分
     this._cCodePart = this._splitContent.slice(twoPercent[1] + 1).join('\n')
@@ -90,7 +99,7 @@ export class LexParser {
   /**
    * 填充解析结果
    */
-  private _analyse() {
+  private _fillResult() {
     // 分析正则别名部分
     this._regexAliasPart.split('\n').forEach((v) => {
       if (v.trim() !== '') {
@@ -110,7 +119,7 @@ export class LexParser {
         this._regexAliases[alias] = regex
       }
     })
-    // 分析规则与动作部分
+    // 分析规则与动作部分，并作别名展开
     let regexPart = '', // 读取的正则部分
       actionPart = '', // 读取的动作部分
       regexes: string[] = [], // 别名展开后的正则列表
@@ -132,14 +141,14 @@ export class LexParser {
         } else {
           if (!isInQuote && !c.trim() && regexPart != '') {
             // 正则读取完毕
-            let ptr = 0
+            let ptr1 = 0
             isSlash = false
-            for (; ptr < regexPart.length; ptr++) {
+            for (; ptr1 < regexPart.length; ptr1++) {
               // 寻找正则别名的开头{
-              let char = regexPart.charAt(ptr)
+              let char = regexPart.charAt(ptr1)
               if (!isInQuote && !isSlash && char == '{') {
                 // 开始读取别名
-                let ptr2 = ptr + 1,
+                let ptr2 = ptr1 + 1,
                   alias = ''
                 for (; ptr2 < regexPart.length; ptr2++) {
                   // 寻找别名的结尾}
@@ -153,13 +162,13 @@ export class LexParser {
                 )
                 if (alias in this._regexAliases) {
                   regexPart =
-                    regexPart.substring(0, ptr) +
+                    regexPart.substring(0, ptr1) +
                     '(' +
                     this._regexAliases[alias] +
                     ')' +
                     regexPart.substring(ptr2 + 1)
-                  ptr -= 1
-                } else ptr = ptr2
+                  ptr1 -= 1
+                } else ptr1 = ptr2
               } else if (char == '\\') isSlash = !isSlash
               else if (!isSlash && char == '"') isInQuote = !isInQuote
               else isSlash = false

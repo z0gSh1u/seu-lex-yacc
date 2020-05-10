@@ -1,92 +1,107 @@
 let data = {
-  "options": {
-    "directed": true,
-    "multigraph": false,
-    "compound": false
-  },
   "nodes": [
     {
       "label": "0",
-      "x": 17.5,
-      "y": 50,
-      "color": "#fff"
+      "color": "#46A3FF"
     },
     {
       "label": "1",
-      "x": 17.5,
-      "y": 100,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "2",
-      "x": 35,
-      "y": 0,
-      "color": "skyblue"
+      "color": "#FFFFFF"
     },
     {
       "label": "3",
-      "x": 35,
-      "y": 150,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "4",
-      "x": 17.5,
-      "y": 250,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "5",
-      "x": 17.5,
-      "y": 300,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "6",
-      "x": 35,
-      "y": 200,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "7",
-      "x": 35,
-      "y": 350,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "8",
-      "x": 17.5,
-      "y": 450,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "9",
-      "x": 0,
-      "y": 500,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "10",
-      "x": 0,
-      "y": 550,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "11",
-      "x": 17.5,
-      "y": 600,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "12",
-      "x": 35,
-      "y": 400,
-      "color": "#fff"
+      "color": "#FFFFFF"
     },
     {
       "label": "13",
-      "x": 35,
-      "y": 650,
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "14",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "15",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "16",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "17",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "18",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "19",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "20",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "21",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "22",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "23",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "24",
+      "color": "#FFFFFF"
+    },
+    {
+      "label": "25",
       "color": "#00DB00"
     }
   ],
@@ -94,101 +109,188 @@ let data = {
     {
       "source": "0",
       "target": "1",
+      "name": "0_0",
       "label": "A"
     },
     {
       "source": "1",
-      "target": "3",
-      "label": "epsilon"
-    },
-    {
-      "source": "1",
-      "target": "0",
-      "label": "epsilon"
-    },
-    {
-      "source": "2",
-      "target": "0",
-      "label": "epsilon"
+      "target": "2",
+      "name": "1_0",
+      "label": "ε"
     },
     {
       "source": "2",
       "target": "3",
-      "label": "epsilon"
+      "name": "2_0",
+      "label": "B"
     },
     {
       "source": "3",
       "target": "6",
-      "label": "epsilon"
+      "name": "3_0",
+      "label": "ε"
     },
     {
       "source": "4",
       "target": "5",
+      "name": "4_0",
       "label": "B"
     },
     {
       "source": "5",
       "target": "7",
-      "label": "epsilon"
+      "name": "5_0",
+      "label": "ε"
     },
     {
       "source": "5",
       "target": "4",
-      "label": "epsilon"
+      "name": "5_1",
+      "label": "ε"
     },
     {
       "source": "6",
       "target": "4",
-      "label": "epsilon"
+      "name": "6_0",
+      "label": "ε"
     },
     {
       "source": "6",
       "target": "7",
-      "label": "epsilon"
+      "name": "6_1",
+      "label": "ε"
     },
     {
       "source": "7",
-      "target": "12",
-      "label": "epsilon"
+      "target": "8",
+      "name": "7_0",
+      "label": "ε"
     },
     {
       "source": "8",
       "target": "9",
+      "name": "8_0",
       "label": "C"
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "name": "8_1",
+      "label": "ε"
     },
     {
       "source": "9",
       "target": "10",
-      "label": "epsilon"
+      "name": "9_0",
+      "label": "ε"
     },
     {
       "source": "10",
       "target": "11",
+      "name": "10_0",
       "label": "D"
     },
     {
       "source": "11",
-      "target": "13",
-      "label": "epsilon"
-    },
-    {
-      "source": "11",
-      "target": "8",
-      "label": "epsilon"
-    },
-    {
-      "source": "12",
-      "target": "8",
-      "label": "epsilon"
+      "target": "18",
+      "name": "11_0",
+      "label": "ε"
     },
     {
       "source": "12",
       "target": "13",
-      "label": "epsilon"
+      "name": "12_0",
+      "label": "ε"
+    },
+    {
+      "source": "12",
+      "target": "15",
+      "name": "12_1",
+      "label": "ε"
+    },
+    {
+      "source": "13",
+      "target": "14",
+      "name": "13_0",
+      "label": "D"
+    },
+    {
+      "source": "14",
+      "target": "17",
+      "name": "14_0",
+      "label": "ε"
+    },
+    {
+      "source": "15",
+      "target": "16",
+      "name": "15_0",
+      "label": "E"
+    },
+    {
+      "source": "16",
+      "target": "17",
+      "name": "16_0",
+      "label": "ε"
+    },
+    {
+      "source": "17",
+      "target": "19",
+      "name": "17_0",
+      "label": "ε"
+    },
+    {
+      "source": "17",
+      "target": "12",
+      "name": "17_1",
+      "label": "ε"
+    },
+    {
+      "source": "18",
+      "target": "12",
+      "name": "18_0",
+      "label": "ε"
+    },
+    {
+      "source": "18",
+      "target": "19",
+      "name": "18_1",
+      "label": "ε"
+    },
+    {
+      "source": "19",
+      "target": "20",
+      "name": "19_0",
+      "label": "ε"
+    },
+    {
+      "source": "20",
+      "target": "21",
+      "name": "20_0",
+      "label": "[any]"
+    },
+    {
+      "source": "21",
+      "target": "22",
+      "name": "21_0",
+      "label": "ε"
+    },
+    {
+      "source": "22",
+      "target": "23",
+      "name": "22_0",
+      "label": "[any]"
+    },
+    {
+      "source": "23",
+      "target": "24",
+      "name": "23_0",
+      "label": "ε"
+    },
+    {
+      "source": "24",
+      "target": "25",
+      "name": "24_0",
+      "label": "F"
     }
-  ],
-  "value": {
-    "width": 35,
-    "height": 650
-  }
+  ]
 }

@@ -4,9 +4,9 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-// TODO: 支持?、+、.
+// TODO: 支持range、.
 
-import { FiniteAutomata, State, Transform } from './FA'
+import { FiniteAutomata, State, Transform, SpAlpha } from './FA'
 import { Regex } from './Regex'
 import { splitAndKeep, assert } from '../../utils'
 
@@ -15,17 +15,53 @@ import { splitAndKeep, assert } from '../../utils'
  */
 export class NFA extends FiniteAutomata {
   /**
-   * 构造一个形如`->0 --a--> [1]`的原子NFA（两个状态，之间用初始字母连接）
+   * 构造一个空NFA
    */
-  constructor(initAlpha?: string) {
+  constructor() {
     super()
-    this._startStates = initAlpha ? [new State()] : [] // 开始状态
-    this._acceptStates = initAlpha ? [new State()] : [] // 接收状态
-    this._states = [...this._startStates, ...this._acceptStates] // 全部状态
-    this._alphabet = initAlpha ? [initAlpha] : [] // 字母表
-    this._transformAdjList = initAlpha // 状态转移矩阵
-      ? [[{ alpha: 0, target: 1 }], []] // []表示接收态没有出边
-      : []
+    this._startStates = [] // 开始状态
+    this._acceptStates = [] // 接收状态
+    this._states = [] // 全部状态
+    this._alphabet = [] // 字母表
+    this._transformAdjList = [] // 状态转移邻接链表
+  }
+
+  /**
+   * 构造一个形如`->0 --a--> [1]`的原子NFA（两个状态，之间用初始字母连接）
+   * `initAlpha`也可以为SpAlpha枚举
+   */
+  static atom(initAlpha: string | number) {
+    let nfa = new NFA()
+    nfa._startStates = [new State()] // 开始状态
+    nfa._acceptStates = [new State()] // 接收状态
+    nfa._states = [...nfa._startStates, ...nfa._acceptStates] // 全部状态
+    nfa._alphabet = typeof initAlpha === 'string' ? [initAlpha] : [] // 字母表
+    nfa._transformAdjList = [[{ alpha: typeof initAlpha === 'number' ? initAlpha : 0, target: 1 }], []] // []表示接收态没有出边
+    return nfa
+  }
+
+  /**
+   * 返回与参数形状一致的新NFA（深拷贝，State的Symbol生成新的，与原NFA互不影响）
+   */
+  static copy(nfa: NFA) {
+    let res = new NFA()
+    res._states = []
+    for (let i = 0; i < nfa._states.length; i++) {
+      if (nfa._startStates.includes(nfa._states[i])) {
+        let newState = new State()
+        res._startStates.push(newState)
+        res._states[i] = newState
+      } else if (nfa._acceptStates.includes(nfa._states[i])) {
+        let newState = new State()
+        res._acceptStates.push(newState)
+        res._states[i] = newState
+      } else {
+        res._states[i] = new State()
+      }
+    }
+    res._alphabet = [...nfa._alphabet]
+    res._transformAdjList = JSON.parse(JSON.stringify(nfa._transformAdjList))
+    return res
   }
 
   /**
@@ -94,7 +130,7 @@ export class NFA extends FiniteAutomata {
       if (transfrom.alpha === alpha) {
         result.push(this._states[transfrom.target])
         notEpsilon = true
-      } else if (transfrom.alpha === -1 /* epsilon */) {
+      } else if (transfrom.alpha === SpAlpha.EPSILON /* epsilon */) {
         result.push(this._states[transfrom.target])
       }
     }
@@ -108,19 +144,19 @@ export class NFA extends FiniteAutomata {
    *      ________________ε_______________
    *     |                                ↓
    * 新开始 -ε-> 旧开始 --...--> 旧接收 -ε-> 新接收
-   *              ↑_____________|
+   *              ↑______ε______|
    * ```
    */
   kleene() {
     // new_start --epsilon--> old_start
-    let oldStartStates = this._startStates,
+    let oldStartStates = [...this._startStates],
       newStartState = new State()
     this._startStates = [newStartState]
     this._states.push(newStartState)
     this._transformAdjList.push([])
     this.linkEpsilon(this._startStates, oldStartStates)
     // old_accept --epsilon--> new_accept
-    let oldAcceptStates = this._acceptStates,
+    let oldAcceptStates = [...this._acceptStates],
       newAcceptState = new State()
     this._acceptStates = [newAcceptState]
     this._states.push(newAcceptState)
@@ -153,7 +189,7 @@ export class NFA extends FiniteAutomata {
    * 把`from`中的每个状态到`to`中的每个状态建立epsilon边
    */
   linkEpsilon(from: State[], to: State[]) {
-    this.link(from, to, -1)
+    this.link(from, to, SpAlpha.EPSILON)
   }
 
   /**
@@ -161,7 +197,7 @@ export class NFA extends FiniteAutomata {
    */
   hasReachedAccept(currentState: State) {
     // 不考虑epsilon边
-    if (this._acceptStates.indexOf(currentState) !== -1) {
+    if (this._acceptStates.includes(currentState)) {
       return true
     }
     // 考虑epsilon边，尝试向外扩展
@@ -190,8 +226,8 @@ export class NFA extends FiniteAutomata {
       // 重构from中的所有转移
       for (let transform of transforms) {
         let indexOfAlphaInRes =
-            transform.alpha === -1
-              ? -1
+            transform.alpha < 0
+              ? transform.alpha
               : to._alphabet.indexOf(from._alphabet[transform.alpha]),
           indexOfTargetInRes = to._states.indexOf(
             from._states[transform.target]
@@ -214,8 +250,8 @@ export class NFA extends FiniteAutomata {
   static serial(nfa1: NFA, nfa2: NFA) {
     let res = new NFA()
     // 处理开始状态、接收状态、状态、字母表
-    res._startStates = nfa1._startStates
-    res._acceptStates = nfa2._acceptStates
+    res._startStates = [...nfa1._startStates]
+    res._acceptStates = [...nfa2._acceptStates]
     res._states = [...nfa1._states, ...nfa2._states]
     // 请注意，由于使用Set去重后展开，无法保证字母的下标与原先一致！
     res._alphabet = [...new Set([...nfa1._alphabet, ...nfa2._alphabet])]
@@ -259,7 +295,7 @@ export class NFA extends FiniteAutomata {
    * 根据正则表达式构造NFA
    */
   static fromRegex(regex: Regex) {
-    let parts = splitAndKeep(regex.postFix, '().|* ') // 分离特殊符号
+    let parts = splitAndKeep(regex.postFix, '()|*?+\\. ') // 分离特殊符号
     let stack: NFA[] = [],
       oprand1: NFA,
       oprand2: NFA
@@ -269,20 +305,38 @@ export class NFA extends FiniteAutomata {
         // 空格跳过
         continue
       }
-      switch (part[0]) {
-        case '|':
+      switch (part) {
+        case '|': // 或符
           ;[oprand1, oprand2] = [stack.pop() as NFA, stack.pop() as NFA]
           stack.push(NFA.parallel(oprand2, oprand1))
           break
-        case '.': // 连接符
+        case '[dot]': // 连接符
           ;[oprand1, oprand2] = [stack.pop() as NFA, stack.pop() as NFA]
           stack.push(NFA.serial(oprand2, oprand1))
           break
-        case '*':
+        case '*': // 星闭包符
           stack[stack.length - 1].kleene()
           break
-        default:
-          stack.push(new NFA(part[0]))
+        case '+': // 正闭包符
+          // A+ ----> AA*
+          oprand1 = stack.pop() as NFA
+          let oprand1Kleene = NFA.copy(oprand1)
+          oprand1Kleene.kleene()
+          stack.push(NFA.serial(oprand1, oprand1Kleene))
+          break
+        case '?': // 0/1符
+          oprand1 = stack.pop() as NFA
+          oprand1.linkEpsilon(oprand1._startStates, oprand1._acceptStates)
+          stack.push(oprand1)
+          break
+        case '\\': // 转义符
+          // TODO: 处理转义符
+          break
+        case '.': // 任意字符点（不再是连接符了）
+          stack.push(NFA.atom(SpAlpha.ANY))
+          break
+        default: // 普通字符
+          stack.push(NFA.atom(part[0]))
           break
       }
     }
