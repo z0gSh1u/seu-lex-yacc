@@ -126,15 +126,48 @@ export class NFA extends FiniteAutomata {
     let transforms = this.getTransforms(state),
       result: State[] = [],
       notEpsilon = false
-    for (let transfrom of transforms) {
-      if (transfrom.alpha === alpha) {
-        result.push(this._states[transfrom.target])
+    for (let transform of transforms) {
+      if (transform.alpha === alpha) {
+        result.push(this._states[transform.target])
         notEpsilon = true
-      } else if (transfrom.alpha === SpAlpha.EPSILON /* epsilon */) {
-        result.push(this._states[transfrom.target])
+      } else if (transform.alpha === -1 /* epsilon */) {
+        result.push(this._states[transform.target])
       }
     }
     return { result, notEpsilon }
+  }
+
+  /**
+   * 返回从某状态集合只通过epsilon边所能到达的所有状态（包括自身）
+   * @param states 状态集合
+   */
+  epsilonClosure(states: State[]) {
+    let result = [...states]
+    for (let i = 0; i < result.length; i++) {
+      result = result.concat(this.getTransforms(result[i], true).map(transform => this._states[transform.target]).filter(v => !result.includes(v)))
+    }
+    return result
+  }
+
+  /**
+   * 返回从某状态集合通过一个字母能到达的所有状态
+   * @param states 状态集合
+   * @param alpha 字母在字母表的下标
+   */
+  move(states: State[], alpha: number) {
+    let result: State[] = []
+    for (let state of states) {
+      let transforms = this.getTransforms(state)
+      for (let transform of transforms) {
+        if (transform.alpha == alpha) {
+          let targetState = this._states[transform.target]
+          if (!result.includes(targetState)) {
+            result.push(targetState)
+          }
+        }
+      }
+    }
+    return result
   }
 
   /**
@@ -226,9 +259,9 @@ export class NFA extends FiniteAutomata {
       // 重构from中的所有转移
       for (let transform of transforms) {
         let indexOfAlphaInRes =
-            transform.alpha < 0
-              ? transform.alpha
-              : to._alphabet.indexOf(from._alphabet[transform.alpha]),
+          transform.alpha === -1
+            ? -1
+            : to._alphabet.indexOf(from._alphabet[transform.alpha]),
           indexOfTargetInRes = to._states.indexOf(
             from._states[transform.target]
           )
