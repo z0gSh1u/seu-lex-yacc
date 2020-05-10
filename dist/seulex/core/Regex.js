@@ -5,7 +5,6 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-// TODO: 怎么处理转义字符？考虑支持\n、\s和\d。
 const utils_1 = require("../../utils");
 /**
  * 正则表达式类
@@ -13,8 +12,9 @@ const utils_1 = require("../../utils");
 class Regex {
     constructor(regex) {
         this._raw = regex;
+        // 展开转义\d和\s
+        this._expandEscape();
         // 展开range范围，支持[a-z]、[A-Za-f]、[0-9abc]等各种刁钻形式
-        // TODO: _expandRange对[[]]这种嵌套形式不报错
         this._expandRange();
         // 隐式加点
         this._addDots();
@@ -23,6 +23,9 @@ class Regex {
     }
     get raw() {
         return this._raw;
+    }
+    get escapeExpanded() {
+        return this._escapeExpanded;
     }
     get dotAdded() {
         return this._dotAdded;
@@ -34,6 +37,55 @@ class Regex {
         return this._rangeExpanded;
     }
     /**
+     * 某些表示多种字符的转义字符，如\d、\s，在该阶段展开
+     */
+    _expandEscape() {
+        const PATTERN_INSIDEQUOTE_NOTSLASH = /(?=[^\\]|^)(\"[^\"]*[^\\]\")/g; // 在非转义引号之间内容，$0为带引号匹配结果
+        let quoteRanges = []; // 真引号覆盖区间（闭区间）
+        this._escapeExpanded = this._raw;
+        for (let i = 0; i < this._escapeExpanded.length - 1; i++) {
+            quoteRanges = utils_1.getMatchedRanges(PATTERN_INSIDEQUOTE_NOTSLASH, this._escapeExpanded); // 每轮都要重算，因为会改变_escapeExpanded
+            if (utils_1.inRange(quoteRanges, i))
+                continue; // 在真引号内的统统不处理
+            if (this._escapeExpanded[i] === '\\') {
+                let before = 0;
+                if (this._escapeExpanded[i + 1] !== '\\') {
+                    // 不是\\的情况，而是\x
+                    for (let j = i; j >= 0; j--) {
+                        if (this._escapeExpanded[j] === '\\')
+                            before += 1;
+                        else
+                            break;
+                    }
+                    if (before % 2 !== 0) {
+                        // 例如\\\x是可以的，但\\\\x是不可以的
+                        let escapeCharacter = this._escapeExpanded[i + 1];
+                        utils_1.assert(utils_1.inStr(escapeCharacter, 'dstrn\\[]*?+()|"'), 'This escape character is not supported.');
+                        if (utils_1.inStr(escapeCharacter, 'ds')) {
+                            // 该阶段只处理这两个，剩下的转给后级处理
+                            let expanded;
+                            switch (escapeCharacter) {
+                                case 'd':
+                                    expanded = '[0-9]';
+                                    break;
+                                case 's':
+                                    expanded = '[\\t\\r\\n]';
+                                    break;
+                            }
+                            this._escapeExpanded =
+                                this._escapeExpanded.substring(0, i) +
+                                    expanded +
+                                    this._escapeExpanded.substring(i + 2);
+                        }
+                        else {
+                            /* 不处理 */
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /**
      * 展开正则里的方框range，填充rangeExpanded
      */
     _expandRange() {
@@ -42,13 +94,26 @@ class Regex {
         const PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g; // 非转义[]定义的的range，$0为带大括号匹配结果
         let quoteRanges = [], // 真引号覆盖区间（闭区间）
         bracketRanges = []; // 真方框覆盖区间（闭区间）
-        quoteRanges = utils_1.getMatchedRanges(PATTERN_INSIDEQUOTE_NOTSLASH, this._raw);
-        bracketRanges = utils_1.getMatchedRanges(PATTERN_RANGE_NOTSLASH, this._raw);
+        quoteRanges = utils_1.getMatchedRanges(PATTERN_INSIDEQUOTE_NOTSLASH, this._escapeExpanded);
+        bracketRanges = utils_1.getMatchedRanges(PATTERN_RANGE_NOTSLASH, this._escapeExpanded);
+        // 检查是否有[]重合的情况
+        let axis = Array(this._escapeExpanded.length).fill(0);
+        quoteRanges.forEach((range) => {
+            for (let i = range[0]; i <= range[1]; i++)
+                axis[i] = -1;
+        });
+        bracketRanges.forEach((range) => {
+            for (let i = range[0]; i < range[1]; i++) {
+                utils_1.assert(axis[i] <= 0, 'Some bracket range intersects.');
+                axis[i] === 0 && (axis[i] = 1);
+            }
+        });
+        // 开始具体展开
         let replacement = [];
         bracketRanges.forEach((range) => {
             // 检查方括号不在引号内才展开
             if (!utils_1.inRange(quoteRanges, range[0]) && !utils_1.inRange(quoteRanges, range[1])) {
-                let content = this._raw.substring(range[0] + 1, range[1]); // 去掉方框
+                let content = this._escapeExpanded.substring(range[0] + 1, range[1]); // 去掉方框
                 const PATTERN_PAIR = /\S-\S/g;
                 let waitExpand = [], expanded = [];
                 content = content.replace(PATTERN_PAIR, (pair) => {
@@ -67,6 +132,20 @@ class Regex {
                 waitExpand.forEach((lrPair) => {
                     expanded.push(...generateRange(...lrPair));
                 });
+                // 处理剩余的转义字符
+                while (true) {
+                    let changed = false;
+                    for (let i = 0; i < content.length - 1; i++) {
+                        if (content[i] === '\\') {
+                            expanded.push(content[i] + content[i + 1]);
+                            content = content.substring(0, i) + content.substring(i + 2);
+                            changed = true;
+                            break;
+                        }
+                    }
+                    if (!changed)
+                        break;
+                }
                 // 处理剩余的单独字符
                 expanded.push(...content.split(''));
                 // 去重
@@ -76,12 +155,12 @@ class Regex {
             }
             else {
                 // 否则保留
-                replacement.push(this._raw.substring(range[0], range[1] + 1));
+                replacement.push(this._escapeExpanded.substring(range[0], range[1] + 1));
             }
         });
         // 替换
         let ptr = 0;
-        this._rangeExpanded = this._raw.replace(PATTERN_RANGE_NOTSLASH, () => replacement[ptr++]);
+        this._rangeExpanded = this._escapeExpanded.replace(PATTERN_RANGE_NOTSLASH, () => replacement[ptr++]);
     }
     /**
      * （隐式）加点处理
@@ -95,7 +174,9 @@ class Regex {
         inQuote = false; // 当前是否在括号中
         for (let i = 0; i < this._rangeExpanded.length; i++) {
             // 当前、前一、后一字符
-            let c = this._rangeExpanded[i], prev = i === 0 ? null : this._rangeExpanded[i - 1], next = i === this._rangeExpanded.length - 1
+            let c = this._rangeExpanded[i], 
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            prev = i === 0 ? null : this._rangeExpanded[i - 1], next = i === this._rangeExpanded.length - 1
                 ? null
                 : this._rangeExpanded[i + 1];
             // 先考虑有引号的情况
@@ -118,11 +199,18 @@ class Regex {
             else {
                 // 非引号内的一般情况
                 part += c;
+                let beforeSlashes = 0; // 用于判断“当前字符是不是转义字符”
+                for (let j = i - 1; j >= 0; j--) {
+                    if (this._rangeExpanded[j] === '\\')
+                        beforeSlashes += 1;
+                    else
+                        break;
+                }
                 let shouldNotAddDot = // 不加点的情况
-                 c === '\\' || // 当前字符为定义的转义字符
+                 (c === '\\' && beforeSlashes % 2 === 0) || // 当前字符为定义的转义字符
                     i === this._rangeExpanded.length - 1 || // 当前字符为最后一个字符
-                    (utils_1.inStr(c, '|(') && (i === 0 || prev !== '\\')) || // 当前字符为非转义的操作符|(
-                    (next && utils_1.inStr(next, '|)*+?')); // 下一个字符是操作符或右括号
+                    (utils_1.inStr(c, '|(') && (i === 0 || beforeSlashes % 2 === 0)) || // 当前字符为非转义的操作符|(
+                    (next && utils_1.inStr(next, '|)*+?')); // 一个字符是操作符或右括号
                 if (!shouldNotAddDot) {
                     res.push(part);
                     part = '';
@@ -143,9 +231,18 @@ class Regex {
         for (let i = 0; i < raw.length; i++) {
             if (raw[i].match(/".+"/)) {
                 // 引号内容，不处理特殊符号，直接加点拼接
-                // TODO: 引号里面带空格无法处理
                 for (let j = 1; j < raw[i].length - 1; j++) {
-                    parts.push(utils_1.inStr(raw[i][j], '?*+.()|[]') ? `\\ ${raw[i][j]}` : raw[i][j], '[dot]');
+                    if (utils_1.inStr(raw[i][j], '?*+.()|[]\\')) {
+                        // 一般转义不作转义
+                        parts.push(`\\ ${raw[i][j]}`, '[dot]');
+                    }
+                    else if (raw[i][j].trim() === '') {
+                        // 处理纯空格
+                        parts.push('[space]'.repeat(raw[i][j].length), '[dot]');
+                    }
+                    else {
+                        parts.push(raw[i][j], '[dot]');
+                    }
                 }
             }
             else {
@@ -173,7 +270,6 @@ class Regex {
             }
             else if (part === '[dot]') {
                 // 首先确保是连接符而不是任意字符点，优先级更低的是.，全部弹出
-                // TODO: 有没有可能哪个倒霉孩子给栈里整一个[dot]字符串？
                 while (!!stack.length && stack[stack.length - 1] === '[dot]') {
                     res.push(stack.pop());
                 }

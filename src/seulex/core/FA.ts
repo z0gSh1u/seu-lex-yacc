@@ -36,7 +36,7 @@ export type Transform = {
  */
 export enum SpAlpha {
   EPSILON = -1, // ε
-  ANY = -2, // . (any character)
+  ANY = -2, // . (any character, except \n, not ε)
 }
 
 /**
@@ -45,7 +45,7 @@ export enum SpAlpha {
 export function getSpAlpha(alpha: number) {
   switch (alpha) {
     case -1:
-      return 'ε'
+      return '[ε]'
     case -2:
       return '[any]'
   }
@@ -76,19 +76,22 @@ export class FiniteAutomata {
   get transformAdjList() {
     return this._transformAdjList
   }
+
   /**
-   * 获得从该状态出发的所有一步转移
+   * 获得从该状态出发的所有一步转移（不自动扩展）
    * @param state 出发状态
-   * @param epsilonOnly 是否只考虑epsilon转移，默认false
+   * @param spAlpha 如果定义，则只考虑该列表中的字母的转移
    */
-  protected getTransforms(state: State, epsilonOnly = false) {
+  protected getTransforms(state: State, spAlpha?: number[]) {
     let res = this._transformAdjList[this._states.indexOf(state)]
-    if (epsilonOnly) return res.filter((v) => v.alpha === -1)
+    if (spAlpha) return res.filter((v) => spAlpha.includes(v.alpha))
     else return res
   }
+
   /**
    * 设置从该状态出发的所有一步转移
    */
+
   protected setTransforms(state: State, transfroms: Transform[]) {
     this._transformAdjList[this._states.indexOf(state)] = transfroms
   }
