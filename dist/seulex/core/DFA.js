@@ -5,61 +5,62 @@
  * 2020-05 @ https://github.com/Withod/seu-lex-yacc
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+// TODO: DFA最小化
 const FA_1 = require("./FA");
 /**
  * 确定有限状态自动机
  */
 class DFA extends FA_1.FiniteAutomata {
     /**
-     * 构造一个形如`->0 --a--> [1]`的原子DFA（两个状态，之间用初始字母连接）
+     * 利用子集构造法通过一个NFA构造DFA；或者构造一个空DFA
      */
-    constructor(NFA) {
+    constructor(nfa) {
         super();
-        if (NFA) {
-            this.constructedByNFA(NFA);
+        if (nfa) {
+            this.constructFromNFA(nfa);
         }
         else {
-            this._startStates = [new FA_1.State()]; // 开始状态
-            this._acceptStates = [new FA_1.State()]; // 接收状态
-            this._states = [...this._startStates, ...this._acceptStates]; // 全部状态
+            this._startStates = []; // 开始状态
+            this._acceptStates = []; // 接收状态
+            this._states = []; // 全部状态
             this._alphabet = []; // 字母表
-            this._transformAdjList = [[], []]; // 状态转移矩阵
+            this._transformAdjList = []; // 状态转移矩阵
         }
     }
     /**
      * 使用子集构造法由NFA构造此DFA
-     * @param NFA 子集构造法所使用的NFA
+     * @param nfa 子集构造法所使用的NFA
      */
-    constructedByNFA(NFA) {
+    constructFromNFA(nfa) {
         this._startStates = [];
         this._acceptStates = [];
         this._states = [];
         this._alphabet = [];
         this._transformAdjList = [];
-        if (NFA.startStates == []) {
+        if (nfa.startStates.length === 0) {
             return;
         }
         // 设置第一个开始状态
-        let stateSets = [NFA.epsilonClosure(NFA.startStates)];
-        this._alphabet = NFA.alphabet;
+        let stateSets = [nfa.epsilonClosure(nfa.startStates)];
+        this._alphabet = nfa.alphabet;
         this._startStates = [new FA_1.State()];
         this._acceptStates = [this._startStates[0]];
         this._transformAdjList = [[]];
-        if (stateSets[0].some(s => NFA.acceptStates.includes(s))) {
+        if (stateSets[0].some((s) => nfa.acceptStates.includes(s))) {
             this._acceptStates = [this._startStates[0]];
         }
         this._states = [this._startStates[0]];
         // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
         for (let i = 0; i < this._states.length; i++) {
             for (let alpha = 0; alpha < this._alphabet.length; alpha++) {
-                let newStateSet = NFA.epsilonClosure(NFA.move(stateSets[i], alpha));
-                if (newStateSet == []) {
+                let newStateSet = nfa.epsilonClosure(nfa.move(stateSets[i], alpha));
+                if (newStateSet.length < 1) {
                     continue;
                 }
                 let j = 0;
                 for (; j < stateSets.length; j++) {
-                    if (stateSets[j].every(s => newStateSet.includes(s)) &&
-                        newStateSet.every(s => stateSets[j].includes(s))) {
+                    if (stateSets[j].every((s) => newStateSet.includes(s)) &&
+                        newStateSet.every((s) => stateSets[j].includes(s))) {
                         // 与已有的状态集合相同
                         break;
                     }
@@ -70,11 +71,11 @@ class DFA extends FA_1.FiniteAutomata {
                     let newState = new FA_1.State();
                     this._states.push(newState);
                     this._transformAdjList.push([]);
-                    if (newStateSet.some(s => NFA.acceptStates.includes(s))) {
+                    if (newStateSet.some((s) => nfa.acceptStates.includes(s))) {
                         this._acceptStates.push(newState);
                     }
                 }
-                this._transformAdjList[i].push({ alpha: alpha, target: j });
+                this._transformAdjList[i].push({ alpha, target: j });
             }
         }
     }
@@ -135,7 +136,8 @@ class DFA extends FA_1.FiniteAutomata {
     expand(state, alpha) {
         let transforms = this.getTransforms(state), result = [];
         for (let transform of transforms) {
-            if (transform.alpha === alpha) {
+            if (transform.alpha === alpha ||
+                (transform.alpha === FA_1.SpAlpha.ANY && this._alphabet[alpha] !== '\n')) {
                 result.push(this._states[transform.target]);
             }
         }
@@ -156,10 +158,9 @@ class DFA extends FA_1.FiniteAutomata {
         }
     }
     /**
-     * 检测该状态是否到达接收状态
+     * 检测该状态是否为接收状态
      */
     hasReachedAccept(currentState) {
-        // 不考虑epsilon边
         return this._acceptStates.indexOf(currentState) !== -1;
     }
 }

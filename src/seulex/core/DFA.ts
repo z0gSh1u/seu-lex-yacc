@@ -6,7 +6,7 @@
 
 // TODO: DFA最小化
 
-import { FiniteAutomata, State } from './FA'
+import { FiniteAutomata, State, SpAlpha } from './FA'
 import { NFA } from './NFA'
 
 /**
@@ -16,10 +16,10 @@ export class DFA extends FiniteAutomata {
   /**
    * 利用子集构造法通过一个NFA构造DFA；或者构造一个空DFA
    */
-  constructor(NFA?: NFA) {
+  constructor(nfa?: NFA) {
     super()
-    if (NFA) {
-      this.constructedByNFA(NFA)
+    if (nfa) {
+      this.constructFromNFA(nfa)
     } else {
       this._startStates = [] // 开始状态
       this._acceptStates = [] // 接收状态
@@ -31,38 +31,40 @@ export class DFA extends FiniteAutomata {
 
   /**
    * 使用子集构造法由NFA构造此DFA
-   * @param NFA 子集构造法所使用的NFA
+   * @param nfa 子集构造法所使用的NFA
    */
-  constructedByNFA(NFA: NFA) {
+  constructFromNFA(nfa: NFA) {
     this._startStates = []
     this._acceptStates = []
     this._states = []
     this._alphabet = []
     this._transformAdjList = []
-    if (NFA.startStates == []) {
+    if (nfa.startStates.length === 0) {
       return
     }
     // 设置第一个开始状态
-    let stateSets: State[][] = [NFA.epsilonClosure(NFA.startStates)]
-    this._alphabet = NFA.alphabet
+    let stateSets: State[][] = [nfa.epsilonClosure(nfa.startStates)]
+    this._alphabet = nfa.alphabet
     this._startStates = [new State()]
     this._acceptStates = [this._startStates[0]]
     this._transformAdjList = [[]]
-    if (stateSets[0].some(s => NFA.acceptStates.includes(s))) {
+    if (stateSets[0].some((s) => nfa.acceptStates.includes(s))) {
       this._acceptStates = [this._startStates[0]]
     }
     this._states = [this._startStates[0]]
     // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
     for (let i = 0; i < this._states.length; i++) {
       for (let alpha = 0; alpha < this._alphabet.length; alpha++) {
-        let newStateSet = NFA.epsilonClosure(NFA.move(stateSets[i], alpha))
+        let newStateSet = nfa.epsilonClosure(nfa.move(stateSets[i], alpha))
         if (newStateSet.length < 1) {
           continue
         }
         let j = 0
         for (; j < stateSets.length; j++) {
-          if (stateSets[j].every(s => newStateSet.includes(s)) &&
-            newStateSet.every(s => stateSets[j].includes(s))) {
+          if (
+            stateSets[j].every((s) => newStateSet.includes(s)) &&
+            newStateSet.every((s) => stateSets[j].includes(s))
+          ) {
             // 与已有的状态集合相同
             break
           }
@@ -73,11 +75,11 @@ export class DFA extends FiniteAutomata {
           let newState = new State()
           this._states.push(newState)
           this._transformAdjList.push([])
-          if (newStateSet.some(s => NFA.acceptStates.includes(s))) {
+          if (newStateSet.some((s) => nfa.acceptStates.includes(s))) {
             this._acceptStates.push(newState)
           }
         }
-        this._transformAdjList[i].push({ alpha: alpha, target: j })
+        this._transformAdjList[i].push({ alpha, target: j })
       }
     }
   }
@@ -141,13 +143,15 @@ export class DFA extends FiniteAutomata {
     let transforms = this.getTransforms(state),
       result: State[] = []
     for (let transform of transforms) {
-      if (transform.alpha === alpha) {
+      if (
+        transform.alpha === alpha ||
+        (transform.alpha === SpAlpha.ANY && this._alphabet[alpha] !== '\n')
+      ) {
         result.push(this._states[transform.target])
       }
     }
     return result
   }
-
 
   /**
    * 把`from`中的每个状态到`to`状态用字母alpha建立边

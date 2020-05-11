@@ -1,4 +1,4 @@
-<img src="./doc/LogoWithText.png" style="margin: 0 auto; width: 500px; height: auto;">
+<img src="./doc/LogoWithText.png" style="margin: 0 auto;">
 
 ## seulex
 

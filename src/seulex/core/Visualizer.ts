@@ -40,8 +40,16 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
         : '#FFFFFF',
     })
   }
-  // 设置边
-  // TODO: 支持多边
+  function escapeAlpha(alpha: string) {
+    if (alpha.startsWith('\\')) {
+      return `\\\\${alpha[1]}`
+    } else if (alpha === ' ') {
+      return `[space]`
+    } else {
+      return alpha
+    }
+  }
+  // 设置边，支持多边
   for (let i = 0; i < fa.transformAdjList.length; i++) {
     let transforms = fa.transformAdjList[i]
     for (let j = 0; j < transforms.length; j++) {
@@ -52,7 +60,7 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
         label:
           transforms[j].alpha < 0
             ? getSpAlpha(transforms[j].alpha)
-            : fa.alphabet[transforms[j].alpha],
+            : escapeAlpha(fa.alphabet[transforms[j].alpha]),
       })
     }
   }
