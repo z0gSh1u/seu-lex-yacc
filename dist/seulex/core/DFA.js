@@ -53,7 +53,11 @@ class DFA extends FA_1.FiniteAutomata {
         // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
         for (let i = 0; i < this._states.length; i++) {
             for (let alpha = 0; alpha < this._alphabet.length; alpha++) {
+<<<<<<< Updated upstream
                 let newStateSet = nfa.epsilonClosure(nfa.move(stateSets[i], alpha));
+=======
+                let newStateSet = NFA.epsilonClosure(NFA.move(stateSets[i], alpha));
+>>>>>>> Stashed changes
                 if (newStateSet.length < 1) {
                     continue;
                 }
