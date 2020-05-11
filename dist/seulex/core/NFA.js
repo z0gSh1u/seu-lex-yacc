@@ -255,8 +255,8 @@ class NFA extends FA_1.FiniteAutomata {
             let transforms = from._transformAdjList[i], transformsResult = [];
             // 重构from中的所有转移
             for (let transform of transforms) {
-                let indexOfAlphaInRes = transform.alpha < 0
-                    ? transform.alpha
+                let indexOfAlphaInRes = transform.alpha === -1
+                    ? -1
                     : to._alphabet.indexOf(from._alphabet[transform.alpha]), indexOfTargetInRes = to._states.indexOf(from._states[transform.target]);
                 transformsResult.push({
                     alpha: indexOfAlphaInRes,

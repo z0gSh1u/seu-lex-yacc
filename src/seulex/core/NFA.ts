@@ -180,7 +180,7 @@ export class NFA extends FiniteAutomata {
       result = result.concat(
         this.getTransforms(result[i], [SpAlpha.EPSILON])
           .map((transform) => this._states[transform.target])
-          .filter((v) => !result.includes(v))
+          .filter((s) => !result.includes(s))
       )
     }
     return result

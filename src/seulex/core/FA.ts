@@ -37,6 +37,7 @@ export type Transform = {
 export enum SpAlpha {
   EPSILON = -1, // ε
   ANY = -2, // . (any character, except \n, not ε)
+  OTHER = -3, // other character not mentioned
 }
 
 /**
@@ -48,6 +49,8 @@ export function getSpAlpha(alpha: number) {
       return '[ε]'
     case -2:
       return '[any]'
+    case -3:
+      return '[other]'
   }
   return ''
 }
