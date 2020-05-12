@@ -1,3 +1,11 @@
+/**
+ * seustr.h
+ * Offered by seulex for better string processing experience.
+ * Copy this header to a suitbale place you think.
+ * You might need -I argument when using GCC to compile.
+ * github.com/z0gSh1u/seu-lex-yacc
+ */
+
 #ifndef SEUSTR_H_
 #define SEUSTR_H_
 

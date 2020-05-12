@@ -4,12 +4,9 @@
  * 2020-05 @ https://github.com/Withod/seu-lex-yacc
  */
 
-// TODO: DFA最小化
-
 import { FiniteAutomata, State, SpAlpha, getSpAlpha } from './FA'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NFA } from './NFA'
-import { spawn } from 'child_process'
 
 /**
  * 确定有限状态自动机
@@ -28,6 +25,16 @@ export class DFA extends FiniteAutomata {
       this._states = [] // 全部状态
       this._alphabet = [] // 字母表
       this._transformAdjList = [] // 状态转移矩阵
+    }
+  }
+
+  /**
+   * 原地最小化当前DFA。如果alphabet包含[any]则不处理
+   */
+  minimize() {
+    // TODO: DFA最小化
+    if (this._alphabet.includes('[any]')) {
+      return
     }
   }
 
@@ -96,9 +103,15 @@ export class DFA extends FiniteAutomata {
           }
         }
         if (this._transformAdjList[i].length < 1) {
-          this._transformAdjList[i].push({ alpha: SpAlpha.ANY, target: anyTargetState })
+          this._transformAdjList[i].push({
+            alpha: SpAlpha.ANY,
+            target: anyTargetState,
+          })
         } else {
-          this._transformAdjList[i].push({ alpha: SpAlpha.OTHER, target: anyTargetState })
+          this._transformAdjList[i].push({
+            alpha: SpAlpha.OTHER,
+            target: anyTargetState,
+          })
         }
       }
     }
@@ -130,8 +143,8 @@ export class DFA extends FiniteAutomata {
           !this._alphabet.includes(sentence[matchedWordCount]) &&
           !this._alphabet.includes(getSpAlpha(SpAlpha.ANY))
         ) {
-          // 字母表不存在该字符
-          // 注意此时matchedWordCount一定小于sentence.length
+          // 字母表不存在该字符，并且该自动机没有any转移
+          // 注：此时matchedWordCount一定小于sentence.length，不用担心越界
           return false
         } else {
           // 剩余情况则向外推进，继续搜索
@@ -140,7 +153,9 @@ export class DFA extends FiniteAutomata {
             this._alphabet.indexOf(sentence[matchedWordCount])
           )
           matchedWordCount += 1
-          newState && !maybeStates.includes(newState) && maybeStates.push(newState)
+          newState &&
+            !maybeStates.includes(newState) &&
+            maybeStates.push(newState)
         }
         if (!maybeStates.length) {
           // 没有可选的进一步状态了
