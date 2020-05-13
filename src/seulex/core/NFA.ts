@@ -342,6 +342,48 @@ export class NFA extends FiniteAutomata {
     return res
   }
 
+    /**
+   * 并联所有NFA（对应于|或运算）
+   * ```
+   *             ε  NFA1  ε
+   *             ε  ```   ε
+   * new_start <    ```      > new_accept
+   *             ε  ```   ε
+   *             ε  NFAn  ε
+   * ```
+   */
+  static parallelAll(...nfas: NFA[]) {
+    let res = new NFA()
+    res._startStates = [new State()]
+    res._acceptStates = [new State()]
+    let tempAlphabet= []
+    for (let i = 0; i < nfas.length; i++){
+      tempAlphabet.push(...nfas[i]._alphabet)
+    }
+    res._alphabet = [...new Set(tempAlphabet)]
+    let tempStates = []
+    for(let i = 0; i < nfas.length; i++){
+      tempStates.push(...nfas[i]._states)
+    }
+    res._states = [
+      ...res._startStates, 
+      ...tempStates,
+      ...res._acceptStates, 
+    ]
+    res._transformAdjList = [[]] // new_start
+    for (let i = 0; i < nfas.length; i++){
+    NFA.mergeTranformAdjList(nfas[i], res)
+    }
+    res._transformAdjList.push([]) // new_accept
+    for (let i = 0; i < nfas.length; i++){
+    res.linkEpsilon(res._startStates, nfas[i]._startStates)
+    }
+    for (let i = 0; i < nfas.length; i++){
+    res.linkEpsilon(nfas[i]._acceptStates, res._acceptStates)
+    }
+    return res
+  }
+
   /**
    * 根据正则表达式构造NFA
    */
