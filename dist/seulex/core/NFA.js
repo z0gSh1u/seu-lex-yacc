@@ -166,7 +166,7 @@ class NFA extends FA_1.FiniteAutomata {
         for (let i = 0; i < result.length; i++) {
             result = result.concat(this.getTransforms(result[i], [FA_1.SpAlpha.EPSILON])
                 .map((transform) => this._states[transform.target])
-                .filter((v) => !result.includes(v)));
+                .filter((s) => !result.includes(s)));
         }
         return result;
     }
@@ -255,8 +255,8 @@ class NFA extends FA_1.FiniteAutomata {
             let transforms = from._transformAdjList[i], transformsResult = [];
             // 重构from中的所有转移
             for (let transform of transforms) {
-                let indexOfAlphaInRes = transform.alpha === -1
-                    ? -1
+                let indexOfAlphaInRes = transform.alpha < 0
+                    ? transform.alpha
                     : to._alphabet.indexOf(from._alphabet[transform.alpha]), indexOfTargetInRes = to._states.indexOf(from._states[transform.target]);
                 transformsResult.push({
                     alpha: indexOfAlphaInRes,

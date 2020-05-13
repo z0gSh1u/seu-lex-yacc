@@ -29,6 +29,7 @@ var SpAlpha;
 (function (SpAlpha) {
     SpAlpha[SpAlpha["EPSILON"] = -1] = "EPSILON";
     SpAlpha[SpAlpha["ANY"] = -2] = "ANY";
+    SpAlpha[SpAlpha["OTHER"] = -3] = "OTHER";
 })(SpAlpha = exports.SpAlpha || (exports.SpAlpha = {}));
 /**
  * 将特殊字符下标转为字符描述
@@ -39,6 +40,8 @@ function getSpAlpha(alpha) {
             return '[ε]';
         case -2:
             return '[any]';
+        case -3:
+            return '[other]';
     }
     return '';
 }
