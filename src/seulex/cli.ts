@@ -18,25 +18,35 @@ import { beautifyCCode } from '../../enhance/beautify'
 import { callGCC } from '../../enhance/gcc'
 import { visualizeFA } from './core/Visualizer'
 import { DFA } from './core/DFA'
+import { NFA } from './core/NFA'
+import { Regex } from './core/Regex'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 let args = require('minimist')(process.argv.slice(2))
+// args looks like { _: [ 'example/md.l' ], v: true }
+
 if (args._.length === 0) {
   stdoutPrint(`Missing argument [lex_file].\n`)
 } else if (args._.length !== 1) {
   stdoutPrint(`Too many arguments or .l file not specified.\n`)
 } else {
-  let finalCode = ''
-  // const lexParser = new LexParser(path.join(__dirname, args._))
-  let dfa: DFA = new DFA(/* ??? */)
-  // TODO:
+  stdoutPrint(`[ Running... ]\n`)
+  // 构建最终DFA
+  const lexParser = new LexParser(path.join(__dirname, args._[0]))
+  let atomNFAs = []
+  for (let key in lexParser.actions)
+    atomNFAs.push(NFA.fromRegex(new Regex(key)))
+  let dfa = new DFA(NFA.parallelAll(...atomNFAs))
+  // 代码生成
+  let finalCode = generateCode(lexParser, dfa)
+  // 后处理
   args.p && (finalCode = beautifyCCode(finalCode))
   // 输出c文件
-  fs.writeFileSync(path.join(__dirname, 'yy.seulex.c'), finalCode)
+  fs.writeFileSync(path.join('./', 'yy.seulex.c'), finalCode)
   // 调用GGC
   args.c &&
     callGCC(
-      path.join(__dirname, 'yy.seulex.c'),
+      path.join('./', 'yy.seulex.c'),
       args.c.length ? args.c.toString() : ''
     )
   // 可视化DFA

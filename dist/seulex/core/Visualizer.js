@@ -20,6 +20,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const FA_1 = require("./FA");
 const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const childProcess = __importStar(require("child_process"));
 /**
  * 可视化自动机
@@ -65,8 +66,10 @@ function visualizeFA(fa, viewNow = true) {
     }
     // 计算布局并导出
     let dagreJSON = JSON.stringify(dumpObject, null, 2);
-    fs_1.default.writeFileSync('enhance\\Visualizer\\data.js', `let data = ${dagreJSON}`);
+    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer');
+    fs_1.default.writeFileSync(path_1.default.join(VisualizerPath, './data.js'), `let data = ${dagreJSON}`);
     // 启动浏览器显示
-    viewNow && childProcess.exec(`start enhance\\Visualizer\\index.html`);
+    viewNow &&
+        childProcess.exec(`start ${path_1.default.join(VisualizerPath, './index.html')} `);
 }
 exports.visualizeFA = visualizeFA;

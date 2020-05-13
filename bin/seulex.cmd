@@ -1,2 +1,2 @@
 @echo off
-node ../dist/seulex/cli.js %1 %2 %3 %4 %5 %6 %7 %8 %9
+node dist/seulex/cli.js %1 %2 %3 %4 %5 %6 %7 %8 %9

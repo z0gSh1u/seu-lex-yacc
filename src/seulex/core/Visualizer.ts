@@ -10,6 +10,7 @@
 
 import { FiniteAutomata, getSpAlpha } from './FA'
 import fs from 'fs'
+import path from 'path'
 import * as childProcess from 'child_process'
 
 /**
@@ -66,7 +67,12 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
   }
   // 计算布局并导出
   let dagreJSON = JSON.stringify(dumpObject, null, 2)
-  fs.writeFileSync('enhance\\Visualizer\\data.js', `let data = ${dagreJSON}`)
+  const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer')
+  fs.writeFileSync(
+    path.join(VisualizerPath, './data.js'),
+    `let data = ${dagreJSON}`
+  )
   // 启动浏览器显示
-  viewNow && childProcess.exec(`start enhance\\Visualizer\\index.html`)
+  viewNow &&
+    childProcess.exec(`start ${path.join(VisualizerPath, './index.html')} `)
 }
