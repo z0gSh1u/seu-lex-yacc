@@ -341,7 +341,7 @@ export class NFA extends FiniteAutomata {
     res.linkEpsilon(nfa2._acceptStates, res._acceptStates)
     return res
   }
-
+  
   /**
    * 根据正则表达式构造NFA
    */
