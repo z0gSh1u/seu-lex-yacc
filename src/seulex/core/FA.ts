@@ -98,4 +98,30 @@ export class FiniteAutomata {
   protected setTransforms(state: State, transfroms: Transform[]) {
     this._transformAdjList[this._states.indexOf(state)] = transfroms
   }
+
+  /**
+   * 深拷贝FA，State的Symbol生成新的，与原FA互不影响）
+   */
+  static deepCloneFA(fa: FiniteAutomata) {
+    let res = new FiniteAutomata()
+    res._states = []
+    res._startStates = []
+    res._acceptStates = []
+    for (let i = 0; i < fa._states.length; i++) {
+      if (fa._startStates.includes(fa._states[i])) {
+        let newState = new State()
+        res._startStates.push(newState)
+        res._states[i] = newState
+      } else if (fa._acceptStates.includes(fa._states[i])) {
+        let newState = new State()
+        res._acceptStates.push(newState)
+        res._states[i] = newState
+      } else {
+        res._states[i] = new State()
+      }
+    }
+    res._alphabet = [...fa._alphabet]
+    res._transformAdjList = JSON.parse(JSON.stringify(fa._transformAdjList))
+    return res
+  }
 }
