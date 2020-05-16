@@ -412,3 +412,4 @@ class NFA extends FA_1.FiniteAutomata {
     }
 }
 exports.NFA = NFA;
+//# sourceMappingURL=NFA.js.map

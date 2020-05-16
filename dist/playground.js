@@ -16,5 +16,7 @@ console.log(re.dotAdded);
 console.log(re.postFix);
 let nfa = NFA_1.NFA.parallelAll(NFA_1.NFA.fromRegex(re), NFA_1.NFA.fromRegex(re2), NFA_1.NFA.fromRegex(re3), NFA_1.NFA.fromRegex(re4), NFA_1.NFA.fromRegex(re5));
 let dfa = new DFA_1.DFA(nfa);
+dfa.minimize();
 Visualizer_1.visualizeFA(dfa);
-console.log(dfa.alphabet);
+console.log(dfa);
+//# sourceMappingURL=playground.js.map

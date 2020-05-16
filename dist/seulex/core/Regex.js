@@ -309,3 +309,4 @@ class Regex {
     }
 }
 exports.Regex = Regex;
+//# sourceMappingURL=Regex.js.map
