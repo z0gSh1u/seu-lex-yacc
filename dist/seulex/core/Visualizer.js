@@ -73,4 +73,3 @@ function visualizeFA(fa, viewNow = true) {
         childProcess.exec(`start ${path_1.default.join(VisualizerPath, './index.html')} `);
 }
 exports.visualizeFA = visualizeFA;
-//# sourceMappingURL=Visualizer.js.map

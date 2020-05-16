@@ -298,7 +298,7 @@ export class DFA extends FiniteAutomata {
     for (let startState of this._startStates) {
       let currentState = startState, // 本轮深搜当前状态
         matchedWordCount = 0, // 符合的字符数
-        maybeStates: State[] = [] // DFS辅助数组，记录历史状态
+        candidates: State[] = [] // DFS辅助数组，记录历史状态
       while (matchedWordCount <= sentence.length) {
         if (
           // 目前匹配了全句
@@ -325,15 +325,15 @@ export class DFA extends FiniteAutomata {
           )
           matchedWordCount += 1
           newState &&
-            !maybeStates.includes(newState) &&
-            maybeStates.push(newState)
+            !candidates.includes(newState) &&
+            candidates.push(newState)
         }
-        if (!maybeStates.length) {
+        if (!candidates.length) {
           // 没有可选的进一步状态了
           break
         } else {
           // 选一个可选的进一步状态
-          currentState = maybeStates.pop() as State
+          currentState = candidates.pop() as State
         }
       }
     }

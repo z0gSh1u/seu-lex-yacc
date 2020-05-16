@@ -36,7 +36,6 @@ class DFA extends FA_1.FiniteAutomata {
         }
         //存放DFA最小化过程中状态划分
         let stateLists = [];
-        stateLists.push([]);
         //将原DFA划分成接受状态和非接受状态
         let nonTerminalStates = new Array();
         let copyOfOriginalState = DFA.deepCloneFA(this).states;
@@ -60,19 +59,12 @@ class DFA extends FA_1.FiniteAutomata {
        *@param statesToCheck 待划分状态列表
      */
     splitStateList(stateLists, statesToCheck) {
-        //console.log(statesToCheck)
-        //console.log(stateLists.length)
-        //console.log(stateLists)
         let index = (stateLists.length) - 1;
         let statesToRemove = new Array();
         for (let i = 0; i < this.alphabet.length; i++) {
             for (let j = 0; j < statesToCheck.length; j++) {
                 let stateIndex = this.states.indexOf(statesToCheck[j]);
-                if (stateIndex === -1) {
-                    continue;
-                }
                 //获取状态遇到下标为i的符号时状态跳转情况
-                console.log(stateIndex);
                 let temp = this.transformAdjList[stateIndex][i];
                 let nextState = this.states[temp.target];
                 if (!statesToCheck.includes(nextState)) {
@@ -112,7 +104,7 @@ class DFA extends FA_1.FiniteAutomata {
     rebuildState(stateLists, leftMostEndStateIndex) {
         //stateLists中的第一个元素中的所有状态构成新的DFA对象的开始状态
         let newStart = new FA_1.State();
-        this.startStates.push(newStart);
+        this.startStates[0] = newStart;
         this.states.push(newStart);
         //添加既不是开始状态节点，也不是可接受状态节点的状态节点
         for (let i = 1; i < leftMostEndStateIndex; i++) {
@@ -159,8 +151,9 @@ class DFA extends FA_1.FiniteAutomata {
     }
     //建立到其它划分中状态的状态转移
     buildTansitWithStatesInOtherPartition(originalStateList, originalStateTransitMat, stateLists, stateList, stateTransform) {
-        let stateTransitMatRow = originalStateTransitMat[0];
-        // console.log(originalStateIndex)
+        let originalStateIndex = originalStateList.indexOf(stateList[0]);
+        let stateTransitMatRow = originalStateTransitMat[originalStateIndex];
+        console.log(originalStateIndex);
         for (let i = 0; i < stateTransitMatRow.length; i++) {
             //当前转向的状态
             let currentState = originalStateList[stateTransitMatRow[i].target];
@@ -274,7 +267,7 @@ class DFA extends FA_1.FiniteAutomata {
         for (let startState of this._startStates) {
             let currentState = startState, // 本轮深搜当前状态
             matchedWordCount = 0, // 符合的字符数
-            maybeStates = []; // DFS辅助数组，记录历史状态
+            candidates = []; // DFS辅助数组，记录历史状态
             while (matchedWordCount <= sentence.length) {
                 if (
                 // 目前匹配了全句
@@ -298,16 +291,16 @@ class DFA extends FA_1.FiniteAutomata {
                     let newState = this.expand(currentState, this._alphabet.indexOf(sentence[matchedWordCount]));
                     matchedWordCount += 1;
                     newState &&
-                        !maybeStates.includes(newState) &&
-                        maybeStates.push(newState);
+                        !candidates.includes(newState) &&
+                        candidates.push(newState);
                 }
-                if (!maybeStates.length) {
+                if (!candidates.length) {
                     // 没有可选的进一步状态了
                     break;
                 }
                 else {
                     // 选一个可选的进一步状态
-                    currentState = maybeStates.pop();
+                    currentState = candidates.pop();
                 }
             }
         }
@@ -354,4 +347,3 @@ class DFA extends FA_1.FiniteAutomata {
     }
 }
 exports.DFA = DFA;
-//# sourceMappingURL=DFA.js.map

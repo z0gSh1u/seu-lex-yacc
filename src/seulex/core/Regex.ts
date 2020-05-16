@@ -14,6 +14,7 @@ export class Regex {
   private _rangeExpanded!: string // STEP 2 - 做了range展开后的正则表达式
   private _dotAdded!: string[] // STEP 3 - 加点后的正则表达式
   private _postFix!: string // STEP 4- 后缀形式的正则表达式
+  private _actionCode!: string
 
   constructor(regex: string) {
     this._raw = regex
@@ -41,6 +42,12 @@ export class Regex {
   }
   get rangeExpanded() {
     return this._rangeExpanded
+  }
+  get actionCode() {
+    return this._actionCode
+  }
+  set actionCode(code: string) {
+    this._actionCode = code
   }
 
   /**

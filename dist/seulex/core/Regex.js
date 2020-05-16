@@ -36,6 +36,12 @@ class Regex {
     get rangeExpanded() {
         return this._rangeExpanded;
     }
+    get actionCode() {
+        return this._actionCode;
+    }
+    set actionCode(code) {
+        this._actionCode = code;
+    }
     /**
      * 某些表示多种字符的转义字符，如\d、\s，在该阶段展开
      */
@@ -309,4 +315,3 @@ class Regex {
     }
 }
 exports.Regex = Regex;
-//# sourceMappingURL=Regex.js.map

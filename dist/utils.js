@@ -73,4 +73,3 @@ function isAlpha(ch) {
     return ch.length === 1 && !!ch.match(/[A-Za-z]/);
 }
 exports.isAlpha = isAlpha;
-//# sourceMappingURL=utils.js.map

@@ -112,4 +112,3 @@ class FiniteAutomata {
     }
 }
 exports.FiniteAutomata = FiniteAutomata;
-//# sourceMappingURL=FA.js.map
