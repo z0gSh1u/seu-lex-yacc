@@ -16,14 +16,20 @@ export function generateCode(lexParser: LexParser, dfa: DFA) {
     `
     for (let i = 0; i < dfa.transformAdjList.length; i++) {
       let targets = Array(128).fill(-1) // -1表示没有此转移
-      if (dfa.transformAdjList[i].every((t) => t.alpha !== SpAlpha.OTHER)) {
-        for (let transform of dfa.transformAdjList[i]) {
-          // TODO: DFA的字母表是不是一定不含[any]？是的话删去本TODO。
-          targets[dfa.alphabet[transform.alpha].charCodeAt(0)] =
-            transform.target
+      let othersTarget = -1 // 仍未设置转移的字符应转移到的状态
+      for (let transform of dfa.transformAdjList[i]) {
+        if (transform.alpha == SpAlpha.OTHER || transform.alpha == SpAlpha.ANY) {
+          othersTarget = transform.target
+        } else {
+          targets[dfa.alphabet[transform.alpha].charCodeAt(0)] = transform.target
         }
-      } else {
-        // TODO: 请处理有Other情况的转移
+      }
+      if (othersTarget != -1) {
+        for (let alpha in targets) {
+          if (targets[alpha] == -1) {
+            targets[alpha] = othersTarget
+          }
+        }
       }
       res += targets.join(',') + ','
     }
