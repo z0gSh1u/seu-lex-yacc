@@ -4,7 +4,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * NFA（非确定有限状态自动机）
- * by z0gSh1u
+ * by z0gSh1u & Twileon
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 const FA_1 = require("./FA");
@@ -23,6 +23,7 @@ class NFA extends FA_1.FiniteAutomata {
         this._states = []; // 全部状态
         this._alphabet = []; // 字母表
         this._transformAdjList = []; // 状态转移邻接链表
+        this._regex = null;
     }
     /**
      * 构造一个形如`->0 --a--> [1]`的原子NFA（两个状态，之间用初始字母连接）
@@ -42,7 +43,7 @@ class NFA extends FA_1.FiniteAutomata {
         return nfa;
     }
     /**
-     * 返回形状一致的新NFA（深拷贝，State的Symbol生成新的，与原NFA互不影响）
+     * 返回形状一致的新NFA（深拷贝，State的Symbol生成新的，与原NFA互不关联）
      */
     static copy(nfa) {
         let res = new NFA();
@@ -103,22 +104,19 @@ class NFA extends FA_1.FiniteAutomata {
                     }
                 }
                 if (!candidates.length) {
-                    // 没有可选的进一步状态了
-                    break;
+                    break; // 没有可选的进一步状态了
                 }
                 else {
-                    // 选一个可选的进一步状态
-                    currentState = candidates.pop();
+                    currentState = candidates.pop(); // 选一个可选的进一步状态
                 }
             }
         }
         return false;
     }
     /**
-     * 返回从某状态收到一个字母并消耗它后能到达的所有其他状态（考虑了利用epsilon边进行预先和预后扩展）
+     * 返回从某状态收到一个字母并消耗它后，能到达的所有其他状态（考虑了利用epsilon边进行预先和预后扩展）
      * @param state 某状态
      * @param alpha 字母在字母表的下标
-     * @returns `{结果状态数组, 是否消耗字母}`
      */
     expand(state, alpha) {
         let preExpand = this.epsilonClosure([state]); // 所有可行的出发状态
@@ -128,8 +126,7 @@ class NFA extends FA_1.FiniteAutomata {
             for (let transform of transforms) {
                 if (transform.alpha === alpha ||
                     (transform.alpha === FA_1.SpAlpha.ANY && this._alphabet[alpha] !== '\n')) {
-                    // 能够吃掉当前字符后到达的所有状态
-                    result.push(this._states[transform.target]);
+                    result.push(this._states[transform.target]); // 能够吃掉当前字符后到达的所有状态
                 }
             }
         }
@@ -149,9 +146,8 @@ class NFA extends FA_1.FiniteAutomata {
                 if (transform.alpha === alpha ||
                     (transform.alpha === FA_1.SpAlpha.ANY && this._alphabet[alpha] !== '\n')) {
                     let targetState = this._states[transform.target];
-                    if (!result.includes(targetState)) {
+                    if (!result.includes(targetState))
                         result.push(targetState);
-                    }
                 }
             }
         }
@@ -172,7 +168,6 @@ class NFA extends FA_1.FiniteAutomata {
     }
     /**
      * 将当前NFA原地做Kleene闭包（星闭包），见龙书3.7.1节图3-34
-     *
      * ```
      *      ________________ε_______________
      *     |                                ↓
@@ -205,12 +200,11 @@ class NFA extends FA_1.FiniteAutomata {
     link(from, to, alpha) {
         for (let i = 0; i < from.length; i++) {
             let transforms = this.getTransforms(from[i]);
-            for (let j = 0; j < to.length; j++) {
+            for (let j = 0; j < to.length; j++)
                 transforms.push({
                     alpha,
                     target: this._states.indexOf(to[j]),
                 });
-            }
             this.setTransforms(from[i], transforms);
         }
     }
@@ -221,13 +215,12 @@ class NFA extends FA_1.FiniteAutomata {
         this.link(from, to, FA_1.SpAlpha.EPSILON);
     }
     /**
-     * 检测该状态是否到达接收状态（考虑了借助epsilon边）
+     * 检测该状态是否到达接收状态（考虑了借助epsilon边预后扩展）
      */
     hasReachedAccept(currentState) {
         // 不考虑epsilon边
-        if (this._acceptStates.includes(currentState)) {
+        if (this._acceptStates.includes(currentState))
             return true;
-        }
         // 考虑epsilon边
         let stack = [currentState]; // 深搜辅助栈
         while (!!stack.length) {
@@ -267,7 +260,7 @@ class NFA extends FA_1.FiniteAutomata {
         }
     }
     /**
-     * 串联两个NFA（加"点"，连接运算）
+     * 串联两个NFA
      * ```
      * NFA1 --epsilon--> NFA2
      * ```
@@ -336,16 +329,13 @@ class NFA extends FA_1.FiniteAutomata {
         res._alphabet = [...new Set(tempAlphabet)];
         res._states = [...res._startStates, ...tempStates, ...res._acceptStates];
         res._transformAdjList = [[]]; // new_start
-        for (let i = 0; i < nfas.length; i++) {
+        for (let i = 0; i < nfas.length; i++)
             NFA.mergeTranformAdjList(nfas[i], res);
-        }
         res._transformAdjList.push([]); // new_accept
-        for (let i = 0; i < nfas.length; i++) {
+        for (let i = 0; i < nfas.length; i++)
             res.linkEpsilon(res._startStates, nfas[i]._startStates);
-        }
-        for (let i = 0; i < nfas.length; i++) {
+        for (let i = 0; i < nfas.length; i++)
             res.linkEpsilon(nfas[i]._acceptStates, res._acceptStates);
-        }
         return res;
     }
     /**
@@ -408,6 +398,7 @@ class NFA extends FA_1.FiniteAutomata {
             }
         }
         utils_1.assert(stack.length === 1, 'Stack too big after NFA construction.');
+        stack[0]._regex = regex;
         return stack.pop();
     }
 }

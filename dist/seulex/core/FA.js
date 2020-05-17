@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * FA（有限状态自动机）及状态、转换的声明
- * by z0gSh1u
+ * by z0gSh1u & Twileon
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 /**
@@ -35,15 +35,9 @@ var SpAlpha;
  * 将特殊字符下标转为字符描述
  */
 function getSpAlpha(alpha) {
-    switch (alpha) {
-        case -1:
-            return '[ε]';
-        case -2:
-            return '[any]';
-        case -3:
-            return '[other]';
-    }
-    return '';
+    const table = { '-1': '[ε]', '-2': '[any]', '-3': '[other]' };
+    // @ts-ignore
+    return table[alpha] || '';
 }
 exports.getSpAlpha = getSpAlpha;
 /**
@@ -86,7 +80,7 @@ class FiniteAutomata {
     /**
      * 深拷贝FA，State的Symbol生成新的，与原FA互不影响）
      */
-    static deepCloneFA(fa) {
+    static copy(fa) {
         let res = new FiniteAutomata();
         res._states = [];
         res._startStates = [];

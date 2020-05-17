@@ -1,6 +1,6 @@
 "use strict";
 /**
- * .l文件解析器
+ * Lex源文件（.l）解析器
  * by z0gSh1u & Withod
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
@@ -12,7 +12,6 @@ const fs_1 = __importDefault(require("fs"));
 const utils_1 = require("../../utils");
 /**
  * .l文件解析器
- * 用于解析出.l文件的各个部分
  */
 class LexParser {
     constructor(filePath) {
@@ -24,7 +23,7 @@ class LexParser {
         this._regexAliases = {};
         this._actions = {};
         this._fillText();
-        this._fillResult();
+        this._fillAttributes();
     }
     get copyPart() {
         return this._copyPart;
@@ -83,7 +82,7 @@ class LexParser {
     /**
      * 填充解析结果
      */
-    _fillResult() {
+    _fillAttributes() {
         // 分析正则别名部分
         this._regexAliasPart.split('\n').forEach((v) => {
             if (v.trim() !== '') {
@@ -174,8 +173,8 @@ class LexParser {
                     }
                 }
             }
+            // 正在读取动作
             if (!isReadingRegex) {
-                // 正在读取动作
                 actionPart += c.trim() ? c : ' ';
                 if ((!isInQuote && braceLevel == 0 && c == ';') ||
                     (!isInQuote && c == '}' && braceLevel == 1)) {

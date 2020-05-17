@@ -36,7 +36,7 @@ if (args._.length === 0) {
   let atomNFAs = []
   for (let key in lexParser.actions)
     atomNFAs.push(NFA.fromRegex(new Regex(key)))
-  let dfa = new DFA(NFA.parallelAll(...atomNFAs))
+  let dfa = DFA.fromNFA(NFA.parallelAll(...atomNFAs))
   // 代码生成
   let finalCode = generateCode(lexParser, dfa)
   // 后处理

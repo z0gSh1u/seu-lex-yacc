@@ -40,7 +40,7 @@ else {
     let atomNFAs = [];
     for (let key in lexParser.actions)
         atomNFAs.push(NFA_1.NFA.fromRegex(new Regex_1.Regex(key)));
-    let dfa = new DFA_1.DFA(NFA_1.NFA.parallelAll(...atomNFAs));
+    let dfa = DFA_1.DFA.fromNFA(NFA_1.NFA.parallelAll(...atomNFAs));
     // 代码生成
     let finalCode = CodeGenerator_1.generateCode(lexParser, dfa);
     // 后处理

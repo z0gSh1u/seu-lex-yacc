@@ -2,8 +2,6 @@ import fs from 'fs'
 import { assert } from '../utils'
 import { Producer } from './Grammar'
 
-
-
 export class YaccParser {
   private _filePath!: string
   private _rawContent!: string
