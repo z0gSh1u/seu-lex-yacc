@@ -4,7 +4,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * NFA（非确定有限状态自动机）
- * by z0gSh1u
+ * by z0gSh1u & Twileon
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 const FA_1 = require("./FA");
@@ -23,6 +23,10 @@ class NFA extends FA_1.FiniteAutomata {
         this._states = []; // 全部状态
         this._alphabet = []; // 字母表
         this._transformAdjList = []; // 状态转移邻接链表
+        this._acceptActionMap = new Map(); // 接收态对应的动作
+    }
+    get acceptActionMap() {
+        return this._acceptActionMap;
     }
     /**
      * 构造一个形如`->0 --a--> [1]`的原子NFA（两个状态，之间用初始字母连接）
@@ -42,7 +46,7 @@ class NFA extends FA_1.FiniteAutomata {
         return nfa;
     }
     /**
-     * 返回形状一致的新NFA（深拷贝，State的Symbol生成新的，与原NFA互不影响）
+     * 返回形状一致的新NFA（深拷贝，State的Symbol生成新的，与原NFA互不关联）
      */
     static copy(nfa) {
         let res = new NFA();
@@ -103,22 +107,19 @@ class NFA extends FA_1.FiniteAutomata {
                     }
                 }
                 if (!candidates.length) {
-                    // 没有可选的进一步状态了
-                    break;
+                    break; // 没有可选的进一步状态了
                 }
                 else {
-                    // 选一个可选的进一步状态
-                    currentState = candidates.pop();
+                    currentState = candidates.pop(); // 选一个可选的进一步状态
                 }
             }
         }
         return false;
     }
     /**
-     * 返回从某状态收到一个字母并消耗它后能到达的所有其他状态（考虑了利用epsilon边进行预先和预后扩展）
+     * 返回从某状态收到一个字母并消耗它后，能到达的所有其他状态（考虑了利用epsilon边进行预先和预后扩展）
      * @param state 某状态
      * @param alpha 字母在字母表的下标
-     * @returns `{结果状态数组, 是否消耗字母}`
      */
     expand(state, alpha) {
         let preExpand = this.epsilonClosure([state]); // 所有可行的出发状态
@@ -128,8 +129,7 @@ class NFA extends FA_1.FiniteAutomata {
             for (let transform of transforms) {
                 if (transform.alpha === alpha ||
                     (transform.alpha === FA_1.SpAlpha.ANY && this._alphabet[alpha] !== '\n')) {
-                    // 能够吃掉当前字符后到达的所有状态
-                    result.push(this._states[transform.target]);
+                    result.push(this._states[transform.target]); // 能够吃掉当前字符后到达的所有状态
                 }
             }
         }
@@ -149,9 +149,8 @@ class NFA extends FA_1.FiniteAutomata {
                 if (transform.alpha === alpha ||
                     (transform.alpha === FA_1.SpAlpha.ANY && this._alphabet[alpha] !== '\n')) {
                     let targetState = this._states[transform.target];
-                    if (!result.includes(targetState)) {
+                    if (!result.includes(targetState))
                         result.push(targetState);
-                    }
                 }
             }
         }
@@ -172,7 +171,6 @@ class NFA extends FA_1.FiniteAutomata {
     }
     /**
      * 将当前NFA原地做Kleene闭包（星闭包），见龙书3.7.1节图3-34
-     *
      * ```
      *      ________________ε_______________
      *     |                                ↓
@@ -205,12 +203,11 @@ class NFA extends FA_1.FiniteAutomata {
     link(from, to, alpha) {
         for (let i = 0; i < from.length; i++) {
             let transforms = this.getTransforms(from[i]);
-            for (let j = 0; j < to.length; j++) {
+            for (let j = 0; j < to.length; j++)
                 transforms.push({
                     alpha,
                     target: this._states.indexOf(to[j]),
                 });
-            }
             this.setTransforms(from[i], transforms);
         }
     }
@@ -221,13 +218,12 @@ class NFA extends FA_1.FiniteAutomata {
         this.link(from, to, FA_1.SpAlpha.EPSILON);
     }
     /**
-     * 检测该状态是否到达接收状态（考虑了借助epsilon边）
+     * 检测该状态是否到达接收状态（考虑了借助epsilon边预后扩展）
      */
     hasReachedAccept(currentState) {
         // 不考虑epsilon边
-        if (this._acceptStates.includes(currentState)) {
+        if (this._acceptStates.includes(currentState))
             return true;
-        }
         // 考虑epsilon边
         let stack = [currentState]; // 深搜辅助栈
         while (!!stack.length) {
@@ -250,24 +246,24 @@ class NFA extends FA_1.FiniteAutomata {
      * 就地合并`from`的状态转移表到`to`的。请保证先合并状态和字母表
      */
     static mergeTranformAdjList(from, to) {
-        let transformMatrixResult = to._transformAdjList;
+        let mergedAdjList = to._transformAdjList;
         for (let i = 0; i < from._transformAdjList.length; i++) {
-            let transforms = from._transformAdjList[i], transformsResult = [];
+            let transforms = from._transformAdjList[i], mergedTransforms = [];
             // 重构from中的所有转移
             for (let transform of transforms) {
-                let indexOfAlphaInRes = transform.alpha < 0
+                let indexOfAlphaInTo = transform.alpha < 0
                     ? transform.alpha
-                    : to._alphabet.indexOf(from._alphabet[transform.alpha]), indexOfTargetInRes = to._states.indexOf(from._states[transform.target]);
-                transformsResult.push({
-                    alpha: indexOfAlphaInRes,
-                    target: indexOfTargetInRes,
+                    : to._alphabet.indexOf(from._alphabet[transform.alpha]), indexOfTargetInTo = to._states.indexOf(from._states[transform.target]);
+                mergedTransforms.push({
+                    alpha: indexOfAlphaInTo,
+                    target: indexOfTargetInTo,
                 });
             }
-            transformMatrixResult.push(transformsResult);
+            mergedAdjList.push(mergedTransforms);
         }
     }
     /**
-     * 串联两个NFA（加"点"，连接运算）
+     * 串联两个NFA，丢弃所有动作
      * ```
      * NFA1 --epsilon--> NFA2
      * ```
@@ -286,7 +282,7 @@ class NFA extends FA_1.FiniteAutomata {
         return res;
     }
     /**
-     * 并联两个NFA（对应于|或运算）
+     * 并联两个NFA（对应于|或运算），收束尾部，丢弃所有动作
      * ```
      *             ε  NFA1  ε
      * new_start <             > new_accept
@@ -315,43 +311,36 @@ class NFA extends FA_1.FiniteAutomata {
         return res;
     }
     /**
-     * 并联所有NFA（对应于|或运算）
+     * 并联所有NFA（对应于|或运算），不收束尾部
      * ```
-     *             ε  NFA1  ε
-     *             ε  ```   ε
-     * new_start <    ```      > new_accept
-     *             ε  ```   ε
-     *             ε  NFAn  ε
+     *             ε  NFA1
+     * new_start <-   ...
+     *             ε  NFAn
      * ```
      */
     static parallelAll(...nfas) {
-        let res = new NFA();
+        let res = new NFA(), tempAlphabet = [];
         res._startStates = [new FA_1.State()];
-        res._acceptStates = [new FA_1.State()];
-        let tempAlphabet = [], tempStates = [];
+        res._states = [...res._startStates];
         for (let i = 0; i < nfas.length; i++) {
+            res._acceptStates.push(...nfas[i]._acceptStates);
+            res._states.push(...nfas[i]._states);
+            for (let state of nfas[i]._acceptStates)
+                res._acceptActionMap.set(state, nfas[i]._acceptActionMap.get(state));
             tempAlphabet.push(...nfas[i]._alphabet);
-            tempStates.push(...nfas[i]._states);
         }
         res._alphabet = [...new Set(tempAlphabet)];
-        res._states = [...res._startStates, ...tempStates, ...res._acceptStates];
         res._transformAdjList = [[]]; // new_start
-        for (let i = 0; i < nfas.length; i++) {
+        for (let i = 0; i < nfas.length; i++)
             NFA.mergeTranformAdjList(nfas[i], res);
-        }
-        res._transformAdjList.push([]); // new_accept
-        for (let i = 0; i < nfas.length; i++) {
+        for (let i = 0; i < nfas.length; i++)
             res.linkEpsilon(res._startStates, nfas[i]._startStates);
-        }
-        for (let i = 0; i < nfas.length; i++) {
-            res.linkEpsilon(nfas[i]._acceptStates, res._acceptStates);
-        }
         return res;
     }
     /**
      * 根据正则表达式构造NFA
      */
-    static fromRegex(regex) {
+    static fromRegex(regex, actionCode) {
         let parts = utils_1.splitAndKeep(regex.postFix, '()|*?+\\. '); // 分离特殊符号
         let stack = [], oprand1, oprand2, waitingEscapeDetail = false;
         for (let i = 0; i < parts.length; i++) {
@@ -408,7 +397,21 @@ class NFA extends FA_1.FiniteAutomata {
             }
         }
         utils_1.assert(stack.length === 1, 'Stack too big after NFA construction.');
-        return stack.pop();
+        let result = stack.pop();
+        if (actionCode)
+            for (let state of result._acceptStates)
+                result._acceptActionMap.set(state, actionCode);
+        return result;
+    }
+    /**
+     * 从LexParser构造大NFA
+     */
+    static fromLexParser(lexParser) {
+        let nfas = [];
+        for (let regex of lexParser.regexActionMap.keys())
+            nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)));
+        let bigNFA = NFA.parallelAll(...nfas);
+        return bigNFA;
     }
 }
 exports.NFA = NFA;

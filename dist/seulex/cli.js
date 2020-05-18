@@ -23,9 +23,8 @@ const gcc_1 = require("../../enhance/gcc");
 const Visualizer_1 = require("./core/Visualizer");
 const DFA_1 = require("./core/DFA");
 const NFA_1 = require("./core/NFA");
-const Regex_1 = require("./core/Regex");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-let args = require('minimist')(process.argv.slice(2));
+const args = require('minimist')(process.argv.slice(2));
 // args looks like { _: [ 'example/md.l' ], v: true }
 if (args._.length === 0) {
     utils_1.stdoutPrint(`Missing argument [lex_file].\n`);
@@ -35,14 +34,10 @@ else if (args._.length !== 1) {
 }
 else {
     utils_1.stdoutPrint(`[ Running... ]\n`);
-    // 构建最终DFA
-    const lexParser = new LexParser_1.LexParser(path_1.default.join(__dirname, args._[0]));
-    let atomNFAs = [];
-    for (let key in lexParser.actions)
-        atomNFAs.push(NFA_1.NFA.fromRegex(new Regex_1.Regex(key)));
-    let dfa = new DFA_1.DFA(NFA_1.NFA.parallelAll(...atomNFAs));
-    // 代码生成
-    let finalCode = CodeGenerator_1.generateCode(lexParser, dfa);
+    // 构建最终DFA并生成代码
+    let lexParser = new LexParser_1.LexParser(path_1.default.join(__dirname, args._[0]));
+    let bigDFA = DFA_1.DFA.fromNFA(NFA_1.NFA.fromLexParser(lexParser));
+    let finalCode = CodeGenerator_1.generateCode(lexParser, bigDFA);
     // 后处理
     args.p && (finalCode = beautify_1.beautifyCCode(finalCode));
     // 输出c文件
@@ -51,5 +46,5 @@ else {
     args.c &&
         gcc_1.callGCC(path_1.default.join('./', 'yy.seulex.c'), args.c.length ? args.c.toString() : '');
     // 可视化DFA
-    args.v && Visualizer_1.visualizeFA(dfa);
+    args.v && Visualizer_1.visualizeFA(bigDFA);
 }

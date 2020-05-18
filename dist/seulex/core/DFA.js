@@ -1,7 +1,8 @@
 "use strict";
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /**
  * DFA（确定有限状态自动机）
- * by Withod
+ * by Withod, Twileon & z0gSh1u
  * 2020-05 @ https://github.com/Withod/seu-lex-yacc
  */
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -13,105 +14,95 @@ class DFA extends FA_1.FiniteAutomata {
     /**
      * 利用子集构造法通过一个NFA构造DFA；或者构造一个空DFA
      */
-    constructor(nfa) {
+    constructor() {
         super();
-        if (nfa) {
-            this.constructFromNFA(nfa);
-        }
-        else {
-            this._startStates = []; // 开始状态
-            this._acceptStates = []; // 接收状态
-            this._states = []; // 全部状态
-            this._alphabet = []; // 字母表
-            this._transformAdjList = []; // 状态转移矩阵
-        }
+        this._startStates = []; // 开始状态
+        this._acceptStates = []; // 接收状态
+        this._states = []; // 全部状态
+        this._alphabet = []; // 字母表
+        this._transformAdjList = []; // 状态转移矩阵
+        this._acceptActionMap = new Map(); // 接收态对应的动作
+    }
+    get acceptActionMap() {
+        return this._acceptActionMap;
     }
     /**
      * 原地最小化当前DFA。如果alphabet包含[any]则不处理
+     * 龙书 算法3.39
      */
     minimize() {
-        // TODO: DFA最小化
-        if (this._alphabet.includes('[any]')) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let that = this;
+        // 暂不考虑有any的情况（即有other）下的最小化，过于复杂
+        if (this._alphabet.includes('[any]'))
             return;
-        }
+        // TODO:
     }
     /**
      * 使用子集构造法由NFA构造此DFA
      * @param nfa 子集构造法所使用的NFA
      */
-    constructFromNFA(nfa) {
-        this._startStates = [];
-        this._acceptStates = [];
-        this._states = [];
-        this._alphabet = [];
-        this._transformAdjList = [];
-        if (nfa.startStates.length === 0) {
-            return;
-        }
+    static fromNFA(nfa) {
+        let res = new DFA();
+        if (nfa.startStates.length === 0)
+            return res;
         // 设置第一个开始状态
         let stateSets = [nfa.epsilonClosure(nfa.startStates)];
-        this._alphabet = nfa.alphabet;
-        this._startStates = [new FA_1.State()];
-        this._acceptStates = [this._startStates[0]];
-        this._transformAdjList = [[]];
-        if (stateSets[0].some((s) => nfa.acceptStates.includes(s))) {
-            this._acceptStates = [this._startStates[0]];
-        }
-        this._states = [this._startStates[0]];
+        res._alphabet = nfa.alphabet;
+        res._startStates = [new FA_1.State()];
+        res._acceptStates = [res._startStates[0]];
+        res._transformAdjList = [[]];
+        if (stateSets[0].some((s) => nfa.acceptStates.includes(s)))
+            res._acceptStates = [res._startStates[0]];
+        res._states = [res._startStates[0]];
         // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
-        for (let i = 0; i < this._states.length; i++) {
+        for (let i = 0; i < res._states.length; i++) {
             let anyTargetState = -1; // 由any出边指向的状态
-            for (let alpha = 0; alpha < this._alphabet.length; alpha++) {
+            for (let alpha = 0; alpha < res._alphabet.length; alpha++) {
                 let newStateSet = nfa.epsilonClosure(nfa.move(stateSets[i], alpha));
-                if (newStateSet.length < 1) {
+                if (newStateSet.length < 1)
                     continue;
-                }
                 let j = 0;
                 for (; j < stateSets.length; j++) {
                     if (stateSets[j].every((s) => newStateSet.includes(s)) &&
-                        newStateSet.every((s) => stateSets[j].includes(s))) {
-                        // 与已有的状态集合相同
-                        break;
-                    }
+                        newStateSet.every((s) => stateSets[j].includes(s)))
+                        break; // 与已有的状态集合相同
                 }
                 if (j == stateSets.length) {
                     // 与已有的状态集合均不相同，因此新建一个状态
                     stateSets.push(newStateSet);
                     let newState = new FA_1.State();
-                    this._states.push(newState);
-                    this._transformAdjList.push([]);
-                    if (newStateSet.some((s) => nfa.acceptStates.includes(s))) {
-                        this._acceptStates.push(newState);
-                    }
+                    res._states.push(newState);
+                    res._transformAdjList.push([]);
+                    if (newStateSet.some((s) => nfa.acceptStates.includes(s)))
+                        res._acceptStates.push(newState);
                 }
-                if (this._alphabet[alpha] == FA_1.getSpAlpha(FA_1.SpAlpha.ANY)) {
-                    this._transformAdjList[i].push({ alpha: FA_1.SpAlpha.ANY, target: j });
+                if (res._alphabet[alpha] == FA_1.getSpAlpha(FA_1.SpAlpha.ANY)) {
+                    res._transformAdjList[i].push({ alpha: FA_1.SpAlpha.ANY, target: j });
                     anyTargetState = j;
                 }
                 else {
-                    this._transformAdjList[i].push({ alpha, target: j });
+                    res._transformAdjList[i].push({ alpha, target: j });
                 }
             }
             if (anyTargetState != -1) {
-                for (let index = 0; index < this._transformAdjList[i].length; index++) {
-                    if (this._transformAdjList[i][index].target == anyTargetState) {
-                        this._transformAdjList[i].splice(index--, 1);
-                    }
+                for (let index = 0; index < res._transformAdjList[i].length; index++) {
+                    if (res._transformAdjList[i][index].target == anyTargetState)
+                        res._transformAdjList[i].splice(index--, 1);
                 }
-                if (this._transformAdjList[i].length < 1) {
-                    this._transformAdjList[i].push({
+                if (res._transformAdjList[i].length < 1)
+                    res._transformAdjList[i].push({
                         alpha: FA_1.SpAlpha.ANY,
                         target: anyTargetState,
                     });
-                }
-                else {
-                    this._transformAdjList[i].push({
+                else
+                    res._transformAdjList[i].push({
                         alpha: FA_1.SpAlpha.OTHER,
                         target: anyTargetState,
                     });
-                }
             }
         }
+        return res;
     }
     /**
      * 尝试用DFA识别字符串
@@ -123,7 +114,7 @@ class DFA extends FA_1.FiniteAutomata {
         for (let startState of this._startStates) {
             let currentState = startState, // 本轮深搜当前状态
             matchedWordCount = 0, // 符合的字符数
-            maybeStates = []; // DFS辅助数组，记录历史状态
+            candidates = []; // DFS辅助数组，记录历史状态
             while (matchedWordCount <= sentence.length) {
                 if (
                 // 目前匹配了全句
@@ -147,16 +138,14 @@ class DFA extends FA_1.FiniteAutomata {
                     let newState = this.expand(currentState, this._alphabet.indexOf(sentence[matchedWordCount]));
                     matchedWordCount += 1;
                     newState &&
-                        !maybeStates.includes(newState) &&
-                        maybeStates.push(newState);
+                        !candidates.includes(newState) &&
+                        candidates.push(newState);
                 }
-                if (!maybeStates.length) {
-                    // 没有可选的进一步状态了
-                    break;
+                if (!candidates.length) {
+                    break; // 没有可选的进一步状态了
                 }
                 else {
-                    // 选一个可选的进一步状态
-                    currentState = maybeStates.pop();
+                    currentState = candidates.pop(); // 选一个可选的进一步状态
                 }
             }
         }
