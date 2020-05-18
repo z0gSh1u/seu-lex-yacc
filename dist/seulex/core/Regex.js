@@ -36,12 +36,6 @@ class Regex {
     get rangeExpanded() {
         return this._rangeExpanded;
     }
-    get actionCode() {
-        return this._actionCode;
-    }
-    set actionCode(code) {
-        this._actionCode = code;
-    }
     /**
      * 某些表示【多种字符】的转义字符，如\d、\s，在该阶段转换为方框范围形式
      */
@@ -285,18 +279,6 @@ class Regex {
         while (!!stack.length)
             res.push(stack.pop());
         this._postFix = res.join(' ');
-    }
-    /**
-     * 借助LexParser填充正则对应代码
-     */
-    fillActionCode(lexParser) {
-        this._actionCode = lexParser.actions[this._raw].trim();
-        if (this._actionCode === ';') {
-            this._actionCode = ''; // 单独分号表示什么都不做
-        }
-        else if (this._actionCode[0] === '{') { // 去掉大括号
-            this._actionCode = this._actionCode.substring(1, this._actionCode.length - 2);
-        }
     }
 }
 exports.Regex = Regex;

@@ -21,6 +21,10 @@ class DFA extends FA_1.FiniteAutomata {
         this._states = []; // 全部状态
         this._alphabet = []; // 字母表
         this._transformAdjList = []; // 状态转移矩阵
+        this._acceptActionMap = new Map(); // 接收态对应的动作
+    }
+    get acceptActionMap() {
+        return this._acceptActionMap;
     }
     /**
      * 原地最小化当前DFA。如果alphabet包含[any]则不处理
@@ -33,11 +37,6 @@ class DFA extends FA_1.FiniteAutomata {
         if (this._alphabet.includes('[any]'))
             return;
         // TODO:
-        let alphabet = [...this._alphabet];
-        let acceptStates = [...this._acceptStates];
-        let nonAcceptStates = this._states.filter((x) => !this._acceptStates.includes(x));
-        let allStates = [...this._states];
-        let transofrmAdjList = JSON.parse(JSON.stringify(this._transformAdjList));
     }
     /**
      * 使用子集构造法由NFA构造此DFA
@@ -45,14 +44,8 @@ class DFA extends FA_1.FiniteAutomata {
      */
     static fromNFA(nfa) {
         let res = new DFA();
-        res._startStates = [];
-        res._acceptStates = [];
-        res._states = [];
-        res._alphabet = [];
-        res._transformAdjList = [];
-        if (nfa.startStates.length === 0) {
+        if (nfa.startStates.length === 0)
             return res;
-        }
         // 设置第一个开始状态
         let stateSets = [nfa.epsilonClosure(nfa.startStates)];
         res._alphabet = nfa.alphabet;

@@ -5,7 +5,6 @@
  */
 
 import { inStr, inRange, assert, getMatchedRanges } from '../../utils'
-import { LexParser } from './LexParser'
 
 /**
  * 正则表达式类
@@ -16,7 +15,6 @@ export class Regex {
   private _rangeExpanded!: string // STEP 2 - 做了range展开后的正则表达式
   private _dotAdded!: string[] // STEP 3 - 加点后的正则表达式
   private _postFix!: string // STEP 4- 后缀形式的正则表达式
-  private _actionCode!: string // 该正则表达式对应的动作代码
 
   constructor(regex: string) {
     this._raw = regex
@@ -44,12 +42,6 @@ export class Regex {
   }
   get rangeExpanded() {
     return this._rangeExpanded
-  }
-  get actionCode() {
-    return this._actionCode
-  }
-  set actionCode(code: string) {
-    this._actionCode = code
   }
 
   /**
@@ -299,20 +291,5 @@ export class Regex {
     // 处理栈内剩余
     while (!!stack.length) res.push(stack.pop())
     this._postFix = res.join(' ')
-  }
-
-  /**
-   * 借助LexParser填充正则对应代码
-   */
-  fillActionCode(lexParser: LexParser) {
-    this._actionCode = lexParser.actions[this._raw].trim()
-    if (this._actionCode === ';') {
-      this._actionCode = '' // 单独分号表示什么都不做
-    } else if (this._actionCode[0] === '{') { // 去掉大括号
-      this._actionCode = this._actionCode.substring(
-        1,
-        this._actionCode.length - 2
-      )
-    }
   }
 }

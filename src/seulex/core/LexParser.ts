@@ -6,6 +6,7 @@
 
 import fs from 'fs'
 import { assert } from '../../utils'
+import { Regex } from './Regex'
 
 /**
  * .l文件解析器
@@ -22,7 +23,9 @@ export class LexParser {
   private _cCodePart!: string // C代码部分
   // 解析结果
   private _regexAliases!: { [key: string]: string } // 正则别名->正则内容
-  private _actions!: { [key: string]: string } // 正则内容->动作，支持{}、单行无{}、无动作;、或|算符
+  private _regexActionMap!: Map<Regex, string> // 正则对象->动作，支持{}、单行无{}、无动作;、或|算符
+  // @deprecated
+  private _actions!: { [key: string]: string } // 历史遗留产物
 
   get copyPart() {
     return this._copyPart
@@ -33,6 +36,12 @@ export class LexParser {
   get regexAliases() {
     return this._regexAliases
   }
+  get regexActionMap() {
+    return this._regexActionMap
+  }
+  /**
+   * @deprecated 历史遗留产物
+   */
   get actions() {
     return this._actions
   }
@@ -44,7 +53,8 @@ export class LexParser {
       .toString()
       .replace(/\r\n/g, '\n') // 换行一律LF，没有CR
     this._regexAliases = {}
-    this._actions = {}
+    this._actions = {} // 历史遗留产物
+    this._regexActionMap = new Map()
     this._fillText()
     this._fillAttributes()
   }
@@ -198,7 +208,16 @@ export class LexParser {
         ) {
           // 动作读取完毕
           regexes.forEach((regex) => {
-            this._actions[regex] = actionPart
+            // 规范化动作
+            actionPart = actionPart.trim()
+            if (actionPart === ';') {
+              actionPart = '' // 单独分号表示什么都不做
+            } else if (actionPart[0] === '{') {
+              // 去掉大括号
+              actionPart = actionPart.substring(1, actionPart.length - 2)
+            }
+            this._actions[regex] = actionPart.trim()
+            this._regexActionMap.set(new Regex(regex), actionPart.trim())
           })
           regexes = []
           isSlash = false

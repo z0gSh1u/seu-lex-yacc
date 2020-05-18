@@ -5,7 +5,7 @@
  * 2020-05 @ https://github.com/Withod/seu-lex-yacc
  */
 
-import { FiniteAutomata, State, SpAlpha, getSpAlpha, Transform } from './FA'
+import { FiniteAutomata, State, SpAlpha, getSpAlpha } from './FA'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NFA } from './NFA'
 
@@ -13,6 +13,8 @@ import { NFA } from './NFA'
  * 确定有限状态自动机
  */
 export class DFA extends FiniteAutomata {
+  private _acceptActionMap: Map<State, string>
+
   /**
    * 利用子集构造法通过一个NFA构造DFA；或者构造一个空DFA
    */
@@ -23,6 +25,11 @@ export class DFA extends FiniteAutomata {
     this._states = [] // 全部状态
     this._alphabet = [] // 字母表
     this._transformAdjList = [] // 状态转移矩阵
+    this._acceptActionMap = new Map() // 接收态对应的动作
+  }
+
+  get acceptActionMap() {
+    return this._acceptActionMap
   }
 
   /**
@@ -35,13 +42,6 @@ export class DFA extends FiniteAutomata {
     // 暂不考虑有any的情况（即有other）下的最小化，过于复杂
     if (this._alphabet.includes('[any]')) return
     // TODO:
-    let alphabet = [...this._alphabet]
-    let acceptStates = [...this._acceptStates]
-    let nonAcceptStates = this._states.filter(
-      (x) => !this._acceptStates.includes(x)
-    )
-    let allStates = [...this._states]
-    let transofrmAdjList = JSON.parse(JSON.stringify(this._transformAdjList))
   }
 
   /**
@@ -50,14 +50,7 @@ export class DFA extends FiniteAutomata {
    */
   static fromNFA(nfa: NFA) {
     let res = new DFA()
-    res._startStates = []
-    res._acceptStates = []
-    res._states = []
-    res._alphabet = []
-    res._transformAdjList = []
-    if (nfa.startStates.length === 0) {
-      return res
-    }
+    if (nfa.startStates.length === 0) return res
     // 设置第一个开始状态
     let stateSets: State[][] = [nfa.epsilonClosure(nfa.startStates)]
     res._alphabet = nfa.alphabet

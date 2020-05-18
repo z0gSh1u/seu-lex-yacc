@@ -12,13 +12,17 @@
   YYSTYPE yylval;
 %}
 
-letter [a-f]
-title #" "{letter}+
+letter [a-b]
+title #{letter}+
 
 %%
 
 {title} { 
-  yylval = strdup(yytext + 2); return (TITLE); }
+  yylval = strdup(yytext + 2); return (TITLE); 
+}
+a+b? {
+  return 0;
+}
 
 %%
 

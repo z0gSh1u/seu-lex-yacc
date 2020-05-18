@@ -10,6 +10,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const utils_1 = require("../../utils");
+const Regex_1 = require("./Regex");
 /**
  * .l文件解析器
  */
@@ -21,7 +22,8 @@ class LexParser {
             .toString()
             .replace(/\r\n/g, '\n'); // 换行一律LF，没有CR
         this._regexAliases = {};
-        this._actions = {};
+        this._actions = {}; // 历史遗留产物
+        this._regexActionMap = new Map();
         this._fillText();
         this._fillAttributes();
     }
@@ -34,6 +36,12 @@ class LexParser {
     get regexAliases() {
         return this._regexAliases;
     }
+    get regexActionMap() {
+        return this._regexActionMap;
+    }
+    /**
+     * @deprecated 历史遗留产物
+     */
     get actions() {
         return this._actions;
     }
@@ -180,7 +188,17 @@ class LexParser {
                     (!isInQuote && c == '}' && braceLevel == 1)) {
                     // 动作读取完毕
                     regexes.forEach((regex) => {
-                        this._actions[regex] = actionPart;
+                        // 规范化动作
+                        actionPart = actionPart.trim();
+                        if (actionPart === ';') {
+                            actionPart = ''; // 单独分号表示什么都不做
+                        }
+                        else if (actionPart[0] === '{') {
+                            // 去掉大括号
+                            actionPart = actionPart.substring(1, actionPart.length - 2);
+                        }
+                        this._actions[regex] = actionPart.trim();
+                        this._regexActionMap.set(new Regex_1.Regex(regex), actionPart.trim());
                     });
                     regexes = [];
                     isSlash = false;

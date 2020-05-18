@@ -27,6 +27,7 @@ function generateCode(_lexParser, _dfa) {
 }
 exports.generateCode = generateCode;
 function genPresetContent() {
+    // 关于这些变量的具体说明请参考文档
     return `
   #include <stdio.h>
   #include <stdlib.h>
@@ -41,10 +42,42 @@ function genPresetContent() {
   char *_cur_buf_ptr = 0;
   int _lat_acc_state = -1;
   char* _lat_acc_ptr = NULL;
-  `; // 关于这些变量的具体说明请参考文档
+  `;
+}
+function genTransformMatrix() {
+    // 128是ASCII码的数量，mat[i][k]表示在i状态收到k字符后转移到的状态
+    let res = `const int _trans_mat[${dfa.states.length}][128] = {`;
+    for (let i = 0; i < dfa.transformAdjList.length; i++) {
+        let targets = Array(128).fill(-1), // -1表示没有此转移
+        othersTarget = -1; // 仍未设置转移的字符应转移到的状态
+        for (let transform of dfa.transformAdjList[i]) {
+            if (transform.alpha == FA_1.SpAlpha.OTHER || transform.alpha == FA_1.SpAlpha.ANY)
+                othersTarget = transform.target;
+            else
+                targets[dfa.alphabet[transform.alpha].charCodeAt(0)] = transform.target;
+        }
+        // 设置other字符
+        if (othersTarget != -1)
+            for (let alpha in targets)
+                if (targets[alpha] == -1)
+                    targets[alpha] = othersTarget;
+        res += targets.join(',') + ',';
+    }
+    res = res.substring(0, res.length - 1) + '};'; // 去掉多余的逗号
+    return res;
+}
+function genSwitchCase() {
+    // arr[j]=x(x>=0)表示是接收态，x是case编号，=-1表示不是接收态
+    let res = `const int _swi_case[${dfa.states.length}] = {`;
+    for (let i = 0; i < dfa.states.length; i++)
+        if (dfa.acceptStates.includes(dfa.states[i]))
+            res += `${i},`;
+        else
+            res += '-1,';
+    res = res.substring(0, res.length - 1) + '};';
+    return res;
 }
 function genYYLEX() {
-    // TODO: 统计yylineno
     return `
     int yylex() {
       while (1) {
@@ -52,6 +85,7 @@ function genYYLEX() {
         while (_cur_state != -1) {
           int _n_read = fread(_cur_char, sizeof(char), 1, yyin);
           if (_n_read == 0 || _cur_char == 0) break; ${_('已读到文件尾部')}
+          if (_cur_char == '\\n') yylineno++;
           _cur_ptr += fread(_cur_char, sizeof(char), 1, yyin);
           _cur_buf[_cur_buf_ptr++] = _cur_char;
           ${_('进行状态转移')}
@@ -70,74 +104,28 @@ function genYYLEX() {
           yyleng = strlen(_cur_buf);
           memset(_cur_buf, 0, 1024);
           switch (_swi_case[_lat_acc_state]) {
-            ${genActions()}
+            ${genSwitchAction()}
           }
-        } else {
-          return -1;
-        }
+        } else return -1;
         return 0;
       }
     }
   `;
 }
-/**
- * 生成各接收态下的动作
- */
-function genActions() {
-    let res = `{
-  `;
-    // TODO: 龟龟，怎么把动作和接收态对应起来？？？
-    res += `case <接收状态编号>:`;
-    res += `<动作们>`;
-    res += `break;`;
-    // ...
+function genSwitchAction() {
+    // 生成各接收态下的动作
+    let res = '';
+    for (let state of dfa.acceptStates) {
+        let index = dfa.states.indexOf(state);
+        res += `
+      case ${index}:
+        ${dfa.acceptActionMap.get(state)}
+        break;
+    `;
+    }
     res += `
   default:
-    break;
-  }`;
-    return res;
-}
-/**
- * 生成状态转移矩阵
- */
-function genTransformMatrix() {
-    // 128是ASCII码的数量，mat[i][k]表示在i状态收到k字符后转移到的状态
-    let res = `
-    const int _tran_mat[${dfa.states.length}][128] = {
-    `;
-    for (let i = 0; i < dfa.transformAdjList.length; i++) {
-        let targets = Array(128).fill(-1); // -1表示没有此转移
-        let othersTarget = -1; // 仍未设置转移的字符应转移到的状态
-        for (let transform of dfa.transformAdjList[i]) {
-            if (transform.alpha == FA_1.SpAlpha.OTHER || transform.alpha == FA_1.SpAlpha.ANY)
-                othersTarget = transform.target;
-            else
-                targets[dfa.alphabet[transform.alpha].charCodeAt(0)] = transform.target;
-        }
-        // 设置other字符
-        if (othersTarget != -1)
-            for (let alpha in targets)
-                if (targets[alpha] == -1)
-                    targets[alpha] = othersTarget;
-        res += targets.join(',') + ',';
-    }
-    res = res.substring(0, res.length - 1) + '};'; // 去掉多余的逗号
-    return res;
-}
-/**
- * 生成该状态是否为接收态的查询表，arr[j]=x(x>1)表示是接收态，x是case编号，=-1表示不是接收态
- */
-function genSwitchCase() {
-    let res = `
-    const int _swi_case[${dfa.states.length}] = {
-  `;
-    for (let i = 0; i < dfa.states.length; i++) {
-        if (dfa.acceptStates.includes(dfa.states[i]))
-            res += `${i},`;
-        else
-            res += '-1,';
-    }
-    res = res.substring(0, res.length - 1) + '};';
+    break;`;
     return res;
 }
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
