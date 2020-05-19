@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { assert } from '../utils'
-import { Producer } from './Grammar'
+import { Producer, Operator } from './Grammar'
 
 export class YaccParser {
   private _filePath!: string
@@ -12,11 +12,25 @@ export class YaccParser {
   private _producerPart!: string // 主体部分，各种产生式
   private _userCodePart!: string // 最后的用户代码部分
 
-  private _alphabet!: string[]
+  private _tokens!: string[]
+  private _operators!: Operator[]
   private _producers!: Producer[]
+  private _startSymbol!: string
 
   get producers() {
     return this._producers
+  }
+
+  get tokens() {
+    return this._tokens
+  }
+
+  get operators() {
+    return this._operators
+  }
+
+  get startSymbol() {
+    return this._startSymbol
   }
 
   constructor(filePath: string) {
@@ -27,26 +41,188 @@ export class YaccParser {
       .replace(/\r\n/g, '\n')
     this._splitContent = this._rawContent.split('\n')
     this._fillText()
+    this._parseInfo()
     this._parseProducers()
   }
 
+  /**
+   * 分析信息部分
+   */
+  private _parseInfo() {
+    this._operators = []
+    this._tokens = []
+    this._startSymbol = ""
+    this._infoPart.split('\n').forEach(line => {
+      if (!line.trim()) return
+      let words = line.split(/\s/)
+      switch(words[0]) {
+        case '%token':
+          for (let i = 1; i < words.length; i++) {
+            if (this._tokens.indexOf(words[i]) == -1) {
+              this._tokens.push(words[i])
+            }
+          }
+          break
+        case '%left' :
+        case '%right':
+          let isRight = words[0] == '%right'
+          for (let i = 1; i < words.length; i++) {
+            let isRepetitive = false
+            for (let i in this._operators) {
+              let operator = this._operators[i]
+              if (operator.name === words[i]) {
+                isRepetitive = true
+                break
+              }
+            }
+            assert(!isRepetitive, `Operator redifined: ${words[i]}`)
+            this._operators.push(new Operator(words[i], isRight))
+          }
+          break
+        case '%start':
+          for (let i = 1; i < words.length; i++) {
+            assert(!this._startSymbol, `Start symbol redifined: ${words[i]}`)
+            this._startSymbol = words[i]
+          }
+          break
+        default: 
+          assert(false, `Unknown declaration: ${words[0]}`)
+      }
+    })
+    this._operators.reverse()
+  }
+
   private _parseProducers() {
-    const lines = this._producerPart.split('\n')
-    let insideOne = false
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i]
-      if (line.trimLeft() === line) {
-        // 顶格
-        assert(!insideOne, 'New producer before the previous ends.')
-        insideOne = true
-        line = line.trim()
-        if (!this._alphabet.includes(line)) {
-          this._alphabet.push(line)
-        }
-        while ((line = lines[++i].trim()) !== ';') {
-          let lineSplit = line.split(/\s/)
+    let parseState = 0 // 解析过程所处的状态
+    // 0：等待产生式左侧，1：正在读取产生式左侧，1.5：等冒号，2：正在读取产生式右侧非动作部分，3：正在读取动作部分，4：动作部分读取完成
+    let buffer = "" // 字符缓存区
+    let bslash = false // 是否转义
+    let quot = false // 是否在引号中
+    let producerLhs = "" // 产生式左侧缓存区
+    let producerRhs: string[] = [] // 产生式右侧缓存区
+    let action = "" // 动作缓存区
+    let braceLevel = 0 // 读取动作时处于第几层花括号内
+    this._producers = []
+    for (let char of this._producerPart) {
+      if (parseState == 0) {
+        // 正在等待产生式左侧
+        if (char.trim()) {
+          assert(char != ':', `Non-terminal can't be empty`)
+          buffer += char
+          parseState = 1
         }
       }
+      else if (parseState == 1) {
+        // 正在读取产生式左侧
+        if (!char.trim() || char === ':') {
+          // 产生式左侧读取完成
+          producerLhs = buffer
+          buffer = ""
+          parseState = char === ':' ? 2 :1.5
+        } else {
+          // 还在读
+          buffer += char
+          assert(/^\w+$/.test(char), `Invalid non-terminal: ${buffer}`)
+        }
+      } else if (parseState == 1.5) {
+        // 等标志着开始产生式右边的冒号
+        if (char == ':') {
+          parseState = 2
+        } else {
+          assert(!char.trim(), `Expect colon after ${producerLhs}`)
+        }
+      } else if (parseState == 2) {
+        // 在读产生式右侧非动作部分
+        if (quot) {
+          // 在引号内
+          buffer += char
+          if (char === '\\') {
+            bslash = !bslash
+          } else if (!bslash && char === '\'') {
+            assert(buffer.length <= 3 || buffer.length == 4 && buffer[1] ==='\\', `Multiple characters between quotes: ${buffer}`)
+            assert(buffer.length > 2, `No character beteween quotes: ${buffer}`)
+            quot = false
+            producerRhs.push(buffer)
+            buffer = ""
+          } else {
+            bslash = false
+          }
+        } else if (!char.trim() || char === ';' || char === '|' || char === '{' || char === '\'') {
+          // 完成一个符号的读取
+          if (buffer.length) {
+            producerRhs.push(buffer)
+            buffer = ""
+          }
+          if (char === '{') {
+            parseState = 3
+            bslash = false
+            quot = false
+            braceLevel = 1
+          } else if (char === '\'') {
+            buffer += char
+            quot = true
+          }
+        } else {
+          // 尚在读取
+          buffer += char
+        }
+      } else if (parseState == 3) {
+        // 正在读取动作部分
+        if (quot) {
+          // 在引号内
+          action += char
+          if (!bslash && (char === '\'' || char === '\"')) {
+            quot = false
+          } else if (char === '\\') {
+            bslash = !bslash
+          } else {
+            bslash = false
+          }
+        } else if (char === '}') {
+          if(--braceLevel == 0) {
+            // 动作部分读取完成
+            quot = false
+            bslash = false
+            parseState = 4
+          } else {
+            action += char
+          }
+        } else if (char === '\'' || char === '\"') {
+          // 进入引号
+          action += char
+          quot = true
+        } else {
+          action += char
+          if (char == '{') braceLevel++
+        }
+      } else if (parseState == 4 && char.trim() && char != '|' && char != ';') {
+        assert(false, 'New producer before the previous ends.')
+      }
+      if ((parseState == 2 || parseState == 4) && (char === '|' || char === ';')) {
+        // 完成一条产生式
+        this._producers.push(new Producer(producerLhs, producerRhs, action))
+        producerRhs = []
+        action = ""
+        if (char === '|') {
+          // 仍使用当前的产生式左侧
+          parseState = 2
+        } else {
+          parseState = 0
+          producerLhs = ""
+        }
+      } 
+    }
+    if (!this._startSymbol.trim() && this._producers.length) {
+      this._startSymbol = this._producers[0].lhs
+    } else if (this._startSymbol.trim()) {
+      let flag = false
+      for (let i in this._producers) {
+        let producer = this._producers[i]
+        if (producer.lhs === this._startSymbol) {
+          flag = true
+        }
+      }
+      assert(flag, `Invalid start: ${this._startSymbol}`)
     }
   }
 
