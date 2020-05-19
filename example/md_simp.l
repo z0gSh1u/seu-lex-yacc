@@ -23,6 +23,9 @@ title #{letter}+
 a+b? {
   return 0;
 }
+(\r|\n) {
+  return 233;
+}
 
 %%
 

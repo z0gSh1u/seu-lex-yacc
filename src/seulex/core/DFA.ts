@@ -8,6 +8,7 @@
 import { FiniteAutomata, State, SpAlpha, getSpAlpha } from './FA'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NFA } from './NFA'
+import { assert } from '../../utils'
 
 /**
  * 确定有限状态自动机
@@ -55,10 +56,17 @@ export class DFA extends FiniteAutomata {
     let stateSets: State[][] = [nfa.epsilonClosure(nfa.startStates)]
     res._alphabet = nfa.alphabet
     res._startStates = [new State()]
-    res._acceptStates = [res._startStates[0]]
     res._transformAdjList = [[]]
-    if (stateSets[0].some((s) => nfa.acceptStates.includes(s)))
-      res._acceptStates = [res._startStates[0]]
+    stateSets[0].forEach((s) => {
+      if (nfa.acceptStates.includes(s)) {
+        let action = res._acceptActionMap.get(res._startStates[0])
+        assert(!action || action as string === nfa.acceptActionMap.get(s) as string, `Accept state with multiple action.`)
+        if (!action) {
+          res._acceptStates = [res._startStates[0]]
+          res._acceptActionMap.set(res._startStates[0], nfa.acceptActionMap.get(s) as string)
+        }
+      }
+    })
     res._states = [res._startStates[0]]
     // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
     for (let i = 0; i < res._states.length; i++) {
@@ -80,8 +88,16 @@ export class DFA extends FiniteAutomata {
           let newState = new State()
           res._states.push(newState)
           res._transformAdjList.push([])
-          if (newStateSet.some((s) => nfa.acceptStates.includes(s)))
-            res._acceptStates.push(newState)
+          newStateSet.forEach((s) => {
+            if (nfa.acceptStates.includes(s)) {
+              let action = res._acceptActionMap.get(newState)
+              assert(!action || action as string === nfa.acceptActionMap.get(s) as string, `Accept state with multiple action`)
+              if (!action) {
+                res._acceptStates.push(newState)
+                res._acceptActionMap.set(newState, nfa.acceptActionMap.get(s) as string)
+              }
+            }
+          })
         }
         if (res._alphabet[alpha] == getSpAlpha(SpAlpha.ANY)) {
           res._transformAdjList[i].push({ alpha: SpAlpha.ANY, target: j })

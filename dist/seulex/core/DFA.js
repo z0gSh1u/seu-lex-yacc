@@ -7,6 +7,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const FA_1 = require("./FA");
+const utils_1 = require("../../utils");
 /**
  * 确定有限状态自动机
  */
@@ -50,10 +51,17 @@ class DFA extends FA_1.FiniteAutomata {
         let stateSets = [nfa.epsilonClosure(nfa.startStates)];
         res._alphabet = nfa.alphabet;
         res._startStates = [new FA_1.State()];
-        res._acceptStates = [res._startStates[0]];
         res._transformAdjList = [[]];
-        if (stateSets[0].some((s) => nfa.acceptStates.includes(s)))
-            res._acceptStates = [res._startStates[0]];
+        stateSets[0].forEach((s) => {
+            if (nfa.acceptStates.includes(s)) {
+                let action = res._acceptActionMap.get(res._startStates[0]);
+                utils_1.assert(!action || action === nfa.acceptActionMap.get(s), `Accept state with multiple action.`);
+                if (!action) {
+                    res._acceptStates = [res._startStates[0]];
+                    res._acceptActionMap.set(res._startStates[0], nfa.acceptActionMap.get(s));
+                }
+            }
+        });
         res._states = [res._startStates[0]];
         // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
         for (let i = 0; i < res._states.length; i++) {
@@ -74,8 +82,16 @@ class DFA extends FA_1.FiniteAutomata {
                     let newState = new FA_1.State();
                     res._states.push(newState);
                     res._transformAdjList.push([]);
-                    if (newStateSet.some((s) => nfa.acceptStates.includes(s)))
-                        res._acceptStates.push(newState);
+                    newStateSet.forEach((s) => {
+                        if (nfa.acceptStates.includes(s)) {
+                            let action = res._acceptActionMap.get(newState);
+                            utils_1.assert(!action || action === nfa.acceptActionMap.get(s), `Accept state with multiple action`);
+                            if (!action) {
+                                res._acceptStates.push(newState);
+                                res._acceptActionMap.set(newState, nfa.acceptActionMap.get(s));
+                            }
+                        }
+                    });
                 }
                 if (res._alphabet[alpha] == FA_1.getSpAlpha(FA_1.SpAlpha.ANY)) {
                     res._transformAdjList[i].push({ alpha: FA_1.SpAlpha.ANY, target: j });
