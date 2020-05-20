@@ -23,7 +23,7 @@ import { NFA } from './core/NFA'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const args = require('minimist')(process.argv.slice(2))
 // args looks like { _: [ 'example/md.l' ], v: true }
-
+const tik = new Date().getTime()
 if (args._.length === 0) {
   stdoutPrint(`Missing argument [lex_file].\n`)
 } else if (args._.length !== 1) {
@@ -34,10 +34,15 @@ if (args._.length === 0) {
   let finalCode = '',
     bigDFA!: DFA
   try {
+    stdoutPrint(`[ Parsing .l file... ]\n`)
     let lexParser = new LexParser(path.resolve('./', args._[0]))
+    stdoutPrint(`[ Building NFA... ]\n`)
     let bigNFA = NFA.fromLexParser(lexParser)
+    stdoutPrint(`[ Building DFA... ]\n`)
     bigDFA = DFA.fromNFA(bigNFA)
+    stdoutPrint(`[ Generating code... ]\n`)
     finalCode = generateCode(lexParser, bigDFA)
+    stdoutPrint(`[ Main work done! Start post-processing... ]\n`)
   } catch (e) {
     console.error(e)
   }
@@ -54,3 +59,6 @@ if (args._.length === 0) {
   // 可视化DFA
   args.v && visualizeFA(bigDFA)
 }
+stdoutPrint(`[ All work done! ]\n`)
+const tok = new Date().getTime()
+stdoutPrint(`[ Time consumed: ${tok - tik} ms. ]\n`)

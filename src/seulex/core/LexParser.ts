@@ -7,6 +7,7 @@
 import fs from 'fs'
 import { assert } from '../../utils'
 import { Regex } from './Regex'
+import { Action } from './FA'
 
 /**
  * .l文件解析器
@@ -23,7 +24,7 @@ export class LexParser {
   private _cCodePart!: string // C代码部分
   // 解析结果
   private _regexAliases!: { [key: string]: string } // 正则别名->正则内容
-  private _regexActionMap!: Map<Regex, string> // 正则对象->动作，支持{}、单行无{}、无动作;、或|算符
+  private _regexActionMap!: Map<Regex, Action> // 正则对象->动作，支持{}、单行无{}、无动作;、或|算符
   // @deprecated
   private _actions!: { [key: string]: string } // 历史遗留产物
 
@@ -207,7 +208,7 @@ export class LexParser {
           (!isInQuote && c == '}' && braceLevel == 1)
         ) {
           // 动作读取完毕
-          regexes.forEach((regex) => {
+          regexes.forEach((regex, index) => {
             // 规范化动作
             actionPart = actionPart.trim()
             if (actionPart === ';') {
@@ -217,7 +218,10 @@ export class LexParser {
               actionPart = actionPart.substring(1, actionPart.length - 2)
             }
             this._actions[regex] = actionPart.trim()
-            this._regexActionMap.set(new Regex(regex), actionPart.trim())
+            this._regexActionMap.set(new Regex(regex), {
+              code: actionPart.trim(),
+              order: index,
+            })
           })
           regexes = []
           isSlash = false

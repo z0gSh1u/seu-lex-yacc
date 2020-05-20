@@ -400,16 +400,17 @@ class NFA extends FA_1.FiniteAutomata {
         let result = stack.pop();
         if (actionCode)
             for (let state of result._acceptStates)
-                result._acceptActionMap.set(state, actionCode);
+                result._acceptActionMap.set(state, { code: actionCode, order: 1 });
         return result;
     }
     /**
      * 从LexParser构造大NFA
      */
     static fromLexParser(lexParser) {
+        var _a;
         let nfas = [];
         for (let regex of lexParser.regexActionMap.keys())
-            nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)));
+            nfas.push(NFA.fromRegex(regex, (_a = lexParser.regexActionMap.get(regex)) === null || _a === void 0 ? void 0 : _a.code));
         let bigNFA = NFA.parallelAll(...nfas);
         return bigNFA;
     }

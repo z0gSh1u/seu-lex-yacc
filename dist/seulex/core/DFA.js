@@ -7,7 +7,6 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const FA_1 = require("./FA");
-const utils_1 = require("../../utils");
 /**
  * 确定有限状态自动机
  */
@@ -55,9 +54,16 @@ class DFA extends FA_1.FiniteAutomata {
         stateSets[0].forEach((s) => {
             if (nfa.acceptStates.includes(s)) {
                 let action = res._acceptActionMap.get(res._startStates[0]);
+                let compare = nfa.acceptActionMap.get(s);
                 // FIXME
-                utils_1.assert(!action || action === nfa.acceptActionMap.get(s), `Accept state with multiple action.`);
-                if (!action) {
+                if (action && action.code !== compare.code) {
+                    if (action.order > compare.order) {
+                        // 优先级不足，替换
+                        res._acceptActionMap.set(res._startStates[0], compare);
+                    }
+                }
+                else if (!action) {
+                    // 没有重复
                     res._acceptStates = [res._startStates[0]];
                     res._acceptActionMap.set(res._startStates[0], nfa.acceptActionMap.get(s));
                 }
@@ -86,16 +92,17 @@ class DFA extends FA_1.FiniteAutomata {
                     newStateSet.forEach((s) => {
                         if (nfa.acceptStates.includes(s)) {
                             let action = res._acceptActionMap.get(newState);
+                            let compare = nfa.acceptActionMap.get(s);
                             // FIXME: Accept state with multiple action is possible.
-                            // assert(!action || action as string === nfa.acceptActionMap.get(s) as string, `Accept state with multiple action.`)
-                            let __cond = !action || action === nfa.acceptActionMap.get(s);
-                            if (!__cond) {
-                                console.error(action);
-                                console.error(nfa.acceptActionMap.get(s));
+                            if (action && action.code !== compare.code) {
+                                if (action.order > compare.order) {
+                                    // 优先级不足，替换
+                                    res._acceptActionMap.set(res._startStates[0], compare);
+                                }
                             }
-                            if (!action) {
+                            else if (!action) {
                                 res._acceptStates.push(newState);
-                                res._acceptActionMap.set(newState, nfa.acceptActionMap.get(s));
+                                res._acceptActionMap.set(newState, compare);
                             }
                         }
                     });

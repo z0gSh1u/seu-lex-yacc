@@ -5,7 +5,7 @@
  * 2020-05 @ https://github.com/Withod/seu-lex-yacc
  */
 
-import { FiniteAutomata, State, SpAlpha, getSpAlpha } from './FA'
+import { FiniteAutomata, State, SpAlpha, getSpAlpha, Action } from './FA'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NFA } from './NFA'
 import { assert } from '../../utils'
@@ -14,7 +14,7 @@ import { assert } from '../../utils'
  * 确定有限状态自动机
  */
 export class DFA extends FiniteAutomata {
-  private _acceptActionMap: Map<State, string>
+  private _acceptActionMap: Map<State, Action>
 
   /**
    * 利用子集构造法通过一个NFA构造DFA；或者构造一个空DFA
@@ -60,15 +60,21 @@ export class DFA extends FiniteAutomata {
     stateSets[0].forEach((s) => {
       if (nfa.acceptStates.includes(s)) {
         let action = res._acceptActionMap.get(res._startStates[0])
-
-
+        let compare = nfa.acceptActionMap.get(s) as Action
         // FIXME
-        assert(!action || action as string === nfa.acceptActionMap.get(s) as string, `Accept state with multiple action.`)
-        if (!action) {
+        if (action && action.code !== compare.code) {
+          if (action.order > compare.order) {
+            // 优先级不足，替换
+            res._acceptActionMap.set(res._startStates[0], compare)
+          }
+        } else if (!action) {
+          // 没有重复
           res._acceptStates = [res._startStates[0]]
-          res._acceptActionMap.set(res._startStates[0], nfa.acceptActionMap.get(s) as string)
+          res._acceptActionMap.set(
+            res._startStates[0],
+            nfa.acceptActionMap.get(s) as Action
+          )
         }
-
       }
     })
     res._states = [res._startStates[0]]
@@ -95,18 +101,16 @@ export class DFA extends FiniteAutomata {
           newStateSet.forEach((s) => {
             if (nfa.acceptStates.includes(s)) {
               let action = res._acceptActionMap.get(newState)
-              
+              let compare = nfa.acceptActionMap.get(s) as Action
               // FIXME: Accept state with multiple action is possible.
-              // assert(!action || action as string === nfa.acceptActionMap.get(s) as string, `Accept state with multiple action.`)
-              let __cond = !action || action as string === nfa.acceptActionMap.get(s) as string
-              if (!__cond) {
-                console.error(action)
-                console.error(nfa.acceptActionMap.get(s))
-              }
-              
-              if (!action) {
+              if (action && action.code !== compare.code) {
+                if (action.order > compare.order) {
+                  // 优先级不足，替换
+                  res._acceptActionMap.set(res._startStates[0], compare)
+                }
+              } else if (!action) {
                 res._acceptStates.push(newState)
-                res._acceptActionMap.set(newState, nfa.acceptActionMap.get(s) as string)
+                res._acceptActionMap.set(newState, compare)
               }
             }
           })
