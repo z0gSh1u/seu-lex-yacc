@@ -31,17 +31,24 @@ if (args._.length === 0) {
 } else {
   stdoutPrint(`[ Running... ]\n`)
   // 构建最终DFA并生成代码
-  let lexParser = new LexParser(path.join(__dirname, args._[0]))
-  let bigDFA = DFA.fromNFA(NFA.fromLexParser(lexParser))
-  let finalCode = generateCode(lexParser, bigDFA)
+  let finalCode = '',
+    bigDFA!: DFA
+  try {
+    let lexParser = new LexParser(path.resolve('./', args._[0]))
+    let bigNFA = NFA.fromLexParser(lexParser)
+    bigDFA = DFA.fromNFA(bigNFA)
+    finalCode = generateCode(lexParser, bigDFA)
+  } catch (e) {
+    console.error(e)
+  }
   // 后处理
   args.p && (finalCode = beautifyCCode(finalCode))
   // 输出c文件
-  fs.writeFileSync(path.join('./', 'yy.seulex.c'), finalCode)
+  fs.writeFileSync(path.resolve('./', 'yy.seulex.c'), finalCode)
   // 调用GGC
   args.c &&
     callGCC(
-      path.join('./', 'yy.seulex.c'),
+      path.resolve('./', 'yy.seulex.c'),
       args.c.length ? args.c.toString() : ''
     )
   // 可视化DFA

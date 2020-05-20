@@ -35,16 +35,23 @@ else if (args._.length !== 1) {
 else {
     utils_1.stdoutPrint(`[ Running... ]\n`);
     // 构建最终DFA并生成代码
-    let lexParser = new LexParser_1.LexParser(path_1.default.join(__dirname, args._[0]));
-    let bigDFA = DFA_1.DFA.fromNFA(NFA_1.NFA.fromLexParser(lexParser));
-    let finalCode = CodeGenerator_1.generateCode(lexParser, bigDFA);
+    let finalCode = '', bigDFA;
+    try {
+        let lexParser = new LexParser_1.LexParser(path_1.default.resolve('./', args._[0]));
+        let bigNFA = NFA_1.NFA.fromLexParser(lexParser);
+        bigDFA = DFA_1.DFA.fromNFA(bigNFA);
+        finalCode = CodeGenerator_1.generateCode(lexParser, bigDFA);
+    }
+    catch (e) {
+        console.error(e);
+    }
     // 后处理
     args.p && (finalCode = beautify_1.beautifyCCode(finalCode));
     // 输出c文件
-    fs_1.default.writeFileSync(path_1.default.join('./', 'yy.seulex.c'), finalCode);
+    fs_1.default.writeFileSync(path_1.default.resolve('./', 'yy.seulex.c'), finalCode);
     // 调用GGC
     args.c &&
-        gcc_1.callGCC(path_1.default.join('./', 'yy.seulex.c'), args.c.length ? args.c.toString() : '');
+        gcc_1.callGCC(path_1.default.resolve('./', 'yy.seulex.c'), args.c.length ? args.c.toString() : '');
     // 可视化DFA
     args.v && Visualizer_1.visualizeFA(bigDFA);
 }

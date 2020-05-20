@@ -15,14 +15,14 @@ YYSTYPE yylval;
 // *=========== seulex generation ============
 #include <stdio.h>
 #include <stdlib.h>
-#define ECHO fprintf(yyout, "%s", yytext);
+#define ECHO fprintf(yyout, "%s\n", yytext);
 int yylineno = 1, yyleng = 0;
 FILE *yyin, *yyout;
-char *yytext[1024] = {0};
+char yytext[1024] = {0};
 char _cur_char = 0;
 int _cur_ptr = 0;
 int _cur_state = 0;
-char *_cur_buf[1024] = {0};
+char _cur_buf[1024] = {0};
 int _cur_buf_ptr = 0;
 int _lat_acc_state = -1;
 int _lat_acc_ptr = 0;
@@ -44,81 +44,78 @@ int yylex()
 {
   if (yyout == NULL)
     yyout = stdout;
-  while (1)
+  if (_cur_char == EOF)
+    return NULL;
+  while (_cur_state != -1)
   {
-    while (_cur_state != -1)
+    _cur_char = fgetc(yyin);
+    _cur_ptr++;
+    if (_cur_char == EOF)
+      break;
+    if (_cur_char == '\n')
+      yylineno++;
+
+    _cur_buf[_cur_buf_ptr] = _cur_char;
+    _cur_buf_ptr += 1;
+    _cur_state = _trans_mat[_cur_state][_cur_char];
+    if (_swi_case[_cur_state] != -1)
     {
-      _cur_char = fgetc(yyin);
-      _cur_ptr++;
-      printf("---- _cur_char :: %c || %d\n", _cur_char, _cur_char);
-      if (_cur_char == 0) // eof
-        break;
-      if (_cur_char == '\n' || _cur_char == '\r')
-      {
-        yylineno++;
-        break;
-      }
-      _cur_buf[_cur_buf_ptr++] = _cur_char;
-      _cur_state = _trans_mat[_cur_state][_cur_char];
-      if (_swi_case[_cur_state] != -1)
-      {
-        _lat_acc_state = _cur_state;
-        _lat_acc_ptr = _cur_ptr;
-      }
+      _lat_acc_state = _cur_state;
+      _lat_acc_ptr = _cur_ptr;
     }
-    if (_lat_acc_state != -1) // accept, but _cur_state == -1
-    {
-      // recover
-      fseek(yyin, _lat_acc_ptr - _cur_ptr, _cur_ptr);
-      _cur_ptr = _lat_acc_ptr;
-      strcpy(yytext, _cur_buf);
-      yyleng = strlen(_cur_buf);
-      memset(_cur_buf, 0, 1024);
-      switch (_swi_case[_lat_acc_state])
-      {
-      case 2:
-        return 0;
-        break;
-      case 3:
-        return 233;
-        break;
-      case 4:
-        return 233;
-        break;
-      case 5:
-        yylval = strdup(yytext + 2);
-        return (TITLE);
-        break;
-      case 6:
-        yylval = strdup(yytext + 2);
-        return (TITLE);
-        break;
-      case 7:
-        return 0;
-        break;
-      case 8:
-        return 0;
-        break;
-      case 9:
-        yylval = strdup(yytext + 2);
-        return (TITLE);
-        break;
-      case 10:
-        yylval = strdup(yytext + 2);
-        return (TITLE);
-        break;
-      default:
-        break;
-      }
-      _lat_acc_state = -1;
-      _lat_acc_ptr = 0;
-    }
-    else
-    {
-      return -1; // error
-    }
-    return 0;
   }
+  if (_lat_acc_state != -1) // accept, but _cur_state == -1
+  {
+    // recover
+    fseek(yyin, _lat_acc_ptr - _cur_ptr, _cur_ptr);
+    _cur_ptr = _lat_acc_ptr;
+    _cur_state = 0;
+    memset(yytext, 0, sizeof(yytext));
+    yyleng = strlen(_cur_buf);
+    strcpy(yytext, _cur_buf);
+    memset(_cur_buf, 0, sizeof(_cur_buf));
+    _cur_buf_ptr = 0;
+    int _lat_acc_state_bak = _lat_acc_state;
+    _lat_acc_state = -1;
+    _lat_acc_ptr = 0;
+    switch (_swi_case[_lat_acc_state_bak])
+    {
+    case 2:
+      return 0x02;
+      break;
+    case 3:
+      return 233;
+      break;
+    case 4:
+      return 233;
+      break;
+    case 5:
+      return (TITLE);
+      break;
+    case 6:
+      return (TITLE);
+      break;
+    case 7:
+      return 0x02;
+      break;
+    case 8:
+      return 0x02;
+      break;
+    case 9:
+      return (TITLE);
+      break;
+    case 10:
+      return (TITLE);
+      break;
+    default:
+      break;
+    }
+  }
+  else
+  {
+    return -1; // error
+  }
+  return NULL;
 }
 
 // *=============== cCodePart ===============
@@ -128,19 +125,19 @@ void writeOut(int c)
   switch (c)
   {
   case TITLE:
-    out("(TITLE)");
+    out("(TITLE)\n");
     break;
   case BOLD:
-    out("(BOLD)");
+    out("(BOLD)\n");
     break;
   case 233:
-    out("(LF)");
+    out("(LF)\n");
     break;
   case -1:
-    out("(ERROR)");
+    out("(ERROR)\n");
     break;
   default:
-    out("(UNKNOWN)");
+    out("(UNKNOWN)\n");
   }
   return;
 }
@@ -149,12 +146,12 @@ int main(int argc, char **argv)
 {
   int c;
   yyin = fopen(argv[1], "r");
-
   if (yyin == NULL)
     printf("\nYYIN NULL\n");
   while ((c = yylex()) != NULL)
   {
     writeOut(c);
+    ECHO;
   }
   fclose(yyin);
   return 0;

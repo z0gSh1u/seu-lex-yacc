@@ -55,6 +55,7 @@ class DFA extends FA_1.FiniteAutomata {
         stateSets[0].forEach((s) => {
             if (nfa.acceptStates.includes(s)) {
                 let action = res._acceptActionMap.get(res._startStates[0]);
+                // FIXME
                 utils_1.assert(!action || action === nfa.acceptActionMap.get(s), `Accept state with multiple action.`);
                 if (!action) {
                     res._acceptStates = [res._startStates[0]];
@@ -85,7 +86,13 @@ class DFA extends FA_1.FiniteAutomata {
                     newStateSet.forEach((s) => {
                         if (nfa.acceptStates.includes(s)) {
                             let action = res._acceptActionMap.get(newState);
-                            utils_1.assert(!action || action === nfa.acceptActionMap.get(s), `Accept state with multiple action`);
+                            // FIXME: Accept state with multiple action is possible.
+                            // assert(!action || action as string === nfa.acceptActionMap.get(s) as string, `Accept state with multiple action.`)
+                            let __cond = !action || action === nfa.acceptActionMap.get(s);
+                            if (!__cond) {
+                                console.error(action);
+                                console.error(nfa.acceptActionMap.get(s));
+                            }
                             if (!action) {
                                 res._acceptStates.push(newState);
                                 res._acceptActionMap.set(newState, nfa.acceptActionMap.get(s));

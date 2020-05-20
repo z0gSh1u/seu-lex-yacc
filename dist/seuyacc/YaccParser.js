@@ -75,19 +75,16 @@ class YaccParser {
         });
         this._operators.reverse();
     }
-    /**
-     * 分析产生式
-     */
     _parseProducers() {
-        let parseState = 0, // 解析过程所处的状态
+        let parseState = 0; // 解析过程所处的状态
         // 0：等待产生式左侧，1：正在读取产生式左侧，1.5：等冒号，2：正在读取产生式右侧非动作部分，3：正在读取动作部分，4：动作部分读取完成
-        buffer = '', // 字符缓存区
-        bslash = false, // 是否转义
-        quot = false, // 是否在引号中
-        producerLhs = '', // 产生式左侧缓存区
-        producerRhs = [], // 产生式右侧缓存区
-        action = '', // 动作缓存区
-        braceLevel = 0; // 读取动作时处于第几层花括号内
+        let buffer = ""; // 字符缓存区
+        let bslash = false; // 是否转义
+        let quot = false; // 是否在引号中
+        let producerLhs = ""; // 产生式左侧缓存区
+        let producerRhs = []; // 产生式右侧缓存区
+        let action = ""; // 动作缓存区
+        let braceLevel = 0; // 读取动作时处于第几层花括号内
         this._producers = [];
         for (let char of this._producerPart) {
             if (parseState == 0) {
