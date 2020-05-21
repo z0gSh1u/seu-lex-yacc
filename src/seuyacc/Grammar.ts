@@ -1,4 +1,10 @@
 /**
+ * 语法相关定义
+ * by Withod
+ * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
+ */
+
+/**
  * 产生式类
  */
 export class Producer {
@@ -26,7 +32,7 @@ export class Producer {
  */
 export class Operator {
   private _name: string
-  private _isRight: boolean  // 运算符是否为右结合，false表示为左结合
+  private _isRight: boolean // 运算符是否为右结合，false表示为左结合
   constructor(name: string, isRight: boolean) {
     this._name = name
     this._isRight = isRight

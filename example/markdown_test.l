@@ -9,37 +9,25 @@
   #define ITALIC 0x03
 
   #define YYSTYPE char*
-
   YYSTYPE yylval;
-
 %}
 
-delim [\t\n" "]
-whitespace {delim}+
-letter [A-Za-z]
-title ^#{1,3}" "{letter}+$
-bold \*\*{letter}+\*\*
-italic \*{letter}+\*
+letter [a-b]
+title #{letter}+
 
 %%
 
 {title} { 
-  yylval = strdup(yytext + 2); return (TITLE); }
-{bold} {
-  yylval = substr(yytext, 2, strlen(yytext) - 2); return (BOLD);
+  yylval = strdup(yytext + 2); return (TITLE); 
 }
-{italic} { yylval = substr(yytext, 2, strlen(yytext) - 1); return (ITALIC); }
-[ab] ;
-[cd] yylval = "Hello";
-[ef] |
-[gh] |
-[i] { return 233; }
+a+b? {
+  return 0;
+}
+(\r|\n) {
+  return 233;
+}
 
 %%
-
-int yywrap(void) {
-  return 1;
-}
 
 void writeOut(int c) {
   switch(c) {

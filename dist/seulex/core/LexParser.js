@@ -187,7 +187,7 @@ class LexParser {
                 if ((!isInQuote && braceLevel == 0 && c == ';') ||
                     (!isInQuote && c == '}' && braceLevel == 1)) {
                     // 动作读取完毕
-                    regexes.forEach((regex) => {
+                    regexes.forEach((regex, index) => {
                         // 规范化动作
                         actionPart = actionPart.trim();
                         if (actionPart === ';') {
@@ -198,7 +198,10 @@ class LexParser {
                             actionPart = actionPart.substring(1, actionPart.length - 2);
                         }
                         this._actions[regex] = actionPart.trim();
-                        this._regexActionMap.set(new Regex_1.Regex(regex), actionPart.trim());
+                        this._regexActionMap.set(new Regex_1.Regex(regex), {
+                            code: actionPart.trim(),
+                            order: index,
+                        });
                     });
                     regexes = [];
                     isSlash = false;

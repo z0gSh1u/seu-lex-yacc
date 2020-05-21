@@ -50,10 +50,25 @@ class DFA extends FA_1.FiniteAutomata {
         let stateSets = [nfa.epsilonClosure(nfa.startStates)];
         res._alphabet = nfa.alphabet;
         res._startStates = [new FA_1.State()];
-        res._acceptStates = [res._startStates[0]];
         res._transformAdjList = [[]];
-        if (stateSets[0].some((s) => nfa.acceptStates.includes(s)))
-            res._acceptStates = [res._startStates[0]];
+        stateSets[0].forEach((s) => {
+            if (nfa.acceptStates.includes(s)) {
+                let action = res._acceptActionMap.get(res._startStates[0]);
+                let compare = nfa.acceptActionMap.get(s);
+                // FIXME
+                if (action && action.code !== compare.code) {
+                    if (action.order > compare.order) {
+                        // 优先级不足，替换
+                        res._acceptActionMap.set(res._startStates[0], compare);
+                    }
+                }
+                else if (!action) {
+                    // 没有重复
+                    res._acceptStates = [res._startStates[0]];
+                    res._acceptActionMap.set(res._startStates[0], nfa.acceptActionMap.get(s));
+                }
+            }
+        });
         res._states = [res._startStates[0]];
         // 遍历设置DFA中第i个状态读入第alpha个字母时的转换
         for (let i = 0; i < res._states.length; i++) {
@@ -74,8 +89,23 @@ class DFA extends FA_1.FiniteAutomata {
                     let newState = new FA_1.State();
                     res._states.push(newState);
                     res._transformAdjList.push([]);
-                    if (newStateSet.some((s) => nfa.acceptStates.includes(s)))
-                        res._acceptStates.push(newState);
+                    newStateSet.forEach((s) => {
+                        if (nfa.acceptStates.includes(s)) {
+                            let action = res._acceptActionMap.get(newState);
+                            let compare = nfa.acceptActionMap.get(s);
+                            // FIXME: Accept state with multiple action is possible.
+                            if (action && action.code !== compare.code) {
+                                if (action.order > compare.order) {
+                                    // 优先级不足，替换
+                                    res._acceptActionMap.set(res._startStates[0], compare);
+                                }
+                            }
+                            else if (!action) {
+                                res._acceptStates.push(newState);
+                                res._acceptActionMap.set(newState, compare);
+                            }
+                        }
+                    });
                 }
                 if (res._alphabet[alpha] == FA_1.getSpAlpha(FA_1.SpAlpha.ANY)) {
                     res._transformAdjList[i].push({ alpha: FA_1.SpAlpha.ANY, target: j });

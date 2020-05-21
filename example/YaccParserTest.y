@@ -21,7 +21,7 @@ zhongjian
     ;
 
 jieshu
-    : zhongjian YYY {reuturn 0;}
+    : zhongjian YYY {return 0;}
     ;
 
 %%

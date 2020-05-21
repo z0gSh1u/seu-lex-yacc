@@ -24,6 +24,14 @@ export class State {
 }
 
 /**
+ * 用在_acceptActionMap
+ */
+export type Action = {
+  order: number
+  code: string
+}
+
+/**
  * 自动机状态转换
  */
 export type Transform = {

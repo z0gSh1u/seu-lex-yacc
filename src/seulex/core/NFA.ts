@@ -7,7 +7,14 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-import { FiniteAutomata, State, Transform, SpAlpha, getSpAlpha } from './FA'
+import {
+  FiniteAutomata,
+  State,
+  Transform,
+  SpAlpha,
+  getSpAlpha,
+  Action,
+} from './FA'
 import { Regex } from './Regex'
 import { splitAndKeep, assert } from '../../utils'
 import { LexParser } from './LexParser'
@@ -16,7 +23,7 @@ import { LexParser } from './LexParser'
  * 非确定有限状态自动机
  */
 export class NFA extends FiniteAutomata {
-  private _acceptActionMap: Map<State, string>
+  private _acceptActionMap: Map<State, Action>
 
   /**
    * 构造一个空NFA
@@ -357,7 +364,7 @@ export class NFA extends FiniteAutomata {
       for (let state of nfas[i]._acceptStates)
         res._acceptActionMap.set(
           state,
-          nfas[i]._acceptActionMap.get(state) as string
+          nfas[i]._acceptActionMap.get(state) as Action
         )
       tempAlphabet.push(...nfas[i]._alphabet)
     }
@@ -433,7 +440,7 @@ export class NFA extends FiniteAutomata {
     let result = stack.pop() as NFA
     if (actionCode)
       for (let state of result._acceptStates)
-        result._acceptActionMap.set(state, actionCode)
+        result._acceptActionMap.set(state, { code: actionCode, order: 1 })
     return result
   }
 
@@ -443,7 +450,7 @@ export class NFA extends FiniteAutomata {
   static fromLexParser(lexParser: LexParser) {
     let nfas = []
     for (let regex of lexParser.regexActionMap.keys())
-      nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)))
+      nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)?.code))
     let bigNFA = NFA.parallelAll(...nfas)
     return bigNFA
   }
