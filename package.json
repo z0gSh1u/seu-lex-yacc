@@ -9,6 +9,7 @@
     "clean": "node ./script/clean.js",
     "lint": "eslint src --fix --ext .ts",
     "test": "jest",
+    "test:watch": "jest --watchAll",
     "build": "npm run clean && tsc"
   },
   "author": "z0gSh1u, Withod, Twileon",

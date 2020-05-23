@@ -49,10 +49,7 @@ export class LexParser {
 
   constructor(filePath: string) {
     this._filePath = filePath
-    this._rawContent = fs
-      .readFileSync(this._filePath)
-      .toString()
-      .replace(/\r\n/g, '\n') // 换行一律LF，没有CR
+    this._rawContent = fs.readFileSync(this._filePath).toString().replace(/\r\n/g, '\n') // 换行一律LF，没有CR
     this._regexAliases = {}
     this._actions = {} // 历史遗留产物
     this._regexActionMap = new Map()
@@ -93,13 +90,9 @@ export class LexParser {
     // 最末尾的C代码部分
     this._cCodePart = this._splitContent.slice(twoPercent[1] + 1).join('\n')
     // 开头的直接复制部分
-    this._copyPart = this._splitContent
-      .slice(copyPartStart + 1, copyPartEnd)
-      .join('\n')
+    this._copyPart = this._splitContent.slice(copyPartStart + 1, copyPartEnd).join('\n')
     // 中间的正则-动作部分
-    this._actionPart = this._splitContent
-      .slice(twoPercent[0] + 1, twoPercent[1])
-      .join('\n')
+    this._actionPart = this._splitContent.slice(twoPercent[0] + 1, twoPercent[1]).join('\n')
     // 剩余的是正则别名部分
     this._regexAliasPart =
       this._splitContent.slice(0, copyPartStart).join('\n') +
@@ -111,21 +104,15 @@ export class LexParser {
    */
   private _fillAttributes() {
     // 分析正则别名部分
-    this._regexAliasPart.split('\n').forEach((v) => {
+    this._regexAliasPart.split('\n').forEach(v => {
       if (v.trim() !== '') {
         v = v.trim()
         let spaceTest = /\s+/.exec(v)
         assert(spaceTest, `Invalid regex alias line: ${v}`)
         let alias = v.substring(0, spaceTest?.index as number)
-        assert(
-          (spaceTest?.index as number) < v.length - 1,
-          `Invalid regex alias line: ${v}`
-        )
+        assert((spaceTest?.index as number) < v.length - 1, `Invalid regex alias line: ${v}`)
         let regex = v.substring(spaceTest?.index as number).trimLeft()
-        assert(
-          !(alias in this._regexAliases),
-          `Regex alias re-definition found: ${v}`
-        )
+        assert(!(alias in this._regexAliases), `Regex alias re-definition found: ${v}`)
         this._regexAliases[alias] = regex
       }
     })
@@ -138,7 +125,7 @@ export class LexParser {
       isInQuote = false, // 是否在引号内
       isSlash = false, // 是否转义
       braceLevel = 0 // 读取动作时处于第几层花括号内
-    this._actionPart.split('').forEach((c) => {
+    this._actionPart.split('').forEach(c => {
       if (isReadingRegex) {
         // 正在读取正则
         if (isWaitingOr) {
@@ -166,10 +153,7 @@ export class LexParser {
                   if (char == '}') break // 完成读取别名
                   alias += char
                 }
-                assert(
-                  ptr2 < regexPart.length,
-                  `Missing right brace at the end of alias: ${alias}`
-                )
+                assert(ptr2 < regexPart.length, `Missing right brace at the end of alias: ${alias}`)
                 if (alias in this._regexAliases) {
                   regexPart =
                     regexPart.substring(0, ptr1) +
@@ -215,7 +199,7 @@ export class LexParser {
               actionPart = '' // 单独分号表示什么都不做
             } else if (actionPart[0] === '{') {
               // 去掉大括号
-              actionPart = actionPart.substring(1, actionPart.length - 2)
+              actionPart = actionPart.substring(1, actionPart.length - 1)
             }
             this._actions[regex] = actionPart.trim()
             this._regexActionMap.set(new Regex(regex), {
@@ -233,8 +217,7 @@ export class LexParser {
           if (c == '\\') isSlash = !isSlash
           else if (!isSlash && (c == "'" || c == '"')) isInQuote = !isInQuote
           else if (!isInQuote && c == '{') braceLevel += 1
-          else if (!isInQuote && c == '}')
-            braceLevel = Math.max(0, braceLevel - 1)
+          else if (!isInQuote && c == '}') braceLevel = Math.max(0, braceLevel - 1)
           else isSlash = false
         }
       }

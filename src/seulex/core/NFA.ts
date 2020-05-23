@@ -7,14 +7,7 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-import {
-  FiniteAutomata,
-  State,
-  Transform,
-  SpAlpha,
-  getSpAlpha,
-  Action,
-} from './FA'
+import { FiniteAutomata, State, Transform, SpAlpha, getSpAlpha, Action } from './FA'
 import { Regex } from './Regex'
 import { splitAndKeep, assert } from '../../utils'
 import { LexParser } from './LexParser'
@@ -51,8 +44,7 @@ export class NFA extends FiniteAutomata {
     nfa._startStates = [new State()] // 开始状态
     nfa._acceptStates = [new State()] // 接收状态
     nfa._states = [...nfa._startStates, ...nfa._acceptStates] // 全部状态
-    nfa._alphabet =
-      typeof initAlpha === 'string' ? [initAlpha] : [getSpAlpha(initAlpha)] // 字母表
+    nfa._alphabet = typeof initAlpha === 'string' ? [initAlpha] : [getSpAlpha(initAlpha)] // 字母表
     nfa._transformAdjList = [
       [{ alpha: typeof initAlpha === 'number' ? initAlpha : 0, target: 1 }],
       [],
@@ -188,8 +180,8 @@ export class NFA extends FiniteAutomata {
     for (let i = 0; i < result.length; i++) {
       result = result.concat(
         this.getTransforms(result[i], [SpAlpha.EPSILON])
-          .map((transform) => this._states[transform.target])
-          .filter((s) => !result.includes(s))
+          .map(transform => this._states[transform.target])
+          .filter(s => !result.includes(s))
       )
     }
     return result
@@ -257,9 +249,7 @@ export class NFA extends FiniteAutomata {
     // 考虑epsilon边
     let stack = [currentState] // 深搜辅助栈
     while (!!stack.length) {
-      for (let transform of this.getTransforms(stack.pop() as State, [
-        SpAlpha.EPSILON,
-      ])) {
+      for (let transform of this.getTransforms(stack.pop() as State, [SpAlpha.EPSILON])) {
         // 遍历所有epsilon转移
         let targetState = this._states[transform.target]
         // 如果到达接收状态就返回真
@@ -362,17 +352,13 @@ export class NFA extends FiniteAutomata {
       res._acceptStates.push(...nfas[i]._acceptStates)
       res._states.push(...nfas[i]._states)
       for (let state of nfas[i]._acceptStates)
-        res._acceptActionMap.set(
-          state,
-          nfas[i]._acceptActionMap.get(state) as Action
-        )
+        res._acceptActionMap.set(state, nfas[i]._acceptActionMap.get(state) as Action)
       tempAlphabet.push(...nfas[i]._alphabet)
     }
     res._alphabet = [...new Set(tempAlphabet)]
     res._transformAdjList = [[]] // new_start
     for (let i = 0; i < nfas.length; i++) NFA.mergeTranformAdjList(nfas[i], res)
-    for (let i = 0; i < nfas.length; i++)
-      res.linkEpsilon(res._startStates, nfas[i]._startStates)
+    for (let i = 0; i < nfas.length; i++) res.linkEpsilon(res._startStates, nfas[i]._startStates)
     return res
   }
 
@@ -392,7 +378,7 @@ export class NFA extends FiniteAutomata {
         continue
       }
       if (waitingEscapeDetail) {
-        stack.push(NFA.atom(`\\${part}`))
+        stack.push(NFA.atom(`${part}`))
         waitingEscapeDetail = false
         continue
       }

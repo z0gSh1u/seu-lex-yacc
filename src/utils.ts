@@ -1,12 +1,17 @@
 // 工具函数
 // by z0gSh1u @ 2020-05
 
+// ASCII打印字符范围
+export const ASCII_MIN = 32
+export const ASCII_MAX = 126
+export const SUPPORTED_ESCAPE = `dstrn\\[]*?+()|"`
+
 /**
  * Ensure `condition`. Else throw `hint`.
  */
 export function assert(condition: unknown, hint: string): void {
   if (!condition) {
-    throw hint
+    throw new Error(hint)
   }
 }
 
