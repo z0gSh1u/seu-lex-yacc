@@ -184,7 +184,8 @@ char TokenName[0x59][256] = {
     "BITXOR_OP",
     "BITOR_OP",
     "QUESTION",
-    "WHITESPACE"
+    "WHITESPACE",
+    "UNMATCH"
 };
 
 %}
@@ -225,6 +226,7 @@ char TokenName[0x59][256] = {
 "void"			{ return(VOID); }
 "volatile"	{ return(VOLATILE); }
 "while"			{ return(WHILE); }
+{L} { return(IDENTIFIER); }
 {L}({L}|{D})*		{ return(IDENTIFIER); }
 [1-9]{D}*						{ return(CONSTANT); }
 {D}+								{ return(CONSTANT); }
@@ -277,8 +279,9 @@ char TokenName[0x59][256] = {
 "^"				{ return(BITXOR_OP); }
 "|"				{ return(BITOR_OP); }
 "?"				{ return(QUESTION); }
-[" "\t\r\n]		{ out("ws\n"); return(WHITESPACE); }
-.			 	 	{ out("unmatch\n"); return(UNMATCH); }
+[\t\r\n]	{ return(WHITESPACE); }
+" " 	{ return(WHITESPACE); }
+.			 	 	{ return(UNMATCH); }
 
 %%
 
@@ -290,8 +293,9 @@ int main(int argc, char** argv) {
 	int c;
 	// keep calling yylex
   while (c = yylex()) {
-		out("TokenName: %s | yyleng: %d | yylineno: %d\n", TokenName[c], yyleng, yylineno);
-    ECHO; // printf yytext
+		if (c == (WHITESPACE)) continue;
+    out("TokenName: %s | yytext: %s\n", TokenName[c], yytext);
+    // ECHO; // printf yytext
   }
   fclose(yyin);
   return 0;

@@ -9,7 +9,7 @@
 
 import { FiniteAutomata, State, Transform, SpAlpha, getSpAlpha, Action } from './FA'
 import { Regex } from './Regex'
-import { splitAndKeep, assert } from '../../utils'
+import { splitAndKeep, assert, ESCAPE_REVERSE } from '../../utils'
 import { LexParser } from './LexParser'
 
 /**
@@ -378,7 +378,7 @@ export class NFA extends FiniteAutomata {
         continue
       }
       if (waitingEscapeDetail) {
-        stack.push(NFA.atom(`${part}`))
+        stack.push(NFA.atom(ESCAPE_REVERSE[`\\${part}`] as string))
         waitingEscapeDetail = false
         continue
       }

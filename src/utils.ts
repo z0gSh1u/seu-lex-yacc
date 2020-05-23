@@ -4,10 +4,27 @@
 // ASCII打印字符范围
 export const ASCII_MIN = 32
 export const ASCII_MAX = 126
-export const SUPPORTED_ESCAPE = `dstrn\\[]*?+()|"`
+export const SUPPORTED_ESCAPE = `dstrn\\[]*?+()|".`
+export const PATTERN_INSIDEQUOTE_NOTSLASH = /(?=[^\\]|^)(\"[^\"]*[^\\]\")/g // 在非转义引号之间内容，$0为带引号匹配结果
+export const PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g // 非转义[]定义的的range，$0为带大括号匹配结果
+export const ESCAPE_REVERSE: { [key: string]: string } = {
+  '\\n': '\n',
+  '\\t': '\t',
+  '\\r': '\r',
+  '\\(': '(',
+  '\\)': ')',
+  '\\[': '[',
+  '\\]': ']',
+  '\\+': '+',
+  '\\-': '-',
+  '\\*': '*',
+  '\\?': '?',
+  '\\"': '"',
+  '\\.': '.'
+}
 
 /**
- * Ensure `condition`. Else throw `hint`.
+ * Ensure `condition`. Else throw Error `hint`.
  */
 export function assert(condition: unknown, hint: string): void {
   if (!condition) {
@@ -34,7 +51,7 @@ export function inStr(ch: string, str: string) {
  * @param ranges [l, r][]
  */
 export function inRange(ranges: [number, number][], target: number) {
-  return ranges.some((range) => target >= range[0] && target <= range[1])
+  return ranges.some(range => target >= range[0] && target <= range[1])
 }
 
 /**

@@ -63,23 +63,16 @@ function genPresetContent() {
 }
 
 function genTransformMatrix() {
+  console.log(dfa)
   // 128是ASCII码的数量，mat[i][k]表示在i状态收到k字符后转移到的状态
   let res = `const int _trans_mat[${dfa.states.length}][128] = {`
-  let targets = Array(128).fill(-1) // -1表示没有此转移
   for (let i = 0; i < dfa.transformAdjList.length; i++) {
+    let targets = Array(128).fill(-1) // -1表示没有此转移
     let othersTarget = -1 // 仍未设置转移的字符应转移到的状态
     for (let transform of dfa.transformAdjList[i]) {
       if (transform.alpha == SpAlpha.OTHER || transform.alpha == SpAlpha.ANY)
         othersTarget = transform.target
-      else {
-        targets[dfa.alphabet[transform.alpha].charCodeAt(0)] = transform.target
-        if (
-          dfa.alphabet[transform.alpha].charCodeAt(0) == 40 &&
-          i == dfa.states.indexOf(dfa.startStates[0])
-        ) {
-          console.log(targets[40])
-        }
-      }
+      else targets[dfa.alphabet[transform.alpha].charCodeAt(0)] = transform.target
     }
     // 设置other字符
     if (othersTarget != -1)
@@ -87,6 +80,7 @@ function genTransformMatrix() {
     res += targets.join(',') + ','
   }
   res = res.substring(0, res.length - 1) + '};' // 去掉多余的逗号
+  // 格式化相关
   let formatRes = '',
     commaCount = 0
   for (let i = 0; i < res.length; i++) {
@@ -97,7 +91,6 @@ function genTransformMatrix() {
       formatRes += '\n'
     }
   }
-
   return formatRes + '\n'
 }
 
@@ -131,25 +124,24 @@ function genYYLEX() {
   return `
     int yylex() {
       if (yyout == NULL) yyout = stdout;
-      if (_cur_char == EOF) return 0;
+      if (_cur_char == EOF) {
+        ${_('yywrap支持')}
+        if (yywrap() == 1) return 0;
+        else {
+          yylineno = 1;
+          yyleng = 0;
+          memset(yytext, 0, sizeof(_cur_buf));
+          memset(_cur_buf, 0, sizeof(_cur_buf));
+          _cur_char = 0;
+          _cur_state = _init_state, _cur_ptr = 0, _cur_buf_ptr = 0;
+          _lat_acc_state = -1, _lat_acc_ptr = 0;
+        }
+      }
       ${_('不断进行状态转移')}
       while (_cur_state != -1) {
         _cur_char = fgetc(yyin);
         if (DEBUG_MODE) printf("** YYLEX: ** %c | %d\\n", _cur_char, _cur_char);
         _cur_ptr++;
-        if (_cur_char == EOF) {
-          ${_('yywrap支持')}
-          if (yywrap() == 1) return 0;
-          else {
-            yylineno = 1;
-            yyleng = 0;
-            memset(yytext, 0, sizeof(_cur_buf));
-            memset(_cur_buf, 0, sizeof(_cur_buf));
-            _cur_char = 0;
-            _cur_state = _init_state, _cur_ptr = 0, _cur_buf_ptr = 0;
-            _lat_acc_state = -1, _lat_acc_ptr = 0;
-          }
-        }
         if (_cur_char == '\\n') yylineno++;
         _cur_buf[_cur_buf_ptr++] = _cur_char;
         ${_('进行状态转移')}

@@ -103,7 +103,7 @@ export class DFA extends FiniteAutomata {
               if (action && action.code !== compare.code) {
                 if (action.order > compare.order) {
                   // 优先级不足，替换
-                  res._acceptActionMap.set(res._startStates[0], compare)
+                  res._acceptActionMap.set(newState, compare)
                 }
               } else if (!action) {
                 res._acceptStates.push(newState)

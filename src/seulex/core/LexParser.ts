@@ -124,7 +124,8 @@ export class LexParser {
       isWaitingOr = false, // 是否正在等待正则间的“或”运算符
       isInQuote = false, // 是否在引号内
       isSlash = false, // 是否转义
-      braceLevel = 0 // 读取动作时处于第几层花括号内
+      braceLevel = 0, // 读取动作时处于第几层花括号内
+      codeOrder = 0
     this._actionPart.split('').forEach(c => {
       if (isReadingRegex) {
         // 正在读取正则
@@ -192,7 +193,7 @@ export class LexParser {
           (!isInQuote && c == '}' && braceLevel == 1)
         ) {
           // 动作读取完毕
-          regexes.forEach((regex, index) => {
+          regexes.forEach(regex => {
             // 规范化动作
             actionPart = actionPart.trim()
             if (actionPart === ';') {
@@ -204,9 +205,10 @@ export class LexParser {
             this._actions[regex] = actionPart.trim()
             this._regexActionMap.set(new Regex(regex), {
               code: actionPart.trim(),
-              order: index,
+              order: codeOrder,
             })
           })
+          codeOrder += 1
           regexes = []
           isSlash = false
           isInQuote = false

@@ -3,8 +3,9 @@ module.exports = {
   useTabs: false,
   semi: false,
   singleQuote: true,
-  TrailingCooma: "none",
+  TrailingCooma: 'none',
   bracketSpacing: true,
   arrowParens: 'avoid',
-  printWidth: 100
+  printWidth: 100,
+  proseWrap: 'never',
 }

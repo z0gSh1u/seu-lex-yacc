@@ -191,8 +191,9 @@ char TokenName[0x59][256] = {
 %}
 
 %%
-"(" 			{ return(LPAREN); }
-.			 	 	{ return(UNMATCH); }
+[a-zA-Z0-9]				{ return(IDENTIFIER); }
+[" "\n\r\t] { return (WHITESPACE);}
+. { return (UNMATCH);}
 
 %%
 
@@ -204,8 +205,9 @@ int main(int argc, char** argv) {
 	int c;
 	// keep calling yylex
   while (c = yylex()) {
-		out("TokenName: %s | yyleng: %d | yylineno: %d\n", TokenName[c], yyleng, yylineno);
-    ECHO; // printf yytext
+		if (c == (WHITESPACE)) continue;
+    out("TokenName: %s | yyleng: %d | yylineno: %d\n", TokenName[c], yyleng, yylineno);
+    // ECHO; // printf yytext
   }
   fclose(yyin);
   return 0;
