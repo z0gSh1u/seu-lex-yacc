@@ -187,7 +187,7 @@ char TokenName[0x57][256] = {
 %}
 
 %%
-"//"(.*)\n  { /* consume //-comment */ }
+"//"(.*)\n  { out("comment\n"); }
 "auto"			{ return(AUTO); }
 "break"			{ return(BREAK); }
 "case"			{ return(CASE); }
@@ -256,7 +256,7 @@ char TokenName[0x57][256] = {
 ","				{ return(COMMA); }
 ":"				{ return(COLON); }
 "="				{ return(ASSIGN); }
-"("				{ return(LPAREN); }
+"(" 			{ return(LPAREN); }
 ")"				{ return(RPAREN); }
 "["			  { return(LBRACKET); }
 "]"	  		{ return(RBRACKET); }
@@ -274,9 +274,10 @@ char TokenName[0x57][256] = {
 "^"				{ return(BITXOR_OP); }
 "|"				{ return(BITOR_OP); }
 "?"				{ return(QUESTION); }
-[\t\n]		{ /* do nothing */ }
-" "       { /* do nothing */ }
-.			 	 	{ /* Add code to complain about unmatched characters */ }
+[\t\r\n]		{ out("ws\n"); return(QUESTION); }
+\s       { out("ws\n"); return(QUESTION); }
+" "       { out("ws\n");  return(QUESTION); }
+.			 	 	{ out("unmatch\n"); return(QUESTION); }
 
 %%
 
@@ -288,9 +289,8 @@ int main(int argc, char** argv) {
 	int c;
 	// keep calling yylex
   while (c = yylex()) {
-		out("TokenName: %s\n", TokenName[c]);
+		out("TokenName: %s | yyleng: %d | yylineno: %d\n", TokenName[c], yyleng, yylineno);
     ECHO; // printf yytext
-		out("yyleng: %d | yylineno: %d\n", yyleng, yylineno);
   }
   fclose(yyin);
   return 0;
