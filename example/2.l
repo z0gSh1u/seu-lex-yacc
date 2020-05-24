@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
    
    jj++;
    if (jj > 20) break;
-    out("TokenName: %s | yyleng: %d | yylineno: %d\n", TokenName[c], yyleng, yylineno);
+    out("Token: %15s  ||  yytext: %15s\n", TokenName[c], yytext);
     // ECHO; // printf yytext
   }
   fclose(yyin);

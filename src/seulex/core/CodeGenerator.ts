@@ -137,7 +137,7 @@ function genYYLEX() {
       }
       ${_('不断进行状态转移')}
       while (_cur_state != -1) {
-        _cur_char = fgetc(yyin);
+        _cur_char = fgetc(yyin); 
         if (DEBUG_MODE) printf("** YYLEX: ** %c | %d\\n", _cur_char, _cur_char);
         _cur_ptr++;
         if (_cur_char == '\\n') yylineno++;
