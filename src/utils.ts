@@ -20,8 +20,18 @@ export const ESCAPE_REVERSE: { [key: string]: string } = {
   '\\*': '*',
   '\\?': '?',
   '\\"': '"',
-  '\\.': '.'
+  '\\.': '.',
+  "\\'": "'",
+  '\\|': '|',
+  '\\\\': '\\',
 }
+export const ESCAPE_CONVERT: { [key: string]: string } = (function () {
+  let ret: { [key: string]: string } = {}
+  const keys = Object.keys(ESCAPE_REVERSE)
+  const vals = Object.values(ESCAPE_REVERSE)
+  for (let i in vals) ret[vals[i]] = keys[i]
+  return ret
+})()
 
 /**
  * Ensure `condition`. Else throw Error `hint`.

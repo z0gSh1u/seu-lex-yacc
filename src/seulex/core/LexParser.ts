@@ -34,6 +34,9 @@ export class LexParser {
   get cCodePart() {
     return this._cCodePart
   }
+  get actionPart() {
+    return this._actionPart
+  }
   get regexAliases() {
     return this._regexAliases
   }
@@ -205,10 +208,9 @@ export class LexParser {
             this._actions[regex] = actionPart.trim()
             this._regexActionMap.set(new Regex(regex), {
               code: actionPart.trim(),
-              order: codeOrder,
+              order: codeOrder++,
             })
           })
-          codeOrder += 1
           regexes = []
           isSlash = false
           isInQuote = false

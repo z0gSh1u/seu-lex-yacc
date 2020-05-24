@@ -1,13 +1,14 @@
 int main() {
   float ad = 1.6;
   register long b = 1024;
-  if (a > b) {
+  if (ad > b) {
     short i = 2;
-    while (i -= 1) printf("Hello world!\n");
+    while (i -= 1) printf("gaolao niubi");
   } else {
     do {
-      printf("Good!\n");
+      happy("gaolao tql");
     } while (1);
+    b = 2 / 3;
   }
   return 0;
 }

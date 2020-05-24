@@ -21,8 +21,19 @@ exports.ESCAPE_REVERSE = {
     '\\*': '*',
     '\\?': '?',
     '\\"': '"',
-    '\\.': '.'
+    '\\.': '.',
+    "\\'": "'",
+    '\\|': '|',
+    '\\\\': '\\',
 };
+exports.ESCAPE_CONVERT = (function () {
+    let ret = {};
+    const keys = Object.keys(exports.ESCAPE_REVERSE);
+    const vals = Object.values(exports.ESCAPE_REVERSE);
+    for (let i in vals)
+        ret[vals[i]] = keys[i];
+    return ret;
+})();
 /**
  * Ensure `condition`. Else throw Error `hint`.
  */

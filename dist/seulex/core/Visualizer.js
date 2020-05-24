@@ -22,6 +22,7 @@ const FA_1 = require("./FA");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const childProcess = __importStar(require("child_process"));
+const utils_1 = require("../../utils");
 /**
  * 可视化自动机
  * @param viewNow 是否立即打开浏览器查看
@@ -40,8 +41,8 @@ function visualizeFA(fa, viewNow = true) {
         });
     }
     function escapeAlpha(alpha) {
-        if (alpha.startsWith('\\')) {
-            return `\\\\${alpha[1]}`;
+        if (utils_1.inStr(alpha[0], '\n\r\t\\')) {
+            return '\\' + utils_1.ESCAPE_CONVERT[alpha];
         }
         else if (alpha === ' ') {
             return `[space]`;

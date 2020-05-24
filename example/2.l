@@ -2,6 +2,8 @@ D			[0-9]
 L			[a-zA-Z_]
 
 %{
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -191,8 +193,8 @@ char TokenName[0x59][256] = {
 %}
 
 %%
-[a-zA-Z0-9]				{ return(IDENTIFIER); }
-[" "\n\r\t] { return (WHITESPACE);}
+
+\"[^"]\" { return (STRING_LITERAL); }
 . { return (UNMATCH);}
 
 %%
@@ -203,9 +205,13 @@ int main(int argc, char** argv) {
 	// redirect yyout if you want, or stdout by default
 	// yyout = stdout;
 	int c;
+  int jj =0;
 	// keep calling yylex
   while (c = yylex()) {
-		if (c == (WHITESPACE)) continue;
+//		if (c == (WHITESPACE)) continue;
+   
+   jj++;
+   if (jj > 20) break;
     out("TokenName: %s | yyleng: %d | yylineno: %d\n", TokenName[c], yyleng, yylineno);
     // ECHO; // printf yytext
   }

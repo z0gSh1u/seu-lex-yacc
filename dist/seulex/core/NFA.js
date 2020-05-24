@@ -337,7 +337,7 @@ class NFA extends FA_1.FiniteAutomata {
     /**
      * 根据正则表达式构造NFA
      */
-    static fromRegex(regex, actionCode) {
+    static fromRegex(regex, action) {
         let parts = utils_1.splitAndKeep(regex.postFix, '()|*?+\\. '); // 分离特殊符号
         let stack = [], oprand1, oprand2, waitingEscapeDetail = false;
         for (let i = 0; i < parts.length; i++) {
@@ -378,7 +378,7 @@ class NFA extends FA_1.FiniteAutomata {
                     stack.push(oprand1);
                     break;
                 case '\\': // 转义符
-                    // 由于Regex转后缀阶段的机智处理，只要看到反斜杠，就一定是转义
+                    // 由于Regex转后缀阶段的处理，只要看到反斜杠，就一定是转义
                     waitingEscapeDetail = true;
                     break;
                 case '.': // 任意字符点（不再是连接符了）
@@ -393,21 +393,20 @@ class NFA extends FA_1.FiniteAutomata {
                     break;
             }
         }
-        utils_1.assert(stack.length === 1, 'Stack too big after NFA construction.');
+        utils_1.assert(stack.length === 1, 'Stack too big after NFA construction. The regex is: ' + regex.raw);
         let result = stack.pop();
-        if (actionCode)
+        if (action)
             for (let state of result._acceptStates)
-                result._acceptActionMap.set(state, { code: actionCode, order: 1 });
+                result._acceptActionMap.set(state, action);
         return result;
     }
     /**
      * 从LexParser构造大NFA
      */
     static fromLexParser(lexParser) {
-        var _a;
         let nfas = [];
         for (let regex of lexParser.regexActionMap.keys())
-            nfas.push(NFA.fromRegex(regex, (_a = lexParser.regexActionMap.get(regex)) === null || _a === void 0 ? void 0 : _a.code));
+            nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)));
         let bigNFA = NFA.parallelAll(...nfas);
         return bigNFA;
     }

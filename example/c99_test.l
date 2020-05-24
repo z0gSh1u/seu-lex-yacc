@@ -95,8 +95,9 @@ L			[a-zA-Z_]
 #define QUESTION 0x56
 #define WHITESPACE 0x57
 #define UNMATCH 0x58
+#define COMMENT 0x59
 
-char TokenName[0x59][256] = {
+char TokenName[0x5a][256] = {
     "",
     "AUTO",
     "BREAK",
@@ -185,13 +186,14 @@ char TokenName[0x59][256] = {
     "BITOR_OP",
     "QUESTION",
     "WHITESPACE",
-    "UNMATCH"
+    "UNMATCH",
+    "COMMENT"
 };
 
 %}
 
 %%
-"//"(.*)\n  { out("comment\n"); }
+"//"(.*)(\n)?  { return(COMMENT); }
 "auto"			{ return(AUTO); }
 "break"			{ return(BREAK); }
 "case"			{ return(CASE); }
@@ -226,13 +228,13 @@ char TokenName[0x59][256] = {
 "void"			{ return(VOID); }
 "volatile"	{ return(VOLATILE); }
 "while"			{ return(WHILE); }
-{L} { return(IDENTIFIER); }
+{L}         { return(IDENTIFIER); }
 {L}({L}|{D})*		{ return(IDENTIFIER); }
 [1-9]{D}*						{ return(CONSTANT); }
 {D}+								{ return(CONSTANT); }
 {D}*"."{D}*					{ return(CONSTANT); }
 {D}+"."{D}*					{ return(CONSTANT); }
-\"(.*)\"	{ return(STRING_LITERAL); }
+\"[^"\n]*\" { return (STRING_LITERAL); }
 "..."			{ return(ELLIPSIS); }
 ">>="			{ return(RIGHT_ASSIGN); }
 "<<="			{ return(LEFT_ASSIGN); }
@@ -279,8 +281,7 @@ char TokenName[0x59][256] = {
 "^"				{ return(BITXOR_OP); }
 "|"				{ return(BITOR_OP); }
 "?"				{ return(QUESTION); }
-[\t\r\n]	{ return(WHITESPACE); }
-" " 	{ return(WHITESPACE); }
+[" "\n\r\t] { return (WHITESPACE);}
 .			 	 	{ return(UNMATCH); }
 
 %%
@@ -292,9 +293,12 @@ int main(int argc, char** argv) {
 	// yyout = stdout;
 	int c;
 	// keep calling yylex
+  int jj = 0;
   while (c = yylex()) {
-		if (c == (WHITESPACE)) continue;
-    out("TokenName: %s | yytext: %s\n", TokenName[c], yytext);
+	//	jj++;
+   // if (jj > 80) break;
+     if (c == (WHITESPACE)) continue;
+    out("Token: %15s  ||  yytext: %15s\n", TokenName[c], yytext);
     // ECHO; // printf yytext
   }
   fclose(yyin);

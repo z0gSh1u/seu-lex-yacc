@@ -55,7 +55,6 @@ class DFA extends FA_1.FiniteAutomata {
             if (nfa.acceptStates.includes(s)) {
                 let action = res._acceptActionMap.get(res._startStates[0]);
                 let compare = nfa.acceptActionMap.get(s);
-                // FIXME
                 if (action && action.code !== compare.code) {
                     if (action.order > compare.order) {
                         // 优先级不足，替换
@@ -93,7 +92,6 @@ class DFA extends FA_1.FiniteAutomata {
                         if (nfa.acceptStates.includes(s)) {
                             let action = res._acceptActionMap.get(newState);
                             let compare = nfa.acceptActionMap.get(s);
-                            // FIXME: Accept state with multiple action is possible.
                             if (action && action.code !== compare.code) {
                                 if (action.order > compare.order) {
                                     // 优先级不足，替换

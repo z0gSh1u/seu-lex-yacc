@@ -63,7 +63,6 @@ function genPresetContent() {
 }
 
 function genTransformMatrix() {
-  console.log(dfa)
   // 128是ASCII码的数量，mat[i][k]表示在i状态收到k字符后转移到的状态
   let res = `const int _trans_mat[${dfa.states.length}][128] = {`
   for (let i = 0; i < dfa.transformAdjList.length; i++) {
@@ -119,7 +118,6 @@ function genYYLESSYYMORE() {
   `
 }
 
-// TODO: 有逻辑错误
 function genYYLEX() {
   return `
     int yylex() {
@@ -184,9 +182,9 @@ function genSwitchAction() {
   for (let state of dfa.acceptStates) {
     let index = dfa.states.indexOf(state)
     res += `
-      case ${index}:
-        ${dfa.acceptActionMap.get(state)?.code}
-        break;`
+  case ${index}:
+    ${dfa.acceptActionMap.get(state)?.code}
+    break;`
   }
   res += `
   default:

@@ -99,9 +99,10 @@ export class Regex {
    */
   private _procRange() {
     const quoteRanges = getMatchedRanges(PATTERN_INSIDEQUOTE_NOTSLASH, this._escapeExpanded)
+    const rangeRanges = getMatchedRanges(PATTERN_RANGE_NOTSLASH, this._escapeExpanded)
     function shouldNot(i: number) {
       // 在引号间中的不处理
-      return inRange(quoteRanges, i)
+      return inRange(quoteRanges, i) && !inRange(rangeRanges, i)
     }
     let bracketRanges: [number, number][] = getMatchedRanges(
       PATTERN_RANGE_NOTSLASH,
@@ -169,9 +170,13 @@ export class Regex {
         let conjugateExpanded = []
         for (let ascii = ASCII_MIN; ascii <= ASCII_MAX; ascii++) {
           const char = String.fromCharCode(ascii)[0]
-          if (!expanded.includes(`\\${char}`) && `trn`.includes(char))
+          if (!expanded.includes(char) && inStr(char, `\\[]*?+()|".`))
             conjugateExpanded.push(`\\${char}`)
-          if (!expanded.includes(char)) conjugateExpanded.push(char)
+          else {
+            if (!expanded.includes(`\\${char}`) && `trn`.includes(char))
+              conjugateExpanded.push(`\\${char}`)
+            if (!expanded.includes(char)) conjugateExpanded.push(char)
+          }
         }
         expanded = [...conjugateExpanded]
       }
@@ -221,7 +226,7 @@ export class Regex {
           (c === '\\' && slashBefore % 2 === 0) || // 当前字符为定义的转义字符
           i === this._rangeExpanded.length - 1 || // 当前字符为最后一个字符
           (inStr(c, '|(') && (i === 0 || slashBefore % 2 === 0)) || // 当前字符为非转义的操作符|(
-          (next && inStr(next as string, '|)*+?')) // 下一个字符是操作符或右括号
+          (next && inStr(next as string, '|)*+?]')) // 下一个字符是操作符或右括号
         if (!shouldNotAddDot) {
           res.push(part)
           part = ''
@@ -246,7 +251,7 @@ export class Regex {
         for (let j = 1; j < raw[i].length - 1; j++) {
           if (inStr(raw[i][j], '?*+.()|[]\\'))
             // 因为去掉了引号，故其中的特殊字符要转义
-            parts.push(`\\ ${raw[i][j]}`, '[dot]')
+            parts.push(`\\`, `${raw[i][j]}`, '[dot]')
           else if (raw[i][j].trim() === '')
             // 处理纯空格
             parts.push(...Array(raw[i][j].length).fill('[space]'), '[dot]')
@@ -256,8 +261,14 @@ export class Regex {
     }
     parts.splice(parts.length - 1, 1) // 去掉最后一个多加的[dot]
     parts = parts.map(v => (v.trim().length === 0 ? '[space]' : v))
+    let waitingEscape = false
     for (let i = 0; i < parts.length; i++) {
       let part = parts[i].trim()
+      if (waitingEscape) {
+        res.push(`${part[0]}`)
+        waitingEscape = false
+        continue
+      }
       if (part.length === 0) {
         continue // 当前是空格，就跳过。该策略不会影响空格识别，因为空格已被转化为[space]
       } else if (part[0] === '|') {
@@ -278,8 +289,11 @@ export class Regex {
       } else if (part[0] === ')') {
         while (stack.length && !inStr(stack[stack.length - 1], '(')) res.push(stack.pop()) // 一直弹到(，即把括号内容全部弹光
         stack.pop() // 弹掉(
+      } else if (part[0] === '\\') {
+        res.push(part[0])
+        waitingEscape = true
       } else {
-        res.push(part) // 其他情况
+        res.push(part)
       }
     }
     // 处理栈内剩余
