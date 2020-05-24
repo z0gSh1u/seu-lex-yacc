@@ -2,12 +2,44 @@
 // 工具函数
 // by z0gSh1u @ 2020-05
 Object.defineProperty(exports, "__esModule", { value: true });
+// ASCII打印字符范围
+exports.ASCII_MIN = 32;
+exports.ASCII_MAX = 126;
+exports.SUPPORTED_ESCAPE = `dstrn\\[]*?+()|".`;
+exports.PATTERN_INSIDEQUOTE_NOTSLASH = /(?=[^\\]|^)(\"[^\"]*[^\\]\")/g; // 在非转义引号之间内容，$0为带引号匹配结果
+exports.PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g; // 非转义[]定义的的range，$0为带大括号匹配结果
+exports.ESCAPE_REVERSE = {
+    '\\n': '\n',
+    '\\t': '\t',
+    '\\r': '\r',
+    '\\(': '(',
+    '\\)': ')',
+    '\\[': '[',
+    '\\]': ']',
+    '\\+': '+',
+    '\\-': '-',
+    '\\*': '*',
+    '\\?': '?',
+    '\\"': '"',
+    '\\.': '.',
+    "\\'": "'",
+    '\\|': '|',
+    '\\\\': '\\',
+};
+exports.ESCAPE_CONVERT = (function () {
+    let ret = {};
+    const keys = Object.keys(exports.ESCAPE_REVERSE);
+    const vals = Object.values(exports.ESCAPE_REVERSE);
+    for (let i in vals)
+        ret[vals[i]] = keys[i];
+    return ret;
+})();
 /**
- * Ensure `condition`. Else throw `hint`.
+ * Ensure `condition`. Else throw Error `hint`.
  */
 function assert(condition, hint) {
     if (!condition) {
-        throw hint;
+        throw new Error(hint);
     }
 }
 exports.assert = assert;
@@ -30,7 +62,7 @@ exports.inStr = inStr;
  * @param ranges [l, r][]
  */
 function inRange(ranges, target) {
-    return ranges.some((range) => target >= range[0] && target <= range[1]);
+    return ranges.some(range => target >= range[0] && target <= range[1]);
 }
 exports.inRange = inRange;
 /**

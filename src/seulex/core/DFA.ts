@@ -57,11 +57,10 @@ export class DFA extends FiniteAutomata {
     res._alphabet = nfa.alphabet
     res._startStates = [new State()]
     res._transformAdjList = [[]]
-    stateSets[0].forEach((s) => {
+    stateSets[0].forEach(s => {
       if (nfa.acceptStates.includes(s)) {
         let action = res._acceptActionMap.get(res._startStates[0])
         let compare = nfa.acceptActionMap.get(s) as Action
-        // FIXME
         if (action && action.code !== compare.code) {
           if (action.order > compare.order) {
             // 优先级不足，替换
@@ -70,10 +69,7 @@ export class DFA extends FiniteAutomata {
         } else if (!action) {
           // 没有重复
           res._acceptStates = [res._startStates[0]]
-          res._acceptActionMap.set(
-            res._startStates[0],
-            nfa.acceptActionMap.get(s) as Action
-          )
+          res._acceptActionMap.set(res._startStates[0], nfa.acceptActionMap.get(s) as Action)
         }
       }
     })
@@ -87,8 +83,8 @@ export class DFA extends FiniteAutomata {
         let j = 0
         for (; j < stateSets.length; j++) {
           if (
-            stateSets[j].every((s) => newStateSet.includes(s)) &&
-            newStateSet.every((s) => stateSets[j].includes(s))
+            stateSets[j].every(s => newStateSet.includes(s)) &&
+            newStateSet.every(s => stateSets[j].includes(s))
           )
             break // 与已有的状态集合相同
         }
@@ -98,15 +94,14 @@ export class DFA extends FiniteAutomata {
           let newState = new State()
           res._states.push(newState)
           res._transformAdjList.push([])
-          newStateSet.forEach((s) => {
+          newStateSet.forEach(s => {
             if (nfa.acceptStates.includes(s)) {
               let action = res._acceptActionMap.get(newState)
               let compare = nfa.acceptActionMap.get(s) as Action
-              // FIXME: Accept state with multiple action is possible.
               if (action && action.code !== compare.code) {
                 if (action.order > compare.order) {
                   // 优先级不足，替换
-                  res._acceptActionMap.set(res._startStates[0], compare)
+                  res._acceptActionMap.set(newState, compare)
                 }
               } else if (!action) {
                 res._acceptStates.push(newState)
@@ -178,9 +173,7 @@ export class DFA extends FiniteAutomata {
             this._alphabet.indexOf(sentence[matchedWordCount])
           )
           matchedWordCount += 1
-          newState &&
-            !candidates.includes(newState) &&
-            candidates.push(newState)
+          newState && !candidates.includes(newState) && candidates.push(newState)
         }
         if (!candidates.length) {
           break // 没有可选的进一步状态了

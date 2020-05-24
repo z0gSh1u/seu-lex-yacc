@@ -37,8 +37,7 @@ class NFA extends FA_1.FiniteAutomata {
         nfa._startStates = [new FA_1.State()]; // 开始状态
         nfa._acceptStates = [new FA_1.State()]; // 接收状态
         nfa._states = [...nfa._startStates, ...nfa._acceptStates]; // 全部状态
-        nfa._alphabet =
-            typeof initAlpha === 'string' ? [initAlpha] : [FA_1.getSpAlpha(initAlpha)]; // 字母表
+        nfa._alphabet = typeof initAlpha === 'string' ? [initAlpha] : [FA_1.getSpAlpha(initAlpha)]; // 字母表
         nfa._transformAdjList = [
             [{ alpha: typeof initAlpha === 'number' ? initAlpha : 0, target: 1 }],
             [],
@@ -164,8 +163,8 @@ class NFA extends FA_1.FiniteAutomata {
         let result = [...states];
         for (let i = 0; i < result.length; i++) {
             result = result.concat(this.getTransforms(result[i], [FA_1.SpAlpha.EPSILON])
-                .map((transform) => this._states[transform.target])
-                .filter((s) => !result.includes(s)));
+                .map(transform => this._states[transform.target])
+                .filter(s => !result.includes(s)));
         }
         return result;
     }
@@ -227,9 +226,7 @@ class NFA extends FA_1.FiniteAutomata {
         // 考虑epsilon边
         let stack = [currentState]; // 深搜辅助栈
         while (!!stack.length) {
-            for (let transform of this.getTransforms(stack.pop(), [
-                FA_1.SpAlpha.EPSILON,
-            ])) {
+            for (let transform of this.getTransforms(stack.pop(), [FA_1.SpAlpha.EPSILON])) {
                 // 遍历所有epsilon转移
                 let targetState = this._states[transform.target];
                 // 如果到达接收状态就返回真
@@ -340,7 +337,7 @@ class NFA extends FA_1.FiniteAutomata {
     /**
      * 根据正则表达式构造NFA
      */
-    static fromRegex(regex, actionCode) {
+    static fromRegex(regex, action) {
         let parts = utils_1.splitAndKeep(regex.postFix, '()|*?+\\. '); // 分离特殊符号
         let stack = [], oprand1, oprand2, waitingEscapeDetail = false;
         for (let i = 0; i < parts.length; i++) {
@@ -350,7 +347,7 @@ class NFA extends FA_1.FiniteAutomata {
                 continue;
             }
             if (waitingEscapeDetail) {
-                stack.push(NFA.atom(`\\${part}`));
+                stack.push(NFA.atom(utils_1.ESCAPE_REVERSE[`\\${part}`]));
                 waitingEscapeDetail = false;
                 continue;
             }
@@ -381,7 +378,7 @@ class NFA extends FA_1.FiniteAutomata {
                     stack.push(oprand1);
                     break;
                 case '\\': // 转义符
-                    // 由于Regex转后缀阶段的机智处理，只要看到反斜杠，就一定是转义
+                    // 由于Regex转后缀阶段的处理，只要看到反斜杠，就一定是转义
                     waitingEscapeDetail = true;
                     break;
                 case '.': // 任意字符点（不再是连接符了）
@@ -396,21 +393,20 @@ class NFA extends FA_1.FiniteAutomata {
                     break;
             }
         }
-        utils_1.assert(stack.length === 1, 'Stack too big after NFA construction.');
+        utils_1.assert(stack.length === 1, 'Stack too big after NFA construction. The regex is: ' + regex.raw);
         let result = stack.pop();
-        if (actionCode)
+        if (action)
             for (let state of result._acceptStates)
-                result._acceptActionMap.set(state, { code: actionCode, order: 1 });
+                result._acceptActionMap.set(state, action);
         return result;
     }
     /**
      * 从LexParser构造大NFA
      */
     static fromLexParser(lexParser) {
-        var _a;
         let nfas = [];
         for (let regex of lexParser.regexActionMap.keys())
-            nfas.push(NFA.fromRegex(regex, (_a = lexParser.regexActionMap.get(regex)) === null || _a === void 0 ? void 0 : _a.code));
+            nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)));
         let bigNFA = NFA.parallelAll(...nfas);
         return bigNFA;
     }

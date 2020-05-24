@@ -56,8 +56,7 @@ else {
     // 输出c文件
     fs_1.default.writeFileSync(path_1.default.resolve('./', 'yy.seulex.c'), finalCode);
     // 调用GGC
-    args.c &&
-        gcc_1.callGCC(path_1.default.resolve('./', 'yy.seulex.c'), args.c.length ? args.c.toString() : '');
+    args.c && gcc_1.callGCC(path_1.default.resolve('./', 'yy.seulex.c'), args.c.length ? args.c.toString() : '');
     // 可视化DFA
     args.v && Visualizer_1.visualizeFA(bigDFA);
 }

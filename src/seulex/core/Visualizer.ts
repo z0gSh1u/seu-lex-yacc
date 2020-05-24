@@ -12,6 +12,7 @@ import { FiniteAutomata, getSpAlpha } from './FA'
 import fs from 'fs'
 import path from 'path'
 import * as childProcess from 'child_process'
+import { ESCAPE_CONVERT, inStr } from '../../utils'
 
 /**
  * 可视化自动机
@@ -42,8 +43,8 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
     })
   }
   function escapeAlpha(alpha: string) {
-    if (alpha.startsWith('\\')) {
-      return `\\\\${alpha[1]}`
+    if (inStr(alpha[0], '\n\r\t\\')) {
+      return '\\' + ESCAPE_CONVERT[alpha]
     } else if (alpha === ' ') {
       return `[space]`
     } else {
@@ -68,11 +69,7 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
   // 计算布局并导出
   let dagreJSON = JSON.stringify(dumpObject, null, 2)
   const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer')
-  fs.writeFileSync(
-    path.join(VisualizerPath, './data.js'),
-    `let data = ${dagreJSON}`
-  )
+  fs.writeFileSync(path.join(VisualizerPath, './data.js'), `let data = ${dagreJSON}`)
   // 启动浏览器显示
-  viewNow &&
-    childProcess.exec(`start ${path.join(VisualizerPath, './index.html')} `)
+  viewNow && childProcess.exec(`start ${path.join(VisualizerPath, './index.html')} `)
 }

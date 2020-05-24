@@ -24,7 +24,7 @@ export class State {
 }
 
 /**
- * 用在_acceptActionMap
+ * 用在_acceptActionMap，表示一段动作代码及其出现次序
  */
 export type Action = {
   order: number

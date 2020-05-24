@@ -51,11 +51,10 @@ class DFA extends FA_1.FiniteAutomata {
         res._alphabet = nfa.alphabet;
         res._startStates = [new FA_1.State()];
         res._transformAdjList = [[]];
-        stateSets[0].forEach((s) => {
+        stateSets[0].forEach(s => {
             if (nfa.acceptStates.includes(s)) {
                 let action = res._acceptActionMap.get(res._startStates[0]);
                 let compare = nfa.acceptActionMap.get(s);
-                // FIXME
                 if (action && action.code !== compare.code) {
                     if (action.order > compare.order) {
                         // 优先级不足，替换
@@ -79,8 +78,8 @@ class DFA extends FA_1.FiniteAutomata {
                     continue;
                 let j = 0;
                 for (; j < stateSets.length; j++) {
-                    if (stateSets[j].every((s) => newStateSet.includes(s)) &&
-                        newStateSet.every((s) => stateSets[j].includes(s)))
+                    if (stateSets[j].every(s => newStateSet.includes(s)) &&
+                        newStateSet.every(s => stateSets[j].includes(s)))
                         break; // 与已有的状态集合相同
                 }
                 if (j == stateSets.length) {
@@ -89,15 +88,14 @@ class DFA extends FA_1.FiniteAutomata {
                     let newState = new FA_1.State();
                     res._states.push(newState);
                     res._transformAdjList.push([]);
-                    newStateSet.forEach((s) => {
+                    newStateSet.forEach(s => {
                         if (nfa.acceptStates.includes(s)) {
                             let action = res._acceptActionMap.get(newState);
                             let compare = nfa.acceptActionMap.get(s);
-                            // FIXME: Accept state with multiple action is possible.
                             if (action && action.code !== compare.code) {
                                 if (action.order > compare.order) {
                                     // 优先级不足，替换
-                                    res._acceptActionMap.set(res._startStates[0], compare);
+                                    res._acceptActionMap.set(newState, compare);
                                 }
                             }
                             else if (!action) {
@@ -167,9 +165,7 @@ class DFA extends FA_1.FiniteAutomata {
                     // 剩余情况则向外推进，继续搜索
                     let newState = this.expand(currentState, this._alphabet.indexOf(sentence[matchedWordCount]));
                     matchedWordCount += 1;
-                    newState &&
-                        !candidates.includes(newState) &&
-                        candidates.push(newState);
+                    newState && !candidates.includes(newState) && candidates.push(newState);
                 }
                 if (!candidates.length) {
                     break; // 没有可选的进一步状态了

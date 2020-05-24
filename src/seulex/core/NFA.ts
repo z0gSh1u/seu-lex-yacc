@@ -7,16 +7,9 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-import {
-  FiniteAutomata,
-  State,
-  Transform,
-  SpAlpha,
-  getSpAlpha,
-  Action,
-} from './FA'
+import { FiniteAutomata, State, Transform, SpAlpha, getSpAlpha, Action } from './FA'
 import { Regex } from './Regex'
-import { splitAndKeep, assert } from '../../utils'
+import { splitAndKeep, assert, ESCAPE_REVERSE } from '../../utils'
 import { LexParser } from './LexParser'
 
 /**
@@ -51,8 +44,7 @@ export class NFA extends FiniteAutomata {
     nfa._startStates = [new State()] // 开始状态
     nfa._acceptStates = [new State()] // 接收状态
     nfa._states = [...nfa._startStates, ...nfa._acceptStates] // 全部状态
-    nfa._alphabet =
-      typeof initAlpha === 'string' ? [initAlpha] : [getSpAlpha(initAlpha)] // 字母表
+    nfa._alphabet = typeof initAlpha === 'string' ? [initAlpha] : [getSpAlpha(initAlpha)] // 字母表
     nfa._transformAdjList = [
       [{ alpha: typeof initAlpha === 'number' ? initAlpha : 0, target: 1 }],
       [],
@@ -188,8 +180,8 @@ export class NFA extends FiniteAutomata {
     for (let i = 0; i < result.length; i++) {
       result = result.concat(
         this.getTransforms(result[i], [SpAlpha.EPSILON])
-          .map((transform) => this._states[transform.target])
-          .filter((s) => !result.includes(s))
+          .map(transform => this._states[transform.target])
+          .filter(s => !result.includes(s))
       )
     }
     return result
@@ -257,9 +249,7 @@ export class NFA extends FiniteAutomata {
     // 考虑epsilon边
     let stack = [currentState] // 深搜辅助栈
     while (!!stack.length) {
-      for (let transform of this.getTransforms(stack.pop() as State, [
-        SpAlpha.EPSILON,
-      ])) {
+      for (let transform of this.getTransforms(stack.pop() as State, [SpAlpha.EPSILON])) {
         // 遍历所有epsilon转移
         let targetState = this._states[transform.target]
         // 如果到达接收状态就返回真
@@ -362,24 +352,20 @@ export class NFA extends FiniteAutomata {
       res._acceptStates.push(...nfas[i]._acceptStates)
       res._states.push(...nfas[i]._states)
       for (let state of nfas[i]._acceptStates)
-        res._acceptActionMap.set(
-          state,
-          nfas[i]._acceptActionMap.get(state) as Action
-        )
+        res._acceptActionMap.set(state, nfas[i]._acceptActionMap.get(state) as Action)
       tempAlphabet.push(...nfas[i]._alphabet)
     }
     res._alphabet = [...new Set(tempAlphabet)]
     res._transformAdjList = [[]] // new_start
     for (let i = 0; i < nfas.length; i++) NFA.mergeTranformAdjList(nfas[i], res)
-    for (let i = 0; i < nfas.length; i++)
-      res.linkEpsilon(res._startStates, nfas[i]._startStates)
+    for (let i = 0; i < nfas.length; i++) res.linkEpsilon(res._startStates, nfas[i]._startStates)
     return res
   }
 
   /**
    * 根据正则表达式构造NFA
    */
-  static fromRegex(regex: Regex, actionCode?: string) {
+  static fromRegex(regex: Regex, action?: Action) {
     let parts = splitAndKeep(regex.postFix, '()|*?+\\. ') // 分离特殊符号
     let stack: NFA[] = [],
       oprand1: NFA,
@@ -392,7 +378,7 @@ export class NFA extends FiniteAutomata {
         continue
       }
       if (waitingEscapeDetail) {
-        stack.push(NFA.atom(`\\${part}`))
+        stack.push(NFA.atom(ESCAPE_REVERSE[`\\${part}`] as string))
         waitingEscapeDetail = false
         continue
       }
@@ -421,7 +407,7 @@ export class NFA extends FiniteAutomata {
           stack.push(oprand1)
           break
         case '\\': // 转义符
-          // 由于Regex转后缀阶段的机智处理，只要看到反斜杠，就一定是转义
+          // 由于Regex转后缀阶段的处理，只要看到反斜杠，就一定是转义
           waitingEscapeDetail = true
           break
         case '.': // 任意字符点（不再是连接符了）
@@ -436,11 +422,9 @@ export class NFA extends FiniteAutomata {
           break
       }
     }
-    assert(stack.length === 1, 'Stack too big after NFA construction.')
+    assert(stack.length === 1, 'Stack too big after NFA construction. The regex is: ' + regex.raw)
     let result = stack.pop() as NFA
-    if (actionCode)
-      for (let state of result._acceptStates)
-        result._acceptActionMap.set(state, { code: actionCode, order: 1 })
+    if (action) for (let state of result._acceptStates) result._acceptActionMap.set(state, action)
     return result
   }
 
@@ -450,7 +434,7 @@ export class NFA extends FiniteAutomata {
   static fromLexParser(lexParser: LexParser) {
     let nfas = []
     for (let regex of lexParser.regexActionMap.keys())
-      nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex)?.code))
+      nfas.push(NFA.fromRegex(regex, lexParser.regexActionMap.get(regex) as Action))
     let bigNFA = NFA.parallelAll(...nfas)
     return bigNFA
   }

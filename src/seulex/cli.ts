@@ -51,11 +51,7 @@ if (args._.length === 0) {
   // 输出c文件
   fs.writeFileSync(path.resolve('./', 'yy.seulex.c'), finalCode)
   // 调用GGC
-  args.c &&
-    callGCC(
-      path.resolve('./', 'yy.seulex.c'),
-      args.c.length ? args.c.toString() : ''
-    )
+  args.c && callGCC(path.resolve('./', 'yy.seulex.c'), args.c.length ? args.c.toString() : '')
   // 可视化DFA
   args.v && visualizeFA(bigDFA)
 }

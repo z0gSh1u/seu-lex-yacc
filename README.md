@@ -1,4 +1,6 @@
-<img src="./doc/LogoWithText.png" align="center">
+<p align="center">
+  <img src="./doc/LogoWithText.png">
+</p>
 
 ## seulex
 
