@@ -108,6 +108,7 @@ class LexParser {
         isWaitingOr = false, // 是否正在等待正则间的“或”运算符
         isInQuote = false, // 是否在引号内
         isSlash = false, // 是否转义
+        isInBrackets = false, // 是否在方括号内
         braceLevel = 0, // 读取动作时处于第几层花括号内
         codeOrder = 0;
         this._actionPart.split('').forEach(c => {
@@ -123,14 +124,14 @@ class LexParser {
                     }
                 }
                 else {
-                    if (!isInQuote && !c.trim() && regexPart != '') {
+                    if (!isInQuote && !isInBrackets && !c.trim() && regexPart != '') {
                         // 正则读取完毕
                         let ptr1 = 0;
                         isSlash = false;
                         for (; ptr1 < regexPart.length; ptr1++) {
                             // 寻找正则别名的开头{
                             let char = regexPart.charAt(ptr1);
-                            if (!isInQuote && !isSlash && char == '{') {
+                            if (!isInQuote && !isSlash && !isInBrackets && char == '{') {
                                 // 开始读取别名
                                 let ptr2 = ptr1 + 1, alias = '';
                                 for (; ptr2 < regexPart.length; ptr2++) {
@@ -155,8 +156,12 @@ class LexParser {
                             }
                             else if (char == '\\')
                                 isSlash = !isSlash;
-                            else if (!isSlash && char == '"')
+                            else if (!isSlash && !isInBrackets && char == '"')
                                 isInQuote = !isInQuote;
+                            else if (!isSlash && !isInQuote && char == '[')
+                                isInBrackets = true;
+                            else if (!isSlash && isInBrackets && char == ']')
+                                isInBrackets = false;
                             else
                                 isSlash = false;
                         }
@@ -165,14 +170,19 @@ class LexParser {
                         regexPart = '';
                         isSlash = false;
                         isInQuote = false;
+                        isInBrackets = false;
                         isWaitingOr = true; // 开始等待正则间的或运算符
                     }
                     else {
                         regexPart += c.trim() ? c : regexPart == '' ? '' : ' ';
                         if (c == '\\')
                             isSlash = !isSlash;
-                        else if (c == '"' && !isSlash)
+                        else if (c == '"' && !isSlash && !isInBrackets)
                             isInQuote = !isInQuote;
+                        else if (c == '[' && !isSlash && !isInQuote)
+                            isInBrackets = true;
+                        else if (c == ']' && !isSlash && isInBrackets)
+                            isInBrackets = false;
                         else
                             isSlash = false;
                     }
@@ -203,6 +213,7 @@ class LexParser {
                     regexes = [];
                     isSlash = false;
                     isInQuote = false;
+                    isInBrackets = false;
                     braceLevel = 0;
                     actionPart = '';
                     isReadingRegex = true; // 开始读取正则
