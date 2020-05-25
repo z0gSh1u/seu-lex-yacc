@@ -114,6 +114,7 @@ function genYYLESSYYMORE() {
 function genYYLEX() {
     return `
     int yylex() {
+      int rollbackLines = 0;
       if (yyout == NULL) yyout = stdout;
       if (_cur_char == EOF) {
         ${_('yywrap支持')}
@@ -133,7 +134,7 @@ function genYYLEX() {
         _cur_char = fgetc(yyin); 
         if (DEBUG_MODE) printf("** YYLEX: ** %c | %d\\n", _cur_char, _cur_char);
         _cur_ptr++;
-        if (_cur_char == '\\n') yylineno++;
+        if (_cur_char == '\\n') yylineno++, rollbackLines++;
         _cur_buf[_cur_buf_ptr++] = _cur_char;
         ${_('进行状态转移')}
         _cur_state = _trans_mat[_cur_state][_cur_char];
@@ -142,11 +143,13 @@ function genYYLEX() {
         if (_swi_case[_cur_state] != -1) {
           _lat_acc_state = _cur_state;
           _lat_acc_ptr = _cur_ptr - 1;
+          rollbackLines = 0;
         }
       }
       ${_('把失败的多余匹配全部回退')}
       if (_lat_acc_state != -1) {
         fseek(yyin, _lat_acc_ptr - _cur_ptr + 1, SEEK_CUR);
+        yylineno -= rollbackLines;
         _cur_ptr = _lat_acc_ptr;
         _cur_state = 0;
         _cur_buf[_cur_buf_ptr - 1] = '\\0';
