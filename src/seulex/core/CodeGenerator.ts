@@ -108,6 +108,8 @@ function genYYLESSYYMORE() {
     void yyless(int n) {
       int delta = strlen(yytext) - n;
       fseek(yyin, -delta, SEEK_CUR);
+      FILE *yyinCopy = yyin;
+      while (delta--) fgetc(yyinCopy) == '\n' && yylineno--;
     }
     void yymore() {
       char old[1024];
