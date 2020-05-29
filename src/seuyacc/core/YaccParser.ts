@@ -5,8 +5,8 @@
  */
 
 import fs from 'fs'
-import { assert, inStr } from '../utils'
-import { Producer, Operator } from './Grammar'
+import { assert, inStr, stringCook } from '../../utils'
+import { Producer, SymbolType, GrammarSymbol } from './Grammar'
 
 /**
  * .y文件解析器
@@ -22,9 +22,14 @@ export class YaccParser {
   private _userCodePart!: string // 最后的用户代码部分
 
   private _tokens!: string[] // 定义的tokens（lex送来的）
-  private _operators!: Operator[] // 定义的运算符
+  private _operators!: string[] // 定义的运算符
+  private _isRightAssociative!: boolean[] // 运算符是否为右结合，false表示为左结合
+  private _nonterminals!: string[] // 定义的非终结符
+  private _others!: string[] // 未事先定义的字符
   private _producers!: Producer[] // 定义的产生式
-  private _startSymbol!: string // 开始符号，未指定会自动分配第一个
+  private _startSymbol!: number // 开始符号，未指定会自动分配第一个
+  private _symbols!: string[][] // 定义的符号
+  // 第0行存储非终结符，第1行存储运算符，第2行存储tokens
 
   get copyPart() {
     return this._copyPart
@@ -46,6 +51,8 @@ export class YaccParser {
   }
 
   constructor(filePath: string) {
+    this._symbols = [this._nonterminals, this._operators, this.tokens, this._others]
+    this._tokens.push('$') // tokens0号位存储结束符
     this._filePath = filePath
     this._rawContent = fs.readFileSync(this._filePath).toString().replace(/\r\n/g, '\n') // 统一使用LF，没有CR
     this._splitContent = this._rawContent.split('\n')
@@ -60,8 +67,8 @@ export class YaccParser {
   private _parseInfo() {
     this._operators = []
     this._tokens = []
-    this._startSymbol = ''
-    this._infoPart.split('\n').forEach(line => {
+    this._startSymbol = -1
+    this._infoPart.split('\n').forEach((line) => {
       if (!line.trim()) return
       let words = line.split(/\s/)
       switch (words[0]) {
@@ -73,15 +80,23 @@ export class YaccParser {
         case '%right':
           let isRight = words[0] == '%right'
           for (let i = 1; i < words.length; i++) {
-            let isRepetitive = this._operators.some(x => x.name == words[i])
-            assert(!isRepetitive, `Operator redefined: ${words[i]}`)
-            this._operators.push(new Operator(words[i], isRight))
+            let opt = words[i]
+            if (opt[0] == '\'') {
+              assert(opt[opt.length-1] == '\'', `Open Quote: ${opt}`)
+              opt = stringCook(opt.substring(1, opt.length-1))
+            }
+            let isRepetitive = this._operators.some((x) => x == opt)
+            assert(!isRepetitive, `Operator redefined: ${opt}`)
+            this._operators.push(opt)
+            this._isRightAssociative.push(isRight)
           }
           break
         case '%start':
           for (let i = 1; i < words.length; i++) {
-            assert(!this._startSymbol, `Start symbol redefined: ${words[i]}`)
-            this._startSymbol = words[i]
+            assert(this._startSymbol < 0, `Start symbol redefined: ${words[i]}`)
+            let index = this._nonterminals.indexOf(words[i])
+            assert(index != -1, `Unknown symbol: ${words[i]}`)
+            this._startSymbol = index
           }
           break
         default:
@@ -89,6 +104,7 @@ export class YaccParser {
       }
     })
     this._operators.reverse()
+    this._isRightAssociative.reverse()
   }
 
   private _parseProducers() {
@@ -97,9 +113,9 @@ export class YaccParser {
     let buffer = '' // 字符缓存区
     let bslash = false // 是否转义
     let quot = false // 是否在引号中
-    let producerLhs = '' // 产生式左侧缓存区
-    let producerRhs: string[] = [] // 产生式右侧缓存区
-    let action = '' // 动作缓存区
+    let producerLhs = "" // 产生式左侧缓存区
+    let producerRhs: GrammarSymbol[] = [] // 产生式右侧缓存区
+    let action = "" // 动作缓存区
     let braceLevel = 0 // 读取动作时处于第几层花括号内
     this._producers = []
     for (let char of this._producerPart) {
@@ -140,7 +156,10 @@ export class YaccParser {
             )
             assert(buffer.length > 2, `No character beteween quotes: ${buffer}`)
             quot = false
-            producerRhs.push(buffer)
+            buffer = buffer.substring(1, buffer.length-1)
+            // if (this._operators.includes(buffer))
+            // producerRhs.push(buffer)
+            // TODO: 对产生式右侧符号的处理需要修改以适应新的结构
             buffer = ''
           } else {
             bslash = false
@@ -148,7 +167,8 @@ export class YaccParser {
         } else if (!char.trim() || inStr(char, `;|{'`)) {
           // 完成一个符号的读取
           if (buffer.length) {
-            producerRhs.push(buffer)
+            // producerRhs.push(buffer)
+            // TODO: 对产生式右侧符号的处理需要修改以适应新的结构
             buffer = ''
           }
           if (char === '{') {
@@ -188,8 +208,14 @@ export class YaccParser {
         assert(false, 'New producer before the previous ends.')
       }
       if ((parseState == 2 || parseState == 4) && inStr(char, `;|`)) {
+        // 判断是否为新的非终结符
+        if (!this._nonterminals.includes(producerLhs)) this._nonterminals.push(producerLhs)
         // 完成一条产生式
-        this._producers.push(new Producer(producerLhs, producerRhs, action))
+        this._producers.push(new Producer(
+          {type: SymbolType.NONTERMINAL, index: this._nonterminals.indexOf(producerLhs)},
+          [],//TODO
+          action
+        ))
         producerRhs = []
         action = ''
         if (char === '|') {
@@ -201,15 +227,10 @@ export class YaccParser {
         }
       }
     }
-    if (!this._startSymbol.trim() && this._producers.length) {
-      this._startSymbol = this._producers[0].lhs
-    } else if (this._startSymbol.trim()) {
-      let flag = false
-      for (let i in this._producers) {
-        let producer = this._producers[i]
-        if (producer.lhs === this._startSymbol) flag = true
-      }
-      assert(flag, `Invalid start: ${this._startSymbol}`)
+    if (this._startSymbol == -1 && this._producers.length) {
+      this._startSymbol = 0
+    } else if (this._startSymbol >= 0) {
+      assert(this._startSymbol < this._nonterminals.length, `Invalid start: ${this._startSymbol}`)
     }
   }
 
