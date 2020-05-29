@@ -33,6 +33,21 @@ export const ESCAPE_CONVERT: { [key: string]: string } = (function () {
   return ret
 })()
 
+export function stringCook(str: string): string {
+  let ret = ""
+  let bslash = false
+  str.split('').forEach(c => {
+    if (bslash) {
+      let char = '\\' + c
+      ret += ESCAPE_REVERSE.hasOwnProperty(char) ? ESCAPE_REVERSE[char] : char
+      bslash = false
+    }
+    else if (c == '\\')  bslash = true
+    else ret += c
+  });
+  return ret
+}
+
 /**
  * Ensure `condition`. Else throw Error `hint`.
  */
