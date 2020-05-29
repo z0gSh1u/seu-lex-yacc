@@ -26,28 +26,28 @@ export class YaccParser {
   private _producers!: Producer[] // 定义的产生式
   private _startSymbol!: string // 开始符号，未指定会自动分配第一个
 
+  get copyPart() {
+    return this._copyPart
+  }
+  get userCodePart() {
+    return this._userCodePart
+  }
   get producers() {
     return this._producers
   }
-
   get tokens() {
     return this._tokens
   }
-
   get operators() {
     return this._operators
   }
-
   get startSymbol() {
     return this._startSymbol
   }
 
   constructor(filePath: string) {
     this._filePath = filePath
-    this._rawContent = fs
-      .readFileSync(this._filePath)
-      .toString()
-      .replace(/\r\n/g, '\n') // 统一使用LF，没有CR
+    this._rawContent = fs.readFileSync(this._filePath).toString().replace(/\r\n/g, '\n') // 统一使用LF，没有CR
     this._splitContent = this._rawContent.split('\n')
     this._fillText()
     this._parseInfo()
@@ -61,7 +61,7 @@ export class YaccParser {
     this._operators = []
     this._tokens = []
     this._startSymbol = ''
-    this._infoPart.split('\n').forEach((line) => {
+    this._infoPart.split('\n').forEach(line => {
       if (!line.trim()) return
       let words = line.split(/\s/)
       switch (words[0]) {
@@ -73,7 +73,7 @@ export class YaccParser {
         case '%right':
           let isRight = words[0] == '%right'
           for (let i = 1; i < words.length; i++) {
-            let isRepetitive = this._operators.some((x) => x.name == words[i])
+            let isRepetitive = this._operators.some(x => x.name == words[i])
             assert(!isRepetitive, `Operator redefined: ${words[i]}`)
             this._operators.push(new Operator(words[i], isRight))
           }
@@ -94,12 +94,12 @@ export class YaccParser {
   private _parseProducers() {
     let parseState = 0 // 解析过程所处的状态
     // 0：等待产生式左侧，1：正在读取产生式左侧，1.5：等冒号，2：正在读取产生式右侧非动作部分，3：正在读取动作部分，4：动作部分读取完成
-    let buffer = "" // 字符缓存区
+    let buffer = '' // 字符缓存区
     let bslash = false // 是否转义
     let quot = false // 是否在引号中
-    let producerLhs = "" // 产生式左侧缓存区
+    let producerLhs = '' // 产生式左侧缓存区
     let producerRhs: string[] = [] // 产生式右侧缓存区
-    let action = "" // 动作缓存区
+    let action = '' // 动作缓存区
     let braceLevel = 0 // 读取动作时处于第几层花括号内
     this._producers = []
     for (let char of this._producerPart) {
@@ -245,13 +245,9 @@ export class YaccParser {
     // 最末尾的C代码部分
     this._userCodePart = this._splitContent.slice(twoPercent[1] + 1).join('\n')
     // 开头的直接复制部分
-    this._copyPart = this._splitContent
-      .slice(copyPartStart + 1, copyPartEnd)
-      .join('\n')
+    this._copyPart = this._splitContent.slice(copyPartStart + 1, copyPartEnd).join('\n')
     // 中间的规则部分
-    this._producerPart = this._splitContent
-      .slice(twoPercent[0] + 1, twoPercent[1])
-      .join('\n')
+    this._producerPart = this._splitContent.slice(twoPercent[0] + 1, twoPercent[1]).join('\n')
     // 剩余的是信息部分
     this._infoPart =
       this._splitContent.slice(0, copyPartStart).join('\n') +

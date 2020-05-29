@@ -1,9 +1,4 @@
-import fs from 'fs'
-import path from 'path'
-import { Regex } from './seulex/core/Regex'
-import { NFA } from './seulex/core/NFA'
-import { visualizeFA } from './seulex/core/Visualizer'
-import { DFA } from './seulex/core/DFA'
-import { LexParser } from './seulex/core/LexParser'
-import { generateCode } from './seulex/core/CodeGenerator'
-import { beautifyCCode } from '../enhance/beautify'
+import { Regex } from "./seulex/core/Regex";
+
+let re = new Regex(`ab\\n"\\t"`)
+console.log(re)
