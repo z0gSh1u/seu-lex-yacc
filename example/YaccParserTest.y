@@ -6,6 +6,7 @@
 %right '='
 %token YYY
 %left '*' '/'
+%start zhongjian
 
 %%
 kaishi

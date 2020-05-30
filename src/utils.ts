@@ -4,9 +4,22 @@
 // ASCII打印字符范围
 export const ASCII_MIN = 32
 export const ASCII_MAX = 126
+// lex支持的转义
 export const SUPPORTED_ESCAPE = `dstrn\\[]*?+()|".`
-export const PATTERN_INSIDEQUOTE_NOTSLASH = /(?=[^\\]|^)(\"[^\"]*[^\\]\")/g // 在非转义引号之间内容，$0为带引号匹配结果
-export const PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g // 非转义[]定义的的range，$0为带大括号匹配结果
+// ========= lex用到的正则 =========
+// 在非转义引号之间内容，$0为带引号匹配结果
+export const PATTERN_INSIDEQUOTE_NOTSLASH = /(?=[^\\]|^)(\"[^\"]*[^\\]\")/g
+// 非转义[]定义的的range，$0为带大括号匹配结果
+export const PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g
+// ========= yacc用到的正则 =========
+export const PATTERN_BLOCK_PRODUCER = /(\w+)\n\s+:(\s+(.+?)({[\s\S]*?})?\n)(\s+\|\s+(.+?)({[\s\S]*?})?\n)*\s+;/g
+// $1为LHS，$3为首个RHS，$4为动作代码（带大括号）
+export const PATTERN_INITIAL_PRODUCER = /(\w+)\n\s+:(\s+(.+?)({[\s\S]*?})?\n)/g
+// $2为RHS，$3为动作代码（带大括号）
+export const PATTERN_CONTINUED_PRODUCER = /(\s+\|\s+(.+?)({[\s\S]*?})?\n)/g
+// 末尾匹配
+export const PATTERN_ENDOF_PRODUCER = /\s+;/g
+// 转义抠除
 export const ESCAPE_REVERSE: { [key: string]: string } = {
   '\\n': '\n',
   '\\t': '\t',
@@ -25,6 +38,7 @@ export const ESCAPE_REVERSE: { [key: string]: string } = {
   '\\|': '|',
   '\\\\': '\\',
 }
+// 转义添加
 export const ESCAPE_CONVERT: { [key: string]: string } = (function () {
   let ret: { [key: string]: string } = {}
   const keys = Object.keys(ESCAPE_REVERSE)
@@ -32,19 +46,18 @@ export const ESCAPE_CONVERT: { [key: string]: string } = (function () {
   for (let i in vals) ret[vals[i]] = keys[i]
   return ret
 })()
-
-export function stringCook(str: string): string {
-  let ret = ""
+// 去除转义斜杠，相当于String.raw的逆方法
+export function cookString(str: string): string {
+  let ret = ''
   let bslash = false
   str.split('').forEach(c => {
     if (bslash) {
       let char = '\\' + c
       ret += ESCAPE_REVERSE.hasOwnProperty(char) ? ESCAPE_REVERSE[char] : char
       bslash = false
-    }
-    else if (c == '\\')  bslash = true
+    } else if (c == '\\') bslash = true
     else ret += c
-  });
+  })
   return ret
 }
 
