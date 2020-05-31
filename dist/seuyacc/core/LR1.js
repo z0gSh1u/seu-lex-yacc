@@ -43,6 +43,7 @@ class LR1Analyzer {
         // @ts-ignore
         this._symbolRange = [];
         this._producers = [];
+        this._operators = yaccParser.operatorDecl;
         this._distributeId(yaccParser);
         this._convertProducer(yaccParser.producers);
     }
@@ -70,6 +71,8 @@ class LR1Analyzer {
         for (let nonTerminal of yaccParser.nonTerminals)
             this._symbols.push({ type: 'nonterminal', content: nonTerminal });
         this._symbolRange.push(this._symbols.length);
+        for (let spToken of Grammar_1.SpToken)
+            this._symbols.push({ type: 'sptoken', content: spToken });
         this._startSymbol = this._getSymbolId({ content: yaccParser.startSymbol });
         utils_1.assert(this._startSymbol, 'LR1 startSymbol unset.');
     }
@@ -82,6 +85,73 @@ class LR1Analyzer {
                 this._symbols[i].content === grammarSymbol.content)
                 return i;
         return -1;
+    }
+    /**
+     * FIRST函数
+     * @param symbols
+     */
+    _first(symbols) {
+        if (!symbols.length)
+            return [this._getSymbolId({ type: 'sptoken', content: 'EPSILON' })];
+        let ret = [];
+        if (symbols[0] < this._symbolRange[2] || symbols[0] >= this._symbolRange[3])
+            ret.push(symbols[0]);
+        else {
+            //TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
+            this._producersOf(symbols[0]).forEach(producer => {
+                this._first(producer.rhs).forEach(symbol => {
+                    if (!ret.includes(symbol))
+                        ret.push(symbol);
+                });
+            });
+        }
+        if (ret.includes(this._getSymbolId({ type: 'sptoken', content: 'EPSILON' }))) {
+            this._first(symbols.slice(1)).forEach(symbol => {
+                if (!ret.includes(symbol))
+                    ret.push(symbol);
+            });
+        }
+        return ret;
+    }
+    /**
+     * FOLLOW函数
+     * @param nonterminal
+     */
+    _follow(nonterminal) {
+        let ret = [];
+        let epsilon = this._getSymbolId({ type: 'sptoken', content: 'EPSILON' });
+        if (nonterminal == this._startSymbol)
+            ret.push(this._getSymbolId({ type: 'sptoken', content: 'END' }));
+        for (let producer of this._producers) {
+            for (let i = 0; i < producer.rhs.length; i++) {
+                if (producer.rhs[i] == nonterminal) {
+                    let first = this._first(producer.rhs.slice(i + 1));
+                    first.forEach(symbol => {
+                        if (symbol != epsilon && !ret.includes(symbol))
+                            ret.push(symbol);
+                    });
+                    if (first.includes(epsilon) && nonterminal != producer.lhs) {
+                        this._follow(producer.lhs).forEach(symbol => {
+                            if (!ret.includes(symbol))
+                                ret.push(symbol);
+                        });
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+    /**
+     * 获取指定非终结符为左侧的所有产生式
+     * @param nonterminal 产生式左侧的非终结符
+     */
+    _producersOf(nonterminal) {
+        let ret = [];
+        for (let producer of this._producers) {
+            if (producer.lhs == nonterminal)
+                ret.push(producer);
+        }
+        return ret;
     }
     /**
      * 将产生式转换为单条存储的、数字->数字[]形式
