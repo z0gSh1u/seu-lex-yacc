@@ -67,7 +67,7 @@ class FiniteAutomata {
     getTransforms(state, spAlpha) {
         let res = this._transformAdjList[this._states.indexOf(state)];
         if (spAlpha)
-            return res.filter((v) => spAlpha.includes(v.alpha));
+            return res.filter(v => spAlpha.includes(v.alpha));
         else
             return res;
     }

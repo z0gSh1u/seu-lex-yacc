@@ -9,9 +9,11 @@ export interface Token {
   name: string
   literal: string
 }
-export const SpToken = {
-  END: { name: '[END]', literal: '' },
-}
+
+export const SpToken: string[] = [
+  'END',
+  'EPSILON'
+]
 
 // either tokenName or literal
 export interface Operator {
@@ -52,5 +54,14 @@ export class LR1Producer {
     this._lhs = lhs
     this._rhs = [...rhs]
     this._action = action
+  }
+  get lhs() {
+    return this._lhs
+  }
+  get rhs() {
+    return this._rhs
+  }
+  get action() {
+    return this._action
   }
 }
