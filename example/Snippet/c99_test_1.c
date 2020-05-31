@@ -3,10 +3,10 @@ int main() {
   register long b = 1024;
   if (ad > b) {
     short i = 2;
-    while (i -= 1) printf("gaolao niubi");
+    while (i -= 1) printf("hello world");
   } else {
     do {
-      happy("gaolao tql");
+      happy("tql?!");
     } while (1);
     b = 2 / 3;
   }
