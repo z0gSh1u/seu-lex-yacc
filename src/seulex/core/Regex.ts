@@ -255,13 +255,13 @@ export class Regex {
           else if (raw[i][j].trim() === '')
             // 处理纯空格
             // TODO: \t\r\n反应不正确
-            parts.push(...Array(raw[i][j].length).fill('[space]'), '[dot]')
+            parts.push(...Array(raw[i][j].length).fill('[ws]'), '[dot]')
           else parts.push(raw[i][j], '[dot]')
         }
       else parts.push(...raw[i].split(''), '[dot]') // 非引号内内容，需要处理特殊符号，先保留，下面开始处理
     }
     parts.splice(parts.length - 1, 1) // 去掉最后一个多加的[dot]
-    parts = parts.map(v => (v.trim().length === 0 ? '[space]' : v))
+    parts = parts.map(v => (v.trim().length === 0 ? '[ws]' : v))
     let waitingEscape = false
     for (let i = 0; i < parts.length; i++) {
       let part = parts[i].trim()
@@ -271,7 +271,7 @@ export class Regex {
         continue
       }
       if (part.length === 0) {
-        continue // 当前是空格，就跳过。该策略不会影响空格识别，因为空格已被转化为[space]
+        continue // 当前是空格，就跳过。该策略不会影响空格识别，因为空格已被转化为[ws]
       } else if (part[0] === '|') {
         while (stack.length && inStr(stack[stack.length - 1], '.*')) res.push(stack.pop()) // 优先级更低的是.*，全部弹出。数组模拟栈，栈顶是数组尾部
         stack.push('|') // 弹完了加上本身

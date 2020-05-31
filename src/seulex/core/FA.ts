@@ -89,14 +89,13 @@ export class FiniteAutomata {
    */
   protected getTransforms(state: State, spAlpha?: number[]) {
     let res = this._transformAdjList[this._states.indexOf(state)]
-    if (spAlpha) return res.filter((v) => spAlpha.includes(v.alpha))
+    if (spAlpha) return res.filter(v => spAlpha.includes(v.alpha))
     else return res
   }
 
   /**
    * 设置从该状态出发的所有一步转移
    */
-
   protected setTransforms(state: State, transfroms: Transform[]) {
     this._transformAdjList[this._states.indexOf(state)] = transfroms
   }

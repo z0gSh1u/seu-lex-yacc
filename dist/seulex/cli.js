@@ -2,7 +2,7 @@
 /**
  * seulex CLI 工具
  * 使用：
- *    bin/seulex.cmd [lex_file] [options]
+ *    node <path_to_project>/dist/seulex/cli.js [lex_file] [options]
  *    [options]:
  *      -p: 美化生成的C代码。
  *      -c: 在生成代码后自动调用gcc编译。如果需要补充gcc参数，请使用"-c <supplement>"（保留引号）。

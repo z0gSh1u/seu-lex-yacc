@@ -235,7 +235,7 @@ char TokenName[0x5a][256] = {
 {D}+								{ return(CONSTANT); }
 {D}*"."{D}*					{ return(CONSTANT); }
 {D}+"."{D}*					{ return(CONSTANT); }
-\"[^"]*\" { return (STRING_LITERAL); }
+\"[^"\n]*\" { return (STRING_LITERAL); }
 "..."			{ return(ELLIPSIS); }
 ">>="			{ return(RIGHT_ASSIGN); }
 "<<="			{ return(LEFT_ASSIGN); }
