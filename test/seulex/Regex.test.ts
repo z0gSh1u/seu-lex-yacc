@@ -28,6 +28,6 @@ test('_toPostfix', () => {
   expect(new Regex(`oh\\d`).postFix).toBe(`o h [dot] 0 1 2 3 4 5 6 7 8 9 | | | | | | | | | [dot]`)
   expect(new Regex(`"oh\\s"`).postFix).toBe(`o h [dot] \\ \\ [dot] s [dot]`)
   expect(new Regex(`"tell me"`).postFix).toBe(
-    `t e [dot] l [dot] l [dot] [space] [dot] m [dot] e [dot]`
+    `t e [dot] l [dot] l [dot] [ws] [dot] m [dot] e [dot]`
   )
 })

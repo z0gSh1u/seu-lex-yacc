@@ -12,7 +12,7 @@ import {
   PATTERN_CONTINUED_PRODUCER,
   PATTERN_BLOCK_PRODUCER,
 } from '../../utils'
-import { YaccParserProducer, Operator } from './Grammar'
+import { YaccParserProducer, YaccParserOperator } from './Grammar'
 
 /**
  * .y文件解析器
@@ -27,7 +27,7 @@ export class YaccParser {
   private _userCodePart!: string // 最后的用户代码部分
 
   private _tokenDecl!: string[] // 定义的Token（lex可以送来的）
-  private _operatorDecl!: Operator[] // 定义的运算符
+  private _operatorDecl!: YaccParserOperator[] // 定义的运算符
   private _nonTerminals!: string[] // 定义的非终结符
   private _producers!: YaccParserProducer[] // 定义的产生式
   private _startSymbol!: string // 开始符号，未指定会自动分配第一个

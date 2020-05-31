@@ -8,18 +8,16 @@
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-import fs from 'fs'
+import fs, { stat } from 'fs'
 import path from 'path'
 import * as childProcess from 'child_process'
+import { LR1DFA } from './Grammar'
+import { LR1Analyzer } from './LR1'
 
-/**
- * 可视化自动机
- * @param viewNow 是否立即打开浏览器查看
- */
-// TODO:
-export function visualizeFA(viewNow = true) {
+export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, viewNow = true) {
   let dumpObject: {
     nodes: {
+      key: string
       label: string
       color: string
     }[]
@@ -30,10 +28,39 @@ export function visualizeFA(viewNow = true) {
       label: string
     }[]
   } = { nodes: [], edges: [] }
-  // 计算布局并导出
+  // 设置点（项目集）
+  for (let i = 0; i < lr1dfa.states.length; i++) {
+    let stateString = `I${i}\n=======\n`
+    for (let item of lr1dfa.states[i].items) {
+      stateString += lr1Analyzer.getSymbolById(item.producer.lhs).content
+      stateString += ' -> '
+      let j = 0
+      for (; j < item.producer.rhs.length; j++) {
+        if (j == item.dotPosition) stateString += '●'
+        stateString += lr1Analyzer.getSymbolById(item.producer.rhs[j]).content + ' '
+      }
+      if (j == item.dotPosition)
+        stateString = stateString.substring(0, stateString.length - 1) + '●'
+      stateString += ' § '
+      stateString += lr1Analyzer.getSymbolById(item.lookahead).content
+      stateString += '\n'
+    }
+    dumpObject.nodes.push({ key: `K${i}`, label: stateString.trim(), color: '#FFFFFF' })
+  }
+  // 设置边（迁移）
+  for (let i = 0; i < lr1dfa.states.length; i++) {
+    lr1dfa.adjList[i].forEach(x => {
+      dumpObject.edges.push({
+        source: `K${i}`,
+        target: `K${x.to}`,
+        name: `K${i}_${x.to}`,
+        label: lr1Analyzer.getSymbolById(x.alpha).content,
+      })
+    })
+  }
   let dagreJSON = JSON.stringify(dumpObject, null, 2)
-  const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer')
-  const shape = 'circle'
+  const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer2')
+  const shape = 'rect'
   fs.writeFileSync(
     path.join(VisualizerPath, './data.js'),
     `window._seulex_shape = '${shape}'; let data = ${dagreJSON}`

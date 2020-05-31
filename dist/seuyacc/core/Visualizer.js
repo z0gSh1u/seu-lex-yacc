@@ -21,19 +21,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const childProcess = __importStar(require("child_process"));
-/**
- * 可视化自动机
- * @param viewNow 是否立即打开浏览器查看
- */
-// TODO:
-function visualizeFA(viewNow = true) {
+function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
     let dumpObject = { nodes: [], edges: [] };
-    // 计算布局并导出
+    // 设置点（项目集）
+    for (let i = 0; i < lr1dfa.states.length; i++) {
+        let stateString = `I${i}\n=======\n`;
+        for (let item of lr1dfa.states[i].items) {
+            stateString += lr1Analyzer.getSymbolById(item.producer.lhs).content;
+            stateString += ' -> ';
+            let j = 0;
+            for (; j < item.producer.rhs.length; j++) {
+                if (j == item.dotPosition)
+                    stateString += '●';
+                stateString += lr1Analyzer.getSymbolById(item.producer.rhs[j]).content + ' ';
+            }
+            if (j == item.dotPosition)
+                stateString = stateString.substring(0, stateString.length - 1) + '●';
+            stateString += ' § ';
+            stateString += lr1Analyzer.getSymbolById(item.lookahead).content;
+            stateString += '\n';
+        }
+        dumpObject.nodes.push({ key: `K${i}`, label: stateString.trim(), color: '#FFFFFF' });
+    }
+    // 设置边（迁移）
+    for (let i = 0; i < lr1dfa.states.length; i++) {
+        lr1dfa.adjList[i].forEach(x => {
+            dumpObject.edges.push({
+                source: `K${i}`,
+                target: `K${x.to}`,
+                name: `K${i}_${x.to}`,
+                label: lr1Analyzer.getSymbolById(x.alpha).content,
+            });
+        });
+    }
     let dagreJSON = JSON.stringify(dumpObject, null, 2);
-    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer');
-    const shape = 'circle';
+    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer2');
+    const shape = 'rect';
     fs_1.default.writeFileSync(path_1.default.join(VisualizerPath, './data.js'), `window._seulex_shape = '${shape}'; let data = ${dagreJSON}`);
     // 启动浏览器显示
     viewNow && childProcess.exec(`start ${path_1.default.join(VisualizerPath, './index.html')} `);
 }
-exports.visualizeFA = visualizeFA;
+exports.visualizeGOTOGraph = visualizeGOTOGraph;

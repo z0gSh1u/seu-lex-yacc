@@ -9,46 +9,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Grammar_1 = require("./Grammar");
 const utils_1 = require("../../utils");
-/**
- *             LR1DFA
- *  LR1ItemSet
- *  _________
- * |         |
- * | LR1Item |
- * | LR1Item | -----> ...
- * | ...     |
- * |_________|
- */
-/**
- * LR1项目
- */
-class LR1Item {
-}
-exports.LR1Item = LR1Item;
-/**
- * LR1项目集（LR1自动机状态）
- */
-class LR1ItemSet {
-}
-exports.LR1ItemSet = LR1ItemSet;
-/**
- * LR1项目集族（LR1自动机）
- */
-class LR1DFA {
-}
-exports.LR1DFA = LR1DFA;
 class LR1Analyzer {
+    // private _firstMap: Map<number, number[]>
     constructor(yaccParser) {
         this._symbols = [];
         // @ts-ignore
         this._symbolRange = [];
         this._producers = [];
         this._operators = yaccParser.operatorDecl;
+        // this._firstMap = new Map<number, number[]>() // expr->firstSymbol[]
         this._distributeId(yaccParser);
         this._convertProducer(yaccParser.producers);
-    }
-    get symbols() {
-        return this._symbols;
     }
     /**
      * 为符号分配编号
@@ -58,6 +29,7 @@ class LR1Analyzer {
         // 0~127 ASCII，文字符号编号
         // 128~X Token编号
         // X+1~Y 非终结符编号
+        // Y+1~Y+3 特殊符号
         for (let i = 0; i < 128; i++)
             this._symbols.push({ type: 'ascii', content: String.fromCharCode(i) });
         // 标记一下ASCII中的不可打印字符
@@ -71,8 +43,9 @@ class LR1Analyzer {
         for (let nonTerminal of yaccParser.nonTerminals)
             this._symbols.push({ type: 'nonterminal', content: nonTerminal });
         this._symbolRange.push(this._symbols.length);
-        for (let spToken of Grammar_1.SpToken)
-            this._symbols.push({ type: 'sptoken', content: spToken });
+        for (let spSymbol of Object.values(Grammar_1.SpSymbol))
+            this._symbols.push(spSymbol);
+        this._symbolRange.push(this._symbols.length);
         this._startSymbol = this._getSymbolId({ content: yaccParser.startSymbol });
         utils_1.assert(this._startSymbol, 'LR1 startSymbol unset.');
     }
@@ -87,26 +60,40 @@ class LR1Analyzer {
         return -1;
     }
     /**
-     * FIRST函数
-     * @param symbols
+     * 根据编号获得符号
      */
-    _first(symbols) {
+    _getSymbolById(id) {
+        return this._symbols[id];
+    }
+    getSymbolById(id) {
+        return this._getSymbolById(id);
+    }
+    /**
+     * 判断符号是否是某个类型
+     */
+    _symbolTypeIs(id, type) {
+        return this._symbols[id].type === type;
+    }
+    /**
+     * 求取FIRST集
+     */
+    FIRST(symbols) {
         if (!symbols.length)
             return [this._getSymbolId({ type: 'sptoken', content: 'EPSILON' })];
         let ret = [];
         if (symbols[0] < this._symbolRange[2] || symbols[0] >= this._symbolRange[3])
             ret.push(symbols[0]);
         else {
-            //TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
+            // TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
             this._producersOf(symbols[0]).forEach(producer => {
-                this._first(producer.rhs).forEach(symbol => {
+                this.FIRST(producer.rhs).forEach(symbol => {
                     if (!ret.includes(symbol))
                         ret.push(symbol);
                 });
             });
         }
         if (ret.includes(this._getSymbolId({ type: 'sptoken', content: 'EPSILON' }))) {
-            this._first(symbols.slice(1)).forEach(symbol => {
+            this.FIRST(symbols.slice(1)).forEach(symbol => {
                 if (!ret.includes(symbol))
                     ret.push(symbol);
             });
@@ -114,24 +101,23 @@ class LR1Analyzer {
         return ret;
     }
     /**
-     * FOLLOW函数
-     * @param nonterminal
+     * 求取FOLLOW集
      */
-    _follow(nonterminal) {
+    FOLLOW(nonterminal) {
         let ret = [];
-        let epsilon = this._getSymbolId({ type: 'sptoken', content: 'EPSILON' });
+        let epsilon = this._getSymbolId(Grammar_1.SpSymbol.EPSILON);
         if (nonterminal == this._startSymbol)
-            ret.push(this._getSymbolId({ type: 'sptoken', content: 'END' }));
+            ret.push(this._getSymbolId(Grammar_1.SpSymbol.END));
         for (let producer of this._producers) {
             for (let i = 0; i < producer.rhs.length; i++) {
                 if (producer.rhs[i] == nonterminal) {
-                    let first = this._first(producer.rhs.slice(i + 1));
+                    let first = this.FIRST(producer.rhs.slice(i + 1));
                     first.forEach(symbol => {
                         if (symbol != epsilon && !ret.includes(symbol))
                             ret.push(symbol);
                     });
                     if (first.includes(epsilon) && nonterminal != producer.lhs) {
-                        this._follow(producer.lhs).forEach(symbol => {
+                        this.FOLLOW(producer.lhs).forEach(symbol => {
                             if (!ret.includes(symbol))
                                 ret.push(symbol);
                         });
@@ -143,14 +129,12 @@ class LR1Analyzer {
     }
     /**
      * 获取指定非终结符为左侧的所有产生式
-     * @param nonterminal 产生式左侧的非终结符
      */
     _producersOf(nonterminal) {
         let ret = [];
-        for (let producer of this._producers) {
+        for (let producer of this._producers)
             if (producer.lhs == nonterminal)
                 ret.push(producer);
-        }
         return ret;
     }
     /**
@@ -176,11 +160,98 @@ class LR1Analyzer {
             }
         }
     }
-    epsilonClosure(states) {
-        let stack = [...states]; // 深搜辅助栈
+    // /**
+    //  * 求取所有现有符号的FIRST集作为基础
+    //  */
+    // private FIRSTAll() {
+    //   for (let i = 0; i < this._symbolRange[4]; i++) this._firstMap.set(i, this.FIRST([i]))
+    // }
+    constructLR1DFA() {
+        // 将C初始化为{CLOSURE}({|S'->.S,$|})
+        let initProducer = this._producersOf(this._startSymbol)[0];
+        let initItem = new Grammar_1.LR1Item(initProducer, this._getSymbolId(Grammar_1.SpSymbol.END));
+        let I0 = new Grammar_1.LR1State([initItem]);
+        I0 = this.CLOSURE(I0);
+        let dfa = new Grammar_1.LR1DFA(0);
+        dfa.addState(I0);
+        let stack = [0];
+        while (stack.length) {
+            let stateToProcess = dfa.states[stack.pop()];
+            let goto = this.GOTO(stateToProcess);
+            for (let [key, val] of goto.entries()) {
+                const stateIndex = dfa.states.findIndex(x => Grammar_1.LR1State.sameState(x, val));
+                if (stateIndex !== -1) {
+                    // 存在一致状态，直接连上边即可
+                    dfa.link(dfa.states.indexOf(stateToProcess), stateIndex, key);
+                }
+                else {
+                    let newState = new Grammar_1.LR1State(val.items);
+                    dfa.addState(newState);
+                    dfa.link(dfa.states.indexOf(stateToProcess), dfa.states.length - 1, key);
+                    stack.push(dfa.states.length - 1);
+                }
+            }
+        }
+        return dfa;
     }
-    firstSet() {
-        return;
+    /**
+     * 求取GOTO(I, X)
+     * 做了一些改进，变成GOTO(I)(X)
+     * 见龙书算法4.53
+     */
+    GOTO(state) {
+        var _a;
+        let res = new Map(); // alpha, state
+        for (let item of state.items) {
+            if (item.dotAtLast())
+                continue;
+            let alpha = item.producer.rhs[item.dotPosition];
+            let newItem = Grammar_1.LR1Item.copy(item, true);
+            if (res.has(alpha)) {
+                (_a = res.get(alpha)) === null || _a === void 0 ? void 0 : _a.addItem(newItem);
+            }
+            else {
+                res.set(alpha, new Grammar_1.LR1State([newItem]));
+            }
+        }
+        return res;
+    }
+    /**
+     * 求取CLOSURE(I)
+     * 见龙书算法4.53
+     */
+    CLOSURE(state) {
+        let res = Grammar_1.LR1State.copy(state);
+        let allItemsOfI = [...state.items]; // for I中的每一个项
+        while (allItemsOfI.length) {
+            let oneItemOfI = allItemsOfI.pop();
+            if (oneItemOfI.dotAtLast())
+                continue; // 点号到最后，不能扩展
+            let currentSymbol = oneItemOfI.producer.rhs[oneItemOfI.dotPosition];
+            if (!this._symbolTypeIs(currentSymbol, 'nonterminal'))
+                continue; // 非终结符打头才有CLOSURE
+            let extendProducers = [];
+            for (let producerInG of this._producers) // for G'中的每个产生式
+                producerInG.lhs === currentSymbol && extendProducers.push(producerInG); // 左手边是当前符号的，就可以作为扩展用
+            let lookahead = oneItemOfI.lookahead;
+            for (let extendProducer of extendProducers) {
+                let newLookaheads = this.FIRST(oneItemOfI.producer.rhs.slice(oneItemOfI.dotPosition));
+                if (newLookaheads.includes(this._getSymbolId(Grammar_1.SpSymbol.EPSILON))) {
+                    // 存在epsilon作为FIRST符
+                    newLookaheads = newLookaheads.filter(v => v != this._getSymbolId(Grammar_1.SpSymbol.EPSILON));
+                    newLookaheads.push(lookahead);
+                }
+                for (let lookahead of newLookaheads) {
+                    // for FIRST(βa)中的每个终结符号b
+                    let newItem = new Grammar_1.LR1Item(extendProducer, lookahead);
+                    if (state.items.some(item => Grammar_1.LR1Item.sameItem(item, newItem)))
+                        continue; // 重复的情况不再添加
+                    allItemsOfI.push(newItem); // 继续扩展
+                    res.addItem(newItem);
+                }
+            }
+        }
+        return res;
     }
 }
 exports.LR1Analyzer = LR1Analyzer;
