@@ -19,7 +19,7 @@ else if (args._.length !== 1) {
     utils_1.stdoutPrint(`Too many arguments or .l file not specified.\n`);
 }
 else {
-    // TODO: 
+    // TODO:
 }
 utils_1.stdoutPrint(`[ All work done! ]\n`);
 const tok = new Date().getTime();

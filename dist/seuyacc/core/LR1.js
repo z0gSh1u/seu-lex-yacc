@@ -79,9 +79,9 @@ class LR1Analyzer {
      */
     FIRST(symbols) {
         if (!symbols.length)
-            return [this._getSymbolId({ type: 'sptoken', content: 'EPSILON' })];
+            return [this._getSymbolId(Grammar_1.SpSymbol.EPSILON)];
         let ret = [];
-        if (symbols[0] < this._symbolRange[2] || symbols[0] >= this._symbolRange[3])
+        if (this._symbolTypeIs(symbols[0], 'nonterminal'))
             ret.push(symbols[0]);
         else {
             // TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
@@ -92,7 +92,7 @@ class LR1Analyzer {
                 });
             });
         }
-        if (ret.includes(this._getSymbolId({ type: 'sptoken', content: 'EPSILON' }))) {
+        if (ret.includes(this._getSymbolId(Grammar_1.SpSymbol.EPSILON))) {
             this.FIRST(symbols.slice(1)).forEach(symbol => {
                 if (!ret.includes(symbol))
                     ret.push(symbol);
@@ -176,6 +176,7 @@ class LR1Analyzer {
         dfa.addState(I0);
         let stack = [0];
         while (stack.length) {
+            console.log(stack.length);
             let stateToProcess = dfa.states[stack.pop()];
             let goto = this.GOTO(stateToProcess);
             for (let [key, val] of goto.entries()) {

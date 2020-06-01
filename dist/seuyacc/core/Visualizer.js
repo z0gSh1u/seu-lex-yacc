@@ -14,13 +14,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 自动机可视化工具
+ * 可视化工具
  * by z0gSh1u
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const childProcess = __importStar(require("child_process"));
+/**
+ * 可视化GOTO图（LR1DFA）
+ */
 function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
     let dumpObject = { nodes: [], edges: [] };
     // 设置点（项目集）
@@ -55,7 +58,7 @@ function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
         });
     }
     let dagreJSON = JSON.stringify(dumpObject, null, 2);
-    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer2');
+    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer');
     const shape = 'rect';
     fs_1.default.writeFileSync(path_1.default.join(VisualizerPath, './data.js'), `window._seulex_shape = '${shape}'; let data = ${dagreJSON}`);
     // 启动浏览器显示

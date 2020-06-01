@@ -21,6 +21,7 @@ import { ESCAPE_CONVERT, inStr } from '../../utils'
 export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
   let dumpObject: {
     nodes: {
+      key: string
       label: string
       color: string
     }[]
@@ -34,6 +35,7 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
   // 设置点
   for (let i = 0; i < fa.states.length; i++) {
     dumpObject.nodes.push({
+      key: `K${i.toString()}`,
       label: i.toString(),
       color: fa.startStates.includes(fa.states[i])
         ? '#46A3FF'

@@ -3,17 +3,20 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 /**
- * 自动机可视化工具
+ * 可视化工具
  * by z0gSh1u
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */
 
-import fs, { stat } from 'fs'
+import fs from 'fs'
 import path from 'path'
 import * as childProcess from 'child_process'
 import { LR1DFA } from './Grammar'
 import { LR1Analyzer } from './LR1'
 
+/**
+ * 可视化GOTO图（LR1DFA）
+ */
 export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, viewNow = true) {
   let dumpObject: {
     nodes: {
@@ -59,7 +62,7 @@ export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, vie
     })
   }
   let dagreJSON = JSON.stringify(dumpObject, null, 2)
-  const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer2')
+  const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer')
   const shape = 'rect'
   fs.writeFileSync(
     path.join(VisualizerPath, './data.js'),

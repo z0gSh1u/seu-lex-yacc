@@ -28,6 +28,5 @@ fs.mkdirSync(DIST_PATH)
 
 // 处理可视化工具的data.js
 fs.writeFileSync(path.join(__dirname, '../enhance/Visualizer/data.js'), '')
-fs.writeFileSync(path.join(__dirname, '../enhance/Visualizer2/data.js'), '')
 
 console.log(`[Clean] Task finished. Start building...`)

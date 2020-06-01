@@ -107,10 +107,9 @@ export class LR1Analyzer {
    * 求取FIRST集
    */
   private FIRST(symbols: number[]): number[] {
-    if (!symbols.length) return [this._getSymbolId({ type: 'sptoken', content: 'EPSILON' })]
+    if (!symbols.length) return [this._getSymbolId(SpSymbol.EPSILON)]
     let ret: number[] = []
-    if (symbols[0] < this._symbolRange[2] || symbols[0] >= this._symbolRange[3])
-      ret.push(symbols[0])
+    if (this._symbolTypeIs(symbols[0], 'nonterminal')) ret.push(symbols[0])
     else {
       // TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
       this._producersOf(symbols[0]).forEach(producer => {
@@ -119,7 +118,7 @@ export class LR1Analyzer {
         })
       })
     }
-    if (ret.includes(this._getSymbolId({ type: 'sptoken', content: 'EPSILON' }))) {
+    if (ret.includes(this._getSymbolId(SpSymbol.EPSILON))) {
       this.FIRST(symbols.slice(1)).forEach(symbol => {
         if (!ret.includes(symbol)) ret.push(symbol)
       })
@@ -203,6 +202,7 @@ export class LR1Analyzer {
     dfa.addState(I0)
     let stack = [0]
     while (stack.length) {
+      console.log(stack.length)
       let stateToProcess = dfa.states[stack.pop() as number]
       let goto = this.GOTO(stateToProcess)
       for (let [key, val] of goto.entries()) {

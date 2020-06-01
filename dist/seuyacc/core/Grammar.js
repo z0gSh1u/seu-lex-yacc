@@ -2,11 +2,6 @@
 /* eslint-disable @typescript-eslint/member-delimiter-style */
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 语法相关定义
- * by Withod, z0gSh1u
- * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
- */
-/**
  * 特殊Symnpl
  */
 exports.SpSymbol = {
