@@ -35,7 +35,8 @@ export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, vie
 
   for (let i = 0; i < lr1dfa.states.length; i++) {
     let topPart = `I${i}\n=======\n`,
-      stateLines = []
+      stateLines = [],
+      kernelItem = true
     for (let item of lr1dfa.states[i].items) {
       let leftPart = ''
       leftPart += lr1Analyzer.symbols[item.rawProducer.lhs].content
@@ -53,6 +54,12 @@ export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, vie
         stateLines[sameLeftPos].lookahead += '/' + lookahead
       } else {
         stateLines.push({ leftPart, lookahead })
+      }
+      if (kernelItem) {
+        leftPart = '--------\n'
+        lookahead = ''
+        stateLines.push({ leftPart, lookahead })
+        kernelItem = false
       }
     }
     console.log(stateLines)

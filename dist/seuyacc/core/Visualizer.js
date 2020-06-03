@@ -28,7 +28,7 @@ function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
     let dumpObject = { nodes: [], edges: [] };
     // 设置点（项目集）
     for (let i = 0; i < lr1dfa.states.length; i++) {
-        let topPart = `I${i}\n=======\n`, stateLines = [];
+        let topPart = `I${i}\n=======\n`, stateLines = [], kernelItem = true;
         for (let item of lr1dfa.states[i].items) {
             let leftPart = '';
             leftPart += lr1Analyzer.symbols[item.rawProducer.lhs].content;
@@ -49,6 +49,12 @@ function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
             }
             else {
                 stateLines.push({ leftPart, lookahead });
+            }
+            if (kernelItem) {
+                leftPart = '--------\n';
+                lookahead = '';
+                stateLines.push({ leftPart, lookahead });
+                kernelItem = false;
             }
         }
         console.log(stateLines);
