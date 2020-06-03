@@ -256,6 +256,18 @@ class LR1Analyzer {
     }
     toACTIONGOTOTable() {
         let ACTIONTable = [], GOTOTable = [];
+        (() => {
+            // 初始化ACTIONTable
+            for (let i = 0; i < this._dfa.states.length; i++) {
+                let row = [];
+                for (let j = 0; j < this._symbols.length; j++) {
+                    if (this._symbolTypeIs(j, 'nonterminal'))
+                        continue;
+                    row.push({ type: 'none', meet: -1, data: -1 });
+                }
+                ACTIONTable.push(row);
+            }
+        })();
         for (let i = 0; i < this._dfa.states.length; i++) {
             let ACTION = [], GOTO = [];
             for (let j = 0; j < this._dfa.adjList[i].length; j++) {

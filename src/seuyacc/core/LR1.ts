@@ -297,12 +297,23 @@ export class LR1Analyzer {
 
   toACTIONGOTOTable() {
     type ACTIONCell = {
-      type: 'shift' | 'reduce' | 'acc'
+      type: 'shift' | 'reduce' | 'acc' | 'none'
       meet: number
       data: number // state or producer
     }
     let ACTIONTable: ACTIONCell[][] = [],
       GOTOTable: number[][] = []
+    ;(() => {
+      // 初始化ACTIONTable
+      for (let i = 0; i < this._dfa.states.length; i++) {
+        let row: ACTIONCell[] = []
+        for (let j = 0; j < this._symbols.length; j++) {
+          if (this._symbolTypeIs(j, 'nonterminal')) continue
+          row.push({ type: 'none', meet: -1, data: -1 })
+        }
+        ACTIONTable.push(row)
+      }
+    })()
     for (let i = 0; i < this._dfa.states.length; i++) {
       let ACTION: ACTIONCell[] = [],
         GOTO: number[] = []
