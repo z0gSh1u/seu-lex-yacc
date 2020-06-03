@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
       description: node.label,
       ttText: node.label,
     }
-    g.setNode(node.label, value)
+    g.setNode(node.key, value)
   }
   // 设置边
   for (let edge of data.edges) {
@@ -43,5 +43,4 @@ document.addEventListener('DOMContentLoaded', function () {
       (height - g.graph().height) / 2
     )
   )
-  tippy('g.node', { size: 'small', interactive: true })
 })

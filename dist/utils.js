@@ -1,6 +1,8 @@
 "use strict";
-// 工具函数
-// by z0gSh1u @ 2020-05
+/**
+ * 工具函数
+ * by z0gSh1u, Withod
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 // ASCII打印字符范围
 exports.ASCII_MIN = 32;

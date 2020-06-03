@@ -1,5 +1,7 @@
-// 工具函数
-// by z0gSh1u @ 2020-05
+/**
+ * 工具函数
+ * by z0gSh1u, Withod
+ */
 
 // ASCII打印字符范围
 export const ASCII_MIN = 32

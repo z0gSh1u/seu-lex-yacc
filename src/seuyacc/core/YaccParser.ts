@@ -12,7 +12,7 @@ import {
   PATTERN_CONTINUED_PRODUCER,
   PATTERN_BLOCK_PRODUCER,
 } from '../../utils'
-import { YaccParserProducer, Operator } from './Grammar'
+import { YaccParserProducer, YaccParserOperator } from './Grammar'
 
 /**
  * .y文件解析器
@@ -20,17 +20,17 @@ import { YaccParserProducer, Operator } from './Grammar'
 export class YaccParser {
   private _rawContent!: string
   private _splitContent!: string[]
-
+  // 四部分的文字内容
   private _copyPart!: string // {% %}之间的
   private _infoPart!: string // 各种%xxx
   private _producerPart!: string // 主体部分，各种产生式
   private _userCodePart!: string // 最后的用户代码部分
-
+  // YaccParser阶段，以下内容均为文字，不做编号
   private _tokenDecl!: string[] // 定义的Token（lex可以送来的）
-  private _operatorDecl!: Operator[] // 定义的运算符
-  private _nonTerminals!: string[] // 定义的非终结符
+  private _operatorDecl!: YaccParserOperator[] // 定义的运算符
   private _producers!: YaccParserProducer[] // 定义的产生式
-  private _startSymbol!: string // 开始符号，未指定会自动分配第一个
+  private _nonTerminals!: string[] // 定义的非终结符，在读产生式的过程中顺便填充
+  private _startSymbol!: string // 开始非终结符
 
   get copyPart() {
     return this._copyPart
