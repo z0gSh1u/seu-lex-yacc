@@ -202,6 +202,12 @@ export class LR1Analyzer {
 
   constructLR1DFA() {
     // 将C初始化为 {CLOSURE}({|S'->S, $|})
+    let newStartSymbolContent = this._symbols[this._startSymbol].content + '\''
+    while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
+      newStartSymbolContent += '\''
+    this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent})
+    this._producers.push(new LR1Producer(this._symbols.length - 1, [this._startSymbol], this._producersOf(this._startSymbol)[0].action))
+    this._startSymbol = this._symbols.length - 1
     let initProducer = this._producersOf(this._startSymbol)[0]
     let I0 = this.CLOSURE(
       new LR1State([
@@ -271,7 +277,7 @@ export class LR1Analyzer {
       for (let extendProducer of extendProducers) {
         // 求取新的展望符号
         let newLookaheads = this.FIRST(
-          this._producers[oneItemOfI.producer].rhs.slice(oneItemOfI.dotPosition)
+          this._producers[oneItemOfI.producer].rhs.slice(oneItemOfI.dotPosition + 1)
         )
         // 存在epsilon作为FIRST符，可以用它“闪过”
         if (newLookaheads.includes(this._getSymbolId(SpSymbol.EPSILON))) {
