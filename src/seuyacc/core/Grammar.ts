@@ -159,7 +159,10 @@ export class LR1State {
     return new LR1State(state._items.map(x => LR1Item.copy(x)))
   }
   static same(s1: LR1State, s2: LR1State) {
-    return s1._items.every(x => s2._items.some(y => LR1Item.same(x, y)))
+    return (
+      s1._items.every(x => s2._items.some(y => LR1Item.same(x, y))) &&
+      s2._items.every(x => s1._items.some(y => LR1Item.same(x, y)))
+    )
   }
 }
 
@@ -190,5 +193,28 @@ export class LR1DFA {
     this._startStateId = startStateId
     this._states = []
     this._adjList = []
+  }
+}
+
+/**
+ * LR1运算符
+ */
+export class LR1Operator {
+  private _symbolId: number
+  private _assoc: 'left' | 'right' | 'non'
+  private _precedence: number // the bigger the higher
+  get symbolId() {
+    return this._symbolId
+  }
+  get assoc() {
+    return this._assoc
+  }
+  get precedence() {
+    return this._precedence
+  }
+  constructor(symbolId: number, assoc: 'left' | 'right' | 'non', precedence: number) {
+    this._symbolId = symbolId
+    this._assoc = assoc
+    this._precedence = precedence
   }
 }

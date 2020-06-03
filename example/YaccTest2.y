@@ -2,21 +2,18 @@
 
 %}
 
-%token c d e
-%start NS
+%token a
+%start S
 %%
 
-NS
-  : S
-  ;
-
 S
-  : C C
+  : '(' L ')'
+  | a
   ;
 
-C
-  : c C
-  | d e
+L
+  : L ',' S
+  | S
   ;
 
 

@@ -21,6 +21,62 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const childProcess = __importStar(require("child_process"));
+function visualizeACTIONGOTOTable(lr1Analyzer, viewNow = true) {
+    let ACTIONHead = [];
+    for (let i of lr1Analyzer.ACTIONReverseLookup)
+        ACTIONHead.push(lr1Analyzer.getSymbolString(i));
+    let GOTOHead = [];
+    for (let i of lr1Analyzer.GOTOReverseLookup)
+        GOTOHead.push(lr1Analyzer.getSymbolString(i));
+    let colUsage = Array(ACTIONHead.length).fill(0);
+    let ACTIONTable = [];
+    for (let i = 0; i < lr1Analyzer.ACTIONTable.length; i++) {
+        let row = [];
+        for (let j = 0; j < lr1Analyzer.ACTIONTable[i].length; j++) {
+            const cell = lr1Analyzer.ACTIONTable[i][j];
+            switch (cell.type) {
+                case 'acc':
+                    row.push('acc');
+                    colUsage[j] = 1;
+                    break;
+                case 'none':
+                    row.push('');
+                    break;
+                case 'reduce':
+                    row.push(`r(${lr1Analyzer.formatPrintProducer(lr1Analyzer.producers[cell.data]).trim()})`);
+                    colUsage[j] = 1;
+                    break;
+                case 'shift':
+                    row.push(`s${cell.data}`);
+                    colUsage[j] = 1;
+                    break;
+            }
+        }
+        ACTIONTable.push(row);
+    }
+    let GOTOTable = [];
+    for (let i = 0; i < lr1Analyzer.GOTOTable.length; i++) {
+        let row = [];
+        for (let cell of lr1Analyzer.GOTOTable[i])
+            row.push(cell === -1 ? '' : cell);
+        GOTOTable.push(row);
+    }
+    // 去除ACTIONTable的空列
+    for (let col = colUsage.length - 1; col >= 0; col--) {
+        if (colUsage[col] == 0) {
+            ACTIONHead.splice(col, 1);
+            for (let row = 0; row < ACTIONTable.length; row++)
+                ACTIONTable[row].splice(col, 1);
+        }
+    }
+    const dumpObject = { ACTIONHead, GOTOHead, ACTIONTable, GOTOTable };
+    const dumpJSON = JSON.stringify(dumpObject, null, 2);
+    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/TableVisualizer');
+    fs_1.default.writeFileSync(path_1.default.join(VisualizerPath, './data.js'), `window._seulex_data = ${dumpJSON}`);
+    // 启动浏览器显示
+    viewNow && childProcess.exec(`start ${path_1.default.join(VisualizerPath, './index.html')} `);
+}
+exports.visualizeACTIONGOTOTable = visualizeACTIONGOTOTable;
 /**
  * 可视化GOTO图（LR1DFA）
  */
@@ -51,7 +107,7 @@ function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
                 stateLines.push({ leftPart, lookahead });
             }
             if (kernelItem) {
-                leftPart = '--------\n';
+                leftPart = '-------\n';
                 lookahead = '';
                 stateLines.push({ leftPart, lookahead });
                 kernelItem = false;
@@ -76,7 +132,7 @@ function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
         });
     }
     let dagreJSON = JSON.stringify(dumpObject, null, 2);
-    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer');
+    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/FAVisualizer');
     const shape = 'rect';
     fs_1.default.writeFileSync(path_1.default.join(VisualizerPath, './data.js'), `window._seulex_shape = '${shape}'; let data = ${dagreJSON}`);
     // 启动浏览器显示

@@ -68,7 +68,7 @@ function visualizeFA(fa, viewNow = true) {
     }
     // 计算布局并导出
     let dagreJSON = JSON.stringify(dumpObject, null, 2);
-    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/Visualizer');
+    const VisualizerPath = path_1.default.join(__dirname, '../../../enhance/FAVisualizer');
     const shape = 'circle';
     fs_1.default.writeFileSync(path_1.default.join(VisualizerPath, './data.js'), `window._seulex_shape = '${shape}'; let data = ${dagreJSON}`);
     // 启动浏览器显示
