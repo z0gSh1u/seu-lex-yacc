@@ -170,6 +170,12 @@ class LR1Analyzer {
     }
     constructLR1DFA() {
         // 将C初始化为 {CLOSURE}({|S'->S, $|})
+        let newStartSymbolContent = this._symbols[this._startSymbol].content + '\'';
+        while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
+            newStartSymbolContent += '\'';
+        this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent });
+        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], this._producersOf(this._startSymbol)[0].action));
+        this._startSymbol = this._symbols.length - 1;
         let initProducer = this._producersOf(this._startSymbol)[0];
         let I0 = this.CLOSURE(new Grammar_1.LR1State([
             new Grammar_1.LR1Item(initProducer, this._producers.indexOf(initProducer), this._getSymbolId(Grammar_1.SpSymbol.END)),
@@ -235,7 +241,7 @@ class LR1Analyzer {
             let lookahead = oneItemOfI.lookahead;
             for (let extendProducer of extendProducers) {
                 // 求取新的展望符号
-                let newLookaheads = this.FIRST(this._producers[oneItemOfI.producer].rhs.slice(oneItemOfI.dotPosition));
+                let newLookaheads = this.FIRST(this._producers[oneItemOfI.producer].rhs.slice(oneItemOfI.dotPosition + 1));
                 // 存在epsilon作为FIRST符，可以用它“闪过”
                 if (newLookaheads.includes(this._getSymbolId(Grammar_1.SpSymbol.EPSILON))) {
                     newLookaheads = newLookaheads.filter(v => v != this._getSymbolId(Grammar_1.SpSymbol.EPSILON));
