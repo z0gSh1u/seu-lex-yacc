@@ -29,6 +29,7 @@ class YaccParserProducer {
 }
 exports.YaccParserProducer = YaccParserProducer;
 // ===================== LR1相关 =====================
+// LR1阶段对各文法符号都进行了编号
 /**
  *              LR1DFA
  *  LR1ItemSet
@@ -63,10 +64,11 @@ exports.LR1Producer = LR1Producer;
 /**
  * LR1项目
  * A->a, $就是一条项目
- * 将多个终结符的，拆分成不同的项目，每个项目只有一个终结符
+ * 将多个展望的的，拆分成不同的项目，每个项目只有一个展望符号
  */
 class LR1Item {
-    constructor(producer, lookahead, dotPosition = 0) {
+    constructor(rawProducer, producer, lookahead, dotPosition = 0) {
+        this._rawProducer = rawProducer;
         this._producer = producer;
         this._lookahead = lookahead;
         this._dotPosition = dotPosition;
@@ -80,26 +82,22 @@ class LR1Item {
     get lookahead() {
         return this._lookahead;
     }
-    /**
-     * 检测点号是否到达尾部
-     */
-    dotAtLast() {
-        return this._dotPosition === this._producer.rhs.length;
+    get rawProducer() {
+        return this._rawProducer;
     }
-    /**
-     * 向后挪动点号
-     */
+    dotAtLast() {
+        return this._dotPosition === this._rawProducer.rhs.length;
+    }
     dotGo() {
         this._dotPosition += 1;
     }
     static copy(item, go = false) {
-        return new LR1Item(item._producer, item._lookahead, item._dotPosition + (go ? 1 : 0));
+        return new LR1Item(item._rawProducer, item._producer, item._lookahead, item._dotPosition + (go ? 1 : 0));
     }
-    static sameItem(i1, i2) {
+    static same(i1, i2) {
         return (i1._dotPosition === i2._dotPosition &&
             i1._lookahead === i2._lookahead &&
-            i1._producer.lhs === i2._producer.lhs &&
-            JSON.stringify(i1._producer.rhs) === JSON.stringify(i2._producer.rhs));
+            i1._producer === i2._producer);
     }
 }
 exports.LR1Item = LR1Item;
@@ -119,8 +117,8 @@ class LR1State {
     static copy(state) {
         return new LR1State(state._items.map(x => LR1Item.copy(x)));
     }
-    static sameState(s1, s2) {
-        return s1._items.every(x => s2._items.some(y => LR1Item.sameItem(x, y)));
+    static same(s1, s2) {
+        return s1._items.every(x => s2._items.some(y => LR1Item.same(x, y)));
     }
 }
 exports.LR1State = LR1State;
@@ -133,13 +131,6 @@ class LR1DFA {
         this._states = [];
         this._adjList = [];
     }
-    addState(state) {
-        this._states.push(state);
-        this._adjList.push([]);
-    }
-    link(from, to, alpha) {
-        this._adjList[from].push({ to, alpha });
-    }
     get startStateId() {
         return this._startStateId;
     }
@@ -148,6 +139,13 @@ class LR1DFA {
     }
     get adjList() {
         return this._adjList;
+    }
+    addState(state) {
+        this._states.push(state);
+        this._adjList.push([]);
+    }
+    link(from, to, alpha) {
+        this._adjList[from].push({ to, alpha });
     }
 }
 exports.LR1DFA = LR1DFA;

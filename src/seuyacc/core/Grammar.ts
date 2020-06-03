@@ -26,7 +26,7 @@ export interface YaccParserOperator {
   tokenName?: string
   literal?: string
   assoc: 'left' | 'right' | 'non'
-  precedence: number // bigger higher
+  precedence: number // 越大优先级越高
 }
 
 /**
@@ -53,6 +53,7 @@ export class YaccParserProducer {
 }
 
 // ===================== LR1相关 =====================
+// LR1阶段对各文法符号都进行了编号
 
 /**
  *              LR1DFA
@@ -73,11 +74,6 @@ export class LR1Producer {
   private _lhs: number
   private _rhs: number[]
   private _action: string
-  constructor(lhs: number, rhs: number[], action = '') {
-    this._lhs = lhs
-    this._rhs = [...rhs]
-    this._action = action
-  }
   get lhs() {
     return this._lhs
   }
@@ -87,15 +83,21 @@ export class LR1Producer {
   get action() {
     return this._action
   }
+  constructor(lhs: number, rhs: number[], action = '') {
+    this._lhs = lhs
+    this._rhs = [...rhs]
+    this._action = action
+  }
 }
 
 /**
  * LR1项目
  * A->a, $就是一条项目
- * 将多个终结符的，拆分成不同的项目，每个项目只有一个终结符
+ * 将多个展望的的，拆分成不同的项目，每个项目只有一个展望符号
  */
 export class LR1Item {
-  private _producer: LR1Producer
+  private _producer: number // 在LR1Analyzer._producers中的下标
+  private _rawProducer: LR1Producer // 历史遗留产物
   private _dotPosition: number // producer.rhs的点号位置，规定0号位为最左（所有符号之前）位置
   private _lookahead: number // 展望符（非终结符）
   get producer() {
@@ -107,32 +109,34 @@ export class LR1Item {
   get lookahead() {
     return this._lookahead
   }
-  constructor(producer: LR1Producer, lookahead: number, dotPosition = 0) {
+  get rawProducer() {
+    return this._rawProducer
+  }
+  constructor(rawProducer: LR1Producer, producer: number, lookahead: number, dotPosition = 0) {
+    this._rawProducer = rawProducer
     this._producer = producer
     this._lookahead = lookahead
     this._dotPosition = dotPosition
   }
-  /**
-   * 检测点号是否到达尾部
-   */
   dotAtLast() {
-    return this._dotPosition === this._producer.rhs.length
+    return this._dotPosition === this._rawProducer.rhs.length
   }
-  /**
-   * 向后挪动点号
-   */
   dotGo() {
     this._dotPosition += 1
   }
   static copy(item: LR1Item, go = false) {
-    return new LR1Item(item._producer, item._lookahead, item._dotPosition + (go ? 1 : 0))
+    return new LR1Item(
+      item._rawProducer,
+      item._producer,
+      item._lookahead,
+      item._dotPosition + (go ? 1 : 0)
+    )
   }
-  static sameItem(i1: LR1Item, i2: LR1Item) {
+  static same(i1: LR1Item, i2: LR1Item) {
     return (
       i1._dotPosition === i2._dotPosition &&
       i1._lookahead === i2._lookahead &&
-      i1._producer.lhs === i2._producer.lhs &&
-      JSON.stringify(i1._producer.rhs) === JSON.stringify(i2._producer.rhs)
+      i1._producer === i2._producer
     )
   }
 }
@@ -154,8 +158,8 @@ export class LR1State {
   static copy(state: LR1State) {
     return new LR1State(state._items.map(x => LR1Item.copy(x)))
   }
-  static sameState(s1: LR1State, s2: LR1State) {
-    return s1._items.every(x => s2._items.some(y => LR1Item.sameItem(x, y)))
+  static same(s1: LR1State, s2: LR1State) {
+    return s1._items.every(x => s2._items.some(y => LR1Item.same(x, y)))
   }
 }
 
@@ -166,13 +170,6 @@ export class LR1DFA {
   private _startStateId: number
   private _states: LR1State[]
   private _adjList: { to: number; alpha: number }[][]
-  addState(state: LR1State) {
-    this._states.push(state)
-    this._adjList.push([])
-  }
-  link(from: number, to: number, alpha: number) {
-    this._adjList[from].push({ to, alpha })
-  }
   get startStateId() {
     return this._startStateId
   }
@@ -181,6 +178,13 @@ export class LR1DFA {
   }
   get adjList() {
     return this._adjList
+  }
+  addState(state: LR1State) {
+    this._states.push(state)
+    this._adjList.push([])
+  }
+  link(from: number, to: number, alpha: number) {
+    this._adjList[from].push({ to, alpha })
   }
   constructor(startStateId: number) {
     this._startStateId = startStateId

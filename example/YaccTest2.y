@@ -2,18 +2,21 @@
 
 %}
 
-%token aa bb cc dd
-
-
-%start SS
+%token c d e
+%start NS
 %%
 
-SS
-  : CC aa
+NS
+  : S
   ;
 
-CC
-  : bb
+S
+  : C C
+  ;
+
+C
+  : c C
+  | d e
   ;
 
 
