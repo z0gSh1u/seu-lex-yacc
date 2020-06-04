@@ -1,0 +1,390 @@
+
+{
+  "header": {
+    "reportVersion": 1,
+    "event": "Allocation failed - JavaScript heap out of memory",
+    "trigger": "FatalError",
+    "filename": "report.20200604.212923.4448.0.001.json",
+    "dumpEventTime": "2020-06-04T21:29:23Z",
+    "dumpEventTimeStamp": "1591277363356",
+    "processId": 4448,
+    "cwd": "d:\\STUDY\\js\\seu-lex-yacc",
+    "commandLine": [
+      "node",
+      "C:\\Users\\Twileon\\AppData\\Roaming\\npm\\\\node_modules\\ts-node\\dist\\bin.js",
+      "d:\\STUDY\\js\\seu-lex-yacc\\src\\playground.ts"
+    ],
+    "nodejsVersion": "v12.13.0",
+    "wordSize": 64,
+    "arch": "x64",
+    "platform": "win32",
+    "componentVersions": {
+      "node": "12.13.0",
+      "v8": "7.7.299.13-node.12",
+      "uv": "1.32.0",
+      "zlib": "1.2.11",
+      "brotli": "1.0.7",
+      "ares": "1.15.0",
+      "modules": "72",
+      "nghttp2": "1.39.2",
+      "napi": "5",
+      "llhttp": "1.1.4",
+      "http_parser": "2.8.0",
+      "openssl": "1.1.1d",
+      "cldr": "35.1",
+      "icu": "64.2",
+      "tz": "2019a",
+      "unicode": "12.1"
+    },
+    "release": {
+      "name": "node",
+      "lts": "Erbium",
+      "headersUrl": "https://nodejs.org/download/release/v12.13.0/node-v12.13.0-headers.tar.gz",
+      "sourceUrl": "https://nodejs.org/download/release/v12.13.0/node-v12.13.0.tar.gz",
+      "libUrl": "https://nodejs.org/download/release/v12.13.0/win-x64/node.lib"
+    },
+    "osName": "Windows_NT",
+    "osRelease": "10.0.17134",
+    "osVersion": "Windows 10 Home China",
+    "osMachine": "x86_64",
+    "cpus": [
+      {
+        "model": "Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz",
+        "speed": 2496,
+        "user": 14214718,
+        "nice": 0,
+        "sys": 22058140,
+        "idle": 194784500,
+        "irq": 4663250
+      },
+      {
+        "model": "Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz",
+        "speed": 2496,
+        "user": 15309359,
+        "nice": 0,
+        "sys": 17249625,
+        "idle": 198497921,
+        "irq": 518671
+      },
+      {
+        "model": "Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz",
+        "speed": 2496,
+        "user": 14527156,
+        "nice": 0,
+        "sys": 17396296,
+        "idle": 199133468,
+        "irq": 182468
+      },
+      {
+        "model": "Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz",
+        "speed": 2496,
+        "user": 14518093,
+        "nice": 0,
+        "sys": 19014437,
+        "idle": 197524359,
+        "irq": 135093
+      }
+    ],
+    "networkInterfaces": [
+      {
+        "name": "WLAN",
+        "internal": false,
+        "mac": "9c:da:3e:93:39:e2",
+        "address": "192.168.0.105",
+        "netmask": "255.255.255.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "Loopback Pseudo-Interface 1",
+        "internal": true,
+        "mac": "00:00:00:00:00:00",
+        "address": "::1",
+        "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+        "family": "IPv6",
+        "scopeid": 0
+      },
+      {
+        "name": "Loopback Pseudo-Interface 1",
+        "internal": true,
+        "mac": "00:00:00:00:00:00",
+        "address": "127.0.0.1",
+        "netmask": "255.0.0.0",
+        "family": "IPv4"
+      }
+    ],
+    "host": "DESKTOP-UUV3BEJ"
+  },
+  "javascriptStack": {
+    "message": "No stack.",
+    "stack": [
+      "Unavailable."
+    ]
+  },
+  "nativeStack": [
+    {
+      "pc": "0x00007ff65f6a1389",
+      "symbol": "std::basic_ostream<char,std::char_traits<char> >::operator<<+10873"
+    },
+    {
+      "pc": "0x00007ff65f6a57cc",
+      "symbol": "std::basic_ostream<char,std::char_traits<char> >::operator<<+28348"
+    },
+    {
+      "pc": "0x00007ff65f6a4778",
+      "symbol": "std::basic_ostream<char,std::char_traits<char> >::operator<<+24168"
+    },
+    {
+      "pc": "0x00007ff65f79332b",
+      "symbol": "v8::base::CPU::has_sse+37723"
+    },
+    {
+      "pc": "0x00007ff65ff96f4e",
+      "symbol": "v8::Isolate::ReportExternalAllocationLimitReached+94"
+    },
+    {
+      "pc": "0x00007ff65ff7ef91",
+      "symbol": "v8::SharedArrayBuffer::Externalize+833"
+    },
+    {
+      "pc": "0x00007ff65fe4c85c",
+      "symbol": "v8::internal::Heap::EphemeronKeyWriteBarrierFromCode+1436"
+    },
+    {
+      "pc": "0x00007ff65fe57c00",
+      "symbol": "v8::internal::Heap::ProtectUnprotectedMemoryChunks+1312"
+    },
+    {
+      "pc": "0x00007ff65fe54734",
+      "symbol": "v8::internal::Heap::PageFlagsAreConsistent+3204"
+    },
+    {
+      "pc": "0x00007ff65fe49fc3",
+      "symbol": "v8::internal::Heap::CollectGarbage+1283"
+    },
+    {
+      "pc": "0x00007ff65fe48794",
+      "symbol": "v8::internal::Heap::AddRetainedMap+2356"
+    },
+    {
+      "pc": "0x00007ff65fe69a65",
+      "symbol": "v8::internal::Factory::NewFillerObject+53"
+    },
+    {
+      "pc": "0x00007ff65fbd6239",
+      "symbol": "v8::internal::interpreter::JumpTableTargetOffsets::iterator::operator=+4057"
+    },
+    {
+      "pc": "0x00007ff6603c2c6d",
+      "symbol": "v8::internal::SetupIsolateDelegate::SetupHeap+567949"
+    },
+    {
+      "pc": "0x00007ff660343cf1",
+      "symbol": "v8::internal::SetupIsolateDelegate::SetupHeap+47889"
+    },
+    {
+      "pc": "0x000003d64047c4f4",
+      "symbol": ""
+    }
+  ],
+  "javascriptHeap": {
+    "totalMemory": 2151460864,
+    "totalCommittedMemory": 2151460864,
+    "usedMemory": 2145525856,
+    "availableMemory": 48621040,
+    "memoryLimit": 2197815296,
+    "heapSpaces": {
+      "read_only_space": {
+        "memorySize": 262144,
+        "committedMemory": 262144,
+        "capacity": 261872,
+        "used": 32296,
+        "available": 229576
+      },
+      "new_space": {
+        "memorySize": 2097152,
+        "committedMemory": 2097152,
+        "capacity": 1047488,
+        "used": 126784,
+        "available": 920704
+      },
+      "old_space": {
+        "memorySize": 1851109376,
+        "committedMemory": 1851109376,
+        "capacity": 1848142032,
+        "used": 1848073192,
+        "available": 68840
+      },
+      "code_space": {
+        "memorySize": 950272,
+        "committedMemory": 950272,
+        "capacity": 766208,
+        "used": 766208,
+        "available": 0
+      },
+      "map_space": {
+        "memorySize": 1052672,
+        "committedMemory": 1052672,
+        "capacity": 610480,
+        "used": 610480,
+        "available": 0
+      },
+      "large_object_space": {
+        "memorySize": 295940096,
+        "committedMemory": 295940096,
+        "capacity": 295913344,
+        "used": 295913344,
+        "available": 0
+      },
+      "code_large_object_space": {
+        "memorySize": 49152,
+        "committedMemory": 49152,
+        "capacity": 3552,
+        "used": 3552,
+        "available": 0
+      },
+      "new_large_object_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 1047488,
+        "used": 0,
+        "available": 1047488
+      }
+    }
+  },
+  "resourceUsage": {
+    "userCpuSeconds": 237.437,
+    "kernelCpuSeconds": 3.406,
+    "cpuConsumptionPercent": 155.383,
+    "maxRss": 2486288384,
+    "pageFaults": {
+      "IORequired": 1235258,
+      "IONotRequired": 0
+    },
+    "fsActivity": {
+      "reads": 222,
+      "writes": 110
+    }
+  },
+  "libuv": [
+  ],
+  "environmentVariables": {
+    "": "C:=C:\\",
+    "": "D:=d:\\STUDY\\js\\seu-lex-yacc",
+    "ALLUSERSPROFILE": "C:\\ProgramData",
+    "AMD_ENTRYPOINT": "vs/workbench/services/extensions/node/extensionHostProcess",
+    "APPDATA": "C:\\Users\\Twileon\\AppData\\Roaming",
+    "APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL": "true",
+    "AV_APPDATA": "C:\\Users\\Twileon\\AppData\\Roaming",
+    "CommonProgramFiles": "C:\\Program Files\\Common Files",
+    "CommonProgramFiles(x86)": "C:\\Program Files (x86)\\Common Files",
+    "CommonProgramW6432": "C:\\Program Files\\Common Files",
+    "COMPUTERNAME": "DESKTOP-UUV3BEJ",
+    "ComSpec": "C:\\Windows\\system32\\cmd.exe",
+    "DOTNET_ROOT": "c:\\Users\\Twileon\\AppData\\Roaming\\Code\\User\\globalStorage\\ms-vsliveshare.vsliveshare\\dotnet-3.1.1",
+    "DOTNET_ROOT(X86)": "c:\\Users\\Twileon\\AppData\\Roaming\\Code\\User\\globalStorage\\ms-vsliveshare.vsliveshare\\dotnet-3.1.1",
+    "dp0": "C:\\Users\\Twileon\\AppData\\Roaming\\npm\\",
+    "DriverData": "C:\\Windows\\System32\\Drivers\\DriverData",
+    "ELECTRON_RUN_AS_NODE": "1",
+    "FLEXLM_BATCH": "1",
+    "FPS_BROWSER_APP_PROFILE_STRING": "Internet Explorer",
+    "FPS_BROWSER_USER_PROFILE_STRING": "Default",
+    "HOMEDRIVE": "C:",
+    "HOMEPATH": "\\Users\\Twileon",
+    "installdir": "C:\\synopsys\\Hspice_A-2007.09",
+    "installdir_A-2007.09": "C:\\synopsys\\Hspice_A-2007.09",
+    "installdir_Z-2007.03": "C:\\synopsys\\Hspice_Z-2007.03",
+    "LM_LICENSE_FILE": "C:\\synopsys\\Hspice_A-2007.09\\license.dat ",
+    "LOCALAPPDATA": "C:\\Users\\Twileon\\AppData\\Local",
+    "LOGONSERVER": "\\\\DESKTOP-UUV3BEJ",
+    "NUMBER_OF_PROCESSORS": "4",
+    "OneDrive": "C:\\Users\\Twileon\\OneDrive",
+    "OS": "Windows_NT",
+    "Path": "C:\\Program Files (x86)\\Intel\\iCLS Client\\;C:\\ProgramData\\Oracle\\Java\\javapath;C:\\Program Files\\Intel\\iCLS Client\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\dotnet\\;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;D:\\program files\\MATLAB2018b\\runtime\\win64;D:\\program files\\MATLAB2018b\\bin;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files (x86)\\Microsoft SQL Server\\100\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\100\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\100\\DTS\\Binn\\;C:\\WINDOWS\\System32\\OpenSSH\\;d:\\quartus\\quartus\\bin;C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;D:\\program files\\Microsoft VS Code\\bin;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Users\\Twileon\\AppData\\Local\\Programs\\Python\\Python35\\Scripts\\;C:\\Users\\Twileon\\AppData\\Local\\Programs\\Python\\Python35\\;C:\\Users\\Twileon\\AppData\\Local\\Microsoft\\WindowsApps;;D:\\program files\\Microsoft VS Code\\bin;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Users\\Twileon\\AppData\\Roaming\\npm",
+    "PATHEXT": ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JSE;.WSF;.WSH;.MSC",
+    "PIPE_LOGGING": "true",
+    "PROCESSOR_ARCHITECTURE": "AMD64",
+    "PROCESSOR_IDENTIFIER": "Intel64 Family 6 Model 158 Stepping 9, GenuineIntel",
+    "PROCESSOR_LEVEL": "6",
+    "PROCESSOR_REVISION": "9e09",
+    "ProgramData": "C:\\ProgramData",
+    "ProgramFiles": "C:\\Program Files",
+    "ProgramFiles(x86)": "C:\\Program Files (x86)",
+    "ProgramW6432": "C:\\Program Files",
+    "PROMPT": "$P$G",
+    "PSModulePath": "C:\\Program Files\\WindowsPowerShell\\Modules;C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules",
+    "PUBLIC": "C:\\Users\\Public",
+    "QUARTUS_ROOTDIR": "d:\\quartus\\quartus",
+    "SESSIONNAME": "Console",
+    "SystemDrive": "C:",
+    "SystemRoot": "C:\\Windows",
+    "TEMP": "C:\\Users\\Twileon\\AppData\\Local\\Temp",
+    "TMP": "C:\\Users\\Twileon\\AppData\\Local\\Temp",
+    "USERDOMAIN": "DESKTOP-UUV3BEJ",
+    "USERDOMAIN_ROAMINGPROFILE": "DESKTOP-UUV3BEJ",
+    "USERNAME": "Twileon",
+    "USERPROFILE": "C:\\Users\\Twileon",
+    "VERBOSE_LOGGING": "true",
+    "VS100COMNTOOLS": "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\Common7\\Tools\\",
+    "VSCODE_CWD": "D:\\program files\\Microsoft VS Code",
+    "VSCODE_HANDLES_UNCAUGHT_ERRORS": "true",
+    "VSCODE_IPC_HOOK": "\\\\.\\pipe\\69f33409ff8a507935b1b49a8eeb19a4-1.39.2-main-sock",
+    "VSCODE_IPC_HOOK_EXTHOST": "\\\\.\\pipe\\vscode-ipc-de6ec560-2384-4ccd-9b9a-e70e4660297e-sock",
+    "VSCODE_LOGS": "C:\\Users\\Twileon\\AppData\\Roaming\\Code\\logs\\20200604T132938",
+    "VSCODE_LOG_STACK": "false",
+    "VSCODE_NLS_CONFIG": "{\"locale\":\"zh-cn\",\"availableLanguages\":{\"*\":\"zh-cn\"},\"_languagePackId\":\"30d0a9efdef99b761ea9557efbc38126.zh-cn\",\"_translationsConfigFile\":\"C:\\\\Users\\\\Twileon\\\\AppData\\\\Roaming\\\\Code\\\\clp\\\\30d0a9efdef99b761ea9557efbc38126.zh-cn\\\\tcf.json\",\"_cacheRoot\":\"C:\\\\Users\\\\Twileon\\\\AppData\\\\Roaming\\\\Code\\\\clp\\\\30d0a9efdef99b761ea9557efbc38126.zh-cn\",\"_resolvedLanguagePackCoreLocation\":\"C:\\\\Users\\\\Twileon\\\\AppData\\\\Roaming\\\\Code\\\\clp\\\\30d0a9efdef99b761ea9557efbc38126.zh-cn\\\\6ab598523be7a800d7f3eb4d92d7ab9a66069390\",\"_corruptedFile\":\"C:\\\\Users\\\\Twileon\\\\AppData\\\\Roaming\\\\Code\\\\clp\\\\30d0a9efdef99b761ea9557efbc38126.zh-cn\\\\corrupted.info\",\"_languagePackSupport\":true}",
+    "VSCODE_NODE_CACHED_DATA_DIR": "C:\\Users\\Twileon\\AppData\\Roaming\\Code\\CachedData\\6ab598523be7a800d7f3eb4d92d7ab9a66069390",
+    "VSCODE_PID": "6484",
+    "VSLS_SESSION_KEEPALIVE_INTERVAL": "20",
+    "windir": "C:\\Windows",
+    "_prog": "node"
+  },
+  "sharedObjects": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "C:\\Windows\\SYSTEM32\\ntdll.dll",
+    "C:\\Windows\\System32\\KERNEL32.DLL",
+    "C:\\Windows\\System32\\KERNELBASE.dll",
+    "C:\\Windows\\System32\\WS2_32.dll",
+    "C:\\Windows\\System32\\RPCRT4.dll",
+    "C:\\Windows\\System32\\ADVAPI32.dll",
+    "C:\\Windows\\System32\\msvcrt.dll",
+    "C:\\Windows\\System32\\sechost.dll",
+    "C:\\Windows\\System32\\USER32.dll",
+    "C:\\Windows\\System32\\win32u.dll",
+    "C:\\Windows\\System32\\GDI32.dll",
+    "C:\\Windows\\System32\\gdi32full.dll",
+    "C:\\Windows\\System32\\msvcp_win.dll",
+    "C:\\Windows\\SYSTEM32\\dbghelp.dll",
+    "C:\\Windows\\System32\\ucrtbase.dll",
+    "C:\\Windows\\System32\\PSAPI.DLL",
+    "C:\\Windows\\System32\\CRYPT32.dll",
+    "C:\\Windows\\System32\\MSASN1.dll",
+    "C:\\Windows\\SYSTEM32\\IPHLPAPI.DLL",
+    "C:\\Windows\\SYSTEM32\\bcrypt.dll",
+    "C:\\Windows\\SYSTEM32\\WINMM.dll",
+    "C:\\Windows\\SYSTEM32\\winmmbase.dll",
+    "C:\\Windows\\SYSTEM32\\USERENV.dll",
+    "C:\\Windows\\System32\\cfgmgr32.dll",
+    "C:\\Windows\\System32\\profapi.dll",
+    "C:\\Windows\\System32\\IMM32.DLL",
+    "C:\\Windows\\System32\\powrprof.dll",
+    "C:\\Windows\\system32\\uxtheme.dll",
+    "C:\\Windows\\System32\\combase.dll",
+    "C:\\Windows\\System32\\bcryptPrimitives.dll",
+    "C:\\Windows\\SysWOW64\\ierd_tgp_lsp64.dll",
+    "C:\\Windows\\System32\\SHLWAPI.dll",
+    "C:\\Windows\\System32\\ole32.dll",
+    "C:\\Windows\\system32\\mswsock.dll",
+    "C:\\Windows\\System32\\kernel.appcore.dll",
+    "C:\\Windows\\System32\\NSI.dll",
+    "C:\\Windows\\SYSTEM32\\dhcpcsvc6.DLL",
+    "C:\\Windows\\SYSTEM32\\dhcpcsvc.DLL",
+    "C:\\Program Files (x86)\\Sangfor\\SSL\\ClientComponent\\SangforNspX64.dll",
+    "C:\\Windows\\System32\\OLEAUT32.dll",
+    "C:\\Windows\\system32\\napinsp.dll",
+    "C:\\Windows\\system32\\pnrpnsp.dll",
+    "C:\\Windows\\system32\\NLAapi.dll",
+    "C:\\Windows\\SYSTEM32\\DNSAPI.dll",
+    "C:\\Windows\\System32\\winrnr.dll",
+    "C:\\Windows\\System32\\wshbth.dll"
+  ]
+}
