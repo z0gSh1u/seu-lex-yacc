@@ -7,12 +7,15 @@
 %%
 
 S
- : C a
- ;
+  : '(' L ')'
+  | a
+  ;
 
-C
- : a
- ;
+L
+  : L ',' S
+  | S
+  ;
+
 
 %%
 #include <stdio.h>
