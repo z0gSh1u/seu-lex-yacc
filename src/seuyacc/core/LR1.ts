@@ -84,8 +84,8 @@ export class LR1Analyzer {
       let id = decl.literal
         ? this._getSymbolId({ type: 'ascii', content: decl.literal })
         : decl.tokenName
-        ? this._getSymbolId({ type: 'token', content: decl.tokenName })
-        : -1
+          ? this._getSymbolId({ type: 'token', content: decl.tokenName })
+          : -1
       assert(id != -1, 'Operator declaration not found. This should never occur.')
       this._operators.push(new LR1Operator(id, decl.assoc, decl.precedence))
     }
@@ -154,20 +154,21 @@ export class LR1Analyzer {
   /**
    * 求取FIRST集
    */
-  FIRST(symbols: number[]): number[] {
+  FIRST(symbols: number[], nonterminalRec: number[] = []): number[] {
     if (!symbols.length) return [this._getSymbolId(SpSymbol.EPSILON)]
     let ret: number[] = []
     if (!this._symbolTypeIs(symbols[0], 'nonterminal')) ret.push(symbols[0])
     else {
-      // TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
-      this._producersOf(symbols[0]).forEach(producer => {
-        this.FIRST(producer.rhs).forEach(symbol => {
-          if (!ret.includes(symbol)) ret.push(symbol)
-        })
-      })
+      if (!nonterminalRec.includes(symbols[0])){
+        nonterminalRec.push(symbols[0])
+        this._producersOf(symbols[0]).forEach(producer => {
+          this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
+            if (!ret.includes(symbol)) ret.push(symbol)
+          })
+      })}
     }
     if (ret.includes(this._getSymbolId(SpSymbol.EPSILON))) {
-      this.FIRST(symbols.slice(1)).forEach(symbol => {
+      this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
         if (!ret.includes(symbol)) ret.push(symbol)
       })
     }
