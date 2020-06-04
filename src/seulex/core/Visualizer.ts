@@ -70,7 +70,7 @@ export function visualizeFA(fa: FiniteAutomata, viewNow = true) {
   }
   // 计算布局并导出
   let dagreJSON = JSON.stringify(dumpObject, null, 2)
-  const VisualizerPath = path.join(__dirname, '../../../enhance/Visualizer')
+  const VisualizerPath = path.join(__dirname, '../../../enhance/FAVisualizer')
   const shape = 'circle'
   fs.writeFileSync(
     path.join(VisualizerPath, './data.js'),
