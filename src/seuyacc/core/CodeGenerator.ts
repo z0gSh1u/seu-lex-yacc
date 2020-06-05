@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { YaccParser } from './YaccParser'
 import { LR1Analyzer } from './LR1'
 
@@ -46,7 +47,27 @@ export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
   // * ========== seuyacc generation ============
   `
   finalCode += generateYTABH(yaccParser)
-  
+  finalCode += genPresetContent()
+}
+
+function genPresetContent() {
+  return `
+  #include <stdio.h>
+  #include <stdlib.h>
+  #define STACK_LIMIT 1000
+  #define SYMBOL_CHART_LIMIT 1000
+  #define SYMBOL_REC_LIMIT 1000
+  struct SymbolChartCell {
+    char *name;
+    char *value;
+  };
+  int stateStack[STACK_LIMIT];
+  int stateStackSize = 0;
+  char *symbolRec[SYMBOL_REC_LIMIT];
+  int symbolRecSize = 0;
+  SymbolChartCell symbolChart[SYMBOL_CHART_LIMIT];
+  int symbolChartSize = 0;
+  `
 }
 
 

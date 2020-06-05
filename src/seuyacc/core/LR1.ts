@@ -178,7 +178,9 @@ export class LR1Analyzer {
   /**
    * 求取FOLLOW集
    */
-  private FOLLOW(nonterminal: number): number[] {
+  private FOLLOW(nonterminal: number, nonterminalRec: number[] = []): number[] {
+    if (nonterminalRec.includes(nonterminal)) return []
+    nonterminalRec.push(nonterminal)
     let ret: number[] = []
     let epsilon = this._getSymbolId(SpSymbol.EPSILON)
     if (nonterminal == this._startSymbol) ret.push(this._getSymbolId(SpSymbol.END))
@@ -189,7 +191,7 @@ export class LR1Analyzer {
           first.forEach(symbol => {
             if (symbol != epsilon && !ret.includes(symbol)) ret.push(symbol)
           })
-          if (first.includes(epsilon) && nonterminal != producer.lhs) {
+          if (first.includes(epsilon)) {
             this.FOLLOW(producer.lhs).forEach(symbol => {
               if (!ret.includes(symbol)) ret.push(symbol)
             })
@@ -341,7 +343,7 @@ export class LR1Analyzer {
             this._producers.indexOf(extendProducer),
             lookahead
           )
-          if (I.items.some(item => LR1Item.same(item, newItem))) continue // 重复的情况不再添加，避免出现一样的Item
+          if (res.items.some(item => LR1Item.same(item, newItem))) continue // 重复的情况不再添加，避免出现一样的Item
           allItemsOfI.push(newItem) // 继续扩展
           res.addItem(newItem)
         }
