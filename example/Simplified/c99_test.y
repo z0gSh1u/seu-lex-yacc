@@ -2,15 +2,11 @@
 	
 %}
 
-%token IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
-%token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
-%token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
-%token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
-%token XOR_ASSIGN OR_ASSIGN
-%token TYPEDEF EXTERN STATIC AUTO REGISTER INLINE RESTRICT
-%token CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
-%token STRUCT UNION ENUM ELLIPSIS
-%token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+%token IDENTIFIER CONSTANT STRING_LITERAL
+%token INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP
+%token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN
+%token INT FLOAT VOID
+%token IF ELSE WHILE FOR CONTINUE BREAK RETURN
 
 %start translation_unit
 %%
@@ -28,11 +24,8 @@ postfix_expression
 	| postfix_expression '(' ')'
 	| postfix_expression '(' argument_expression_list ')'
 	| postfix_expression '.' IDENTIFIER
-	| postfix_expression PTR_OP IDENTIFIER
 	| postfix_expression INC_OP
 	| postfix_expression DEC_OP
-	| '(' type_name ')' '{' initializer_list '}'
-	| '(' type_name ')' '{' initializer_list ',' '}'
 	;
 
 argument_expression_list
@@ -44,9 +37,6 @@ unary_expression
 	: postfix_expression
 	| INC_OP unary_expression
 	| DEC_OP unary_expression
-	| unary_operator cast_expression
-	| SIZEOF unary_expression
-	| SIZEOF '(' type_name ')'
 	;
 
 unary_operator
@@ -58,16 +48,11 @@ unary_operator
 	| '!'
 	;
 
-cast_expression
-	: unary_expression
-	| '(' type_name ')' cast_expression
-	;
-
 multiplicative_expression
-	: cast_expression
-	| multiplicative_expression '*' cast_expression
-	| multiplicative_expression '/' cast_expression
-	| multiplicative_expression '%' cast_expression
+	: unary_expression
+	| multiplicative_expression '*' unary_expression
+	| multiplicative_expression '/' unary_expression
+	| multiplicative_expression '%' unary_expression
 	;
 
 additive_expression
@@ -76,18 +61,12 @@ additive_expression
 	| additive_expression '-' multiplicative_expression
 	;
 
-shift_expression
-	: additive_expression
-	| shift_expression LEFT_OP additive_expression
-	| shift_expression RIGHT_OP additive_expression
-	;
-
 relational_expression
-	: shift_expression
-	| relational_expression '<' shift_expression
-	| relational_expression '>' shift_expression
-	| relational_expression LE_OP shift_expression
-	| relational_expression GE_OP shift_expression
+	: additive_expression
+	| relational_expression '<' additive_expression
+	| relational_expression '>' additive_expression
+	| relational_expression LE_OP additive_expression
+	| relational_expression GE_OP additive_expression
 	;
 
 equality_expression
@@ -96,34 +75,8 @@ equality_expression
 	| equality_expression NE_OP relational_expression
 	;
 
-and_expression
-	: equality_expression
-	| and_expression '&' equality_expression
-	;
-
-exclusive_or_expression
-	: and_expression
-	| exclusive_or_expression '^' and_expression
-	;
-
-inclusive_or_expression
-	: exclusive_or_expression
-	| inclusive_or_expression '|' exclusive_or_expression
-	;
-
-logical_and_expression
-	: inclusive_or_expression
-	| logical_and_expression AND_OP inclusive_or_expression
-	;
-
-logical_or_expression
-	: logical_and_expression
-	| logical_or_expression OR_OP logical_and_expression
-	;
-
 conditional_expression
-	: logical_or_expression
-	| logical_or_expression '?' expression ':' conditional_expression
+	: equality_expression
 	;
 
 assignment_expression
@@ -138,11 +91,6 @@ assignment_operator
 	| MOD_ASSIGN
 	| ADD_ASSIGN
 	| SUB_ASSIGN
-	| LEFT_ASSIGN
-	| RIGHT_ASSIGN
-	| AND_ASSIGN
-	| XOR_ASSIGN
-	| OR_ASSIGN
 	;
 
 expression
@@ -160,14 +108,8 @@ declaration
 	;
 
 declaration_specifiers
-	: storage_class_specifier
-	| storage_class_specifier declaration_specifiers
-	| type_specifier
+	: type_specifier
 	| type_specifier declaration_specifiers
-	| type_qualifier
-	| type_qualifier declaration_specifiers
-	| function_specifier
-	| function_specifier declaration_specifiers
 	;
 
 init_declarator_list
@@ -180,132 +122,31 @@ init_declarator
 	| declarator '=' initializer
 	;
 
-storage_class_specifier
-	: TYPEDEF
-	| EXTERN
-	| STATIC
-	| AUTO
-	| REGISTER
-	;
-
 type_specifier
 	: VOID
-	| CHAR
-	| SHORT
 	| INT
-	| LONG
 	| FLOAT
-	| DOUBLE
-	| SIGNED
-	| UNSIGNED
-	| struct_or_union_specifier
-	| enum_specifier
-	;
-
-struct_or_union_specifier
-	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'
-	| struct_or_union '{' struct_declaration_list '}'
-	| struct_or_union IDENTIFIER
-	;
-
-struct_or_union
-	: STRUCT
-	| UNION
-	;
-
-struct_declaration_list
-	: struct_declaration
-	| struct_declaration_list struct_declaration
-	;
-
-struct_declaration
-	: specifier_qualifier_list struct_declarator_list ';'
 	;
 
 specifier_qualifier_list
 	: type_specifier specifier_qualifier_list
 	| type_specifier
-	| type_qualifier specifier_qualifier_list
-	| type_qualifier
-	;
-
-struct_declarator_list
-	: struct_declarator
-	| struct_declarator_list ',' struct_declarator
-	;
-
-struct_declarator
-	: declarator
-	| ':' constant_expression
-	| declarator ':' constant_expression
-	;
-
-enum_specifier
-	: ENUM '{' enumerator_list '}'
-	| ENUM IDENTIFIER '{' enumerator_list '}'
-	| ENUM '{' enumerator_list ',' '}'
-	| ENUM IDENTIFIER '{' enumerator_list ',' '}'
-	| ENUM IDENTIFIER
-	;
-
-enumerator_list
-	: enumerator
-	| enumerator_list ',' enumerator
-	;
-
-enumerator
-	: IDENTIFIER
-	| IDENTIFIER '=' constant_expression
-	;
-
-type_qualifier
-	: CONST
-	| RESTRICT
-	| VOLATILE
-	;
-
-function_specifier
-	: INLINE
 	;
 
 declarator
-	: pointer direct_declarator
 	| direct_declarator
 	;
-
 
 direct_declarator
 	: IDENTIFIER
 	| '(' declarator ')'
-	| direct_declarator '[' type_qualifier_list assignment_expression ']'
-	| direct_declarator '[' type_qualifier_list ']'
-	| direct_declarator '[' assignment_expression ']'
-	| direct_declarator '[' STATIC type_qualifier_list assignment_expression ']'
-	| direct_declarator '[' type_qualifier_list STATIC assignment_expression ']'
-	| direct_declarator '[' type_qualifier_list '*' ']'
-	| direct_declarator '[' '*' ']'
-	| direct_declarator '[' ']'
 	| direct_declarator '(' parameter_type_list ')'
 	| direct_declarator '(' identifier_list ')'
 	| direct_declarator '(' ')'
 	;
 
-pointer
-	: '*'
-	| '*' type_qualifier_list
-	| '*' pointer
-	| '*' type_qualifier_list pointer
-	;
-
-type_qualifier_list
-	: type_qualifier
-	| type_qualifier_list type_qualifier
-	;
-
-
 parameter_type_list
 	: parameter_list
-	| parameter_list ',' ELLIPSIS
 	;
 
 parameter_list
@@ -330,9 +171,7 @@ type_name
 	;
 
 abstract_declarator
-	: pointer
-	| direct_abstract_declarator
-	| pointer direct_abstract_declarator
+	: direct_abstract_declarator
 	;
 
 direct_abstract_declarator
@@ -351,15 +190,6 @@ direct_abstract_declarator
 
 initializer
 	: assignment_expression
-	| '{' initializer_list '}'
-	| '{' initializer_list ',' '}'
-	;
-
-initializer_list
-	: initializer
-	| designation initializer
-	| initializer_list ',' initializer
-	| initializer_list ',' designation initializer
 	;
 
 designation
@@ -377,19 +207,12 @@ designator
 	;
 
 statement
-	: labeled_statement
-	| compound_statement
+	: compound_statement
 	| expression_statement
 	| selection_statement
 	| iteration_statement
-	| jump_statement
 	;
 
-labeled_statement
-	: IDENTIFIER ':' statement
-	| CASE constant_expression ':' statement
-	| DEFAULT ':' statement
-	;
 
 compound_statement
 	: '{' '}'
@@ -414,24 +237,12 @@ expression_statement
 selection_statement
 	: IF '(' expression ')' statement
 	| IF '(' expression ')' statement ELSE statement
-	| SWITCH '(' expression ')' statement
 	;
 
 iteration_statement
 	: WHILE '(' expression ')' statement
-	| DO statement WHILE '(' expression ')' ';'
 	| FOR '(' expression_statement expression_statement ')' statement
 	| FOR '(' expression_statement expression_statement expression ')' statement
-	| FOR '(' declaration expression_statement ')' statement
-	| FOR '(' declaration expression_statement expression ')' statement
-	;
-
-jump_statement
-	: GOTO IDENTIFIER ';'
-	| CONTINUE ';'
-	| BREAK ';'
-	| RETURN ';'
-	| RETURN expression ';'
 	;
 
 translation_unit
@@ -453,7 +264,6 @@ declaration_list
 	: declaration
 	| declaration_list declaration
 	;
-
 
 %%
 #include <stdio.h>

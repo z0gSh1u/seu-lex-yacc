@@ -116,7 +116,6 @@ function visualizeGOTOGraph(lr1dfa, lr1Analyzer, viewNow = true) {
                 kernelItem = false;
             }
         }
-        console.log(stateLines);
         let stateString = topPart;
         stateLines.forEach(v => {
             stateString += v.leftPart + v.lookahead + '\n';

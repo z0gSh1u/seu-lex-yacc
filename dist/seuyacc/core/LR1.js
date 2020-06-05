@@ -19,9 +19,9 @@ class LR1Analyzer {
         this._distributeId(yaccParser);
         this._convertProducer(yaccParser.producers);
         this._convertOperator(yaccParser.operatorDecl);
-        console.log('[ _constructLR1DFA, this might take a long time... ]');
+        console.log('\n[ _constructLR1DFA, this might take a long time... ]\n');
         this._constructLR1DFA();
-        console.log('[ _constructACTIONGOTOTable, this might take a long time... ]');
+        console.log('\n[ _constructACTIONGOTOTable, this might take a long time... ]\n');
         this._constructACTIONGOTOTable();
     }
     get symbols() {
@@ -29,6 +29,9 @@ class LR1Analyzer {
     }
     get dfa() {
         return this._dfa;
+    }
+    set dfa(v) {
+        this._dfa = v;
     }
     get producers() {
         return this._producers;
@@ -219,11 +222,16 @@ class LR1Analyzer {
         let dfa = new Grammar_1.LR1DFA(0);
         dfa.addState(I0);
         let stack = [0];
+        let pb = new progressbar_1.ProgressBar();
         while (stack.length) {
             let I = dfa.states[stack.pop()]; // for C中的每个项集I
             for (let X = 0; X < this._symbols.length; X++) {
                 // for 每个文法符号X
-                let gotoIX = this._GOTO(I, X);
+                let gotoIX = this.GOTO(I, X);
+                pb.render({
+                    completed: this.GOTOCache.size,
+                    total: dfa.states.length * this.symbols.length,
+                });
                 if (gotoIX.items.length === 0)
                     continue; // gotoIX要非空
                 const sameStateCheck = dfa.states.findIndex(x => Grammar_1.LR1State.same(x, gotoIX)); // 存在一致状态要处理
@@ -258,14 +266,14 @@ class LR1Analyzer {
     }
     /**
      * 缓存包装版本的GOTO
-     * @param i 状态下标
+     * @param i 状态
      * @param a 符号下标
      */
     GOTO(i, a) {
         let cached = this.GOTOCache.get({ i, a });
         let goto;
         if (!cached) {
-            goto = this._GOTO(this._dfa.states[i], a);
+            goto = this._GOTO(i, a);
             this.GOTOCache.set({ i, a }, goto);
         }
         else {
@@ -357,7 +365,7 @@ class LR1Analyzer {
                 let a = this._producers[item.producer].rhs[item.dotPosition];
                 if (this._symbolTypeIs(a, 'nonterminal'))
                     continue;
-                let goto = this.GOTO(i, a);
+                let goto = this.GOTO(dfaStates[i], a);
                 for (let j = 0; j < dfaStates.length; j++)
                     if (Grammar_1.LR1State.same(goto, dfaStates[j]))
                         this._ACTIONTable[i][lookup(a)] = { type: 'shift', data: j };
@@ -426,7 +434,7 @@ class LR1Analyzer {
         for (let i = 0; i < dfaStates.length; i++)
             for (let A = 0; A < this._symbols.length; A++)
                 for (let j = 0; j < dfaStates.length; j++) {
-                    if (Grammar_1.LR1State.same(this.GOTO(i, A), dfaStates[j])) {
+                    if (Grammar_1.LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j])) {
                         this._GOTOTable[i][lookup(A)] = j;
                     }
                 }

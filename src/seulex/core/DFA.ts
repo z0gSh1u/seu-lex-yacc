@@ -38,37 +38,39 @@ export class DFA extends FiniteAutomata {
    * 龙书 算法3.39
    */
   minimize() {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let that = this
     // 暂不考虑有any的情况（即有other）下的最小化，过于复杂
     if (this._alphabet.includes('[any]')) return
-    let stateLists: State[][] = [] //首先建造包含两个组的初始划分
-    let terminalStates: State[] = [...this.acceptStates] //接受状态组，直接拆好装进去
-    for (let i = 0; i < terminalStates.length; i++) {
-      stateLists.push([terminalStates[i]])
-    }
-    let nonTerminalStates: State[] = [] //非接受状态组
+    // 首先建造初始划分
+    let stateLists: State[][] = []
+    let terminalStates: State[] = [...this.acceptStates] // 接受状态组，直接拆好装进去
+    for (let i = 0; i < terminalStates.length; i++) stateLists.push([terminalStates[i]])
+    let nonTerminalStates: State[] = [] // 非接受状态组
     let copyOfOriginalState: State[] = [...this._states]
     for (let i = 0; i < copyOfOriginalState.length; i++) {
       if (!this.acceptStates.includes(copyOfOriginalState[i]))
         nonTerminalStates.push(copyOfOriginalState[i])
     }
     stateLists.push(nonTerminalStates)
-    console.log(stateLists)
-    let flag=true
-    while(flag){//一次拆一个
-      flag=false
-      let newSet=[]//容器
-      for(let k=0;k<stateLists.length;k++){//找一个要拆的
-        let s=stateLists[k] 
-        let reals=s//需要实际拆的副本
-        if(s.length==1)continue//单个状态无法拆
-        else{
-          for(let i=0;i<this.alphabet.length;i++){
-            for(let j=0;j<s.length;j++){
-              let index=(this.getTransforms(s[j]).find(x=>x.alpha==i) as Transform).target
-              if(!s.includes(this.states[index])){
-                //经过状态转移达到的状态不包含在s里面,则拿出来放到容器里
+    let flag = true
+    while (flag) {
+      console.log("flag is true")
+      // 一次拆一个
+      flag = false
+      let newSet = [] //容器
+      for (let k = 0; k < stateLists.length; k++) {
+        // 找一个要拆的
+        let s = stateLists[k]
+        let reals = s // 需要实际拆的副本
+        if (s.length == 1) continue
+        // 单个状态无法拆
+        else {
+          for (let i = 0; i < this.alphabet.length; i++) {
+            for (let j = 0; j < s.length; j++) {
+              let found = this.getTransforms(s[j]).find(x => x.alpha == i)
+              if (!found) continue
+              let index = (found as Transform).target
+              if (!s.includes(this.states[index])) {
+                // 经过状态转移达到的状态不包含在s里面,则拿出来放到容器里
                 newSet.push(s[j])
                 reals.splice(j, 1)
                 flag = true
@@ -81,42 +83,37 @@ export class DFA extends FiniteAutomata {
         stateLists.push(newSet)
       }
     }
-    console.log(this.transformAdjList)
-    //写到这里，状态已经全拆完了，就差一个重构DFA工作了
-    let rowsToDelete: number[]=[]
-    let newTrans: Transform[][]=[]
-    let newStates: State[]=[]
-    for(let k=0;k<stateLists.length;k++){
-      let s=stateLists[k] 
-      if(s.length==1)continue//单个状态不动
-      for(let x=1;x<s.length;x++){
-        rowsToDelete.push(this.states.indexOf(s[x]))//这个数组包含了所有已被合并状态的下标
+    console.log("im here")
+    // 写到这里，状态已经全拆完了，就差一个重构DFA工作了
+    let rowsToDelete: number[] = []
+    let newTrans: Transform[][] = []
+    let newStates: State[] = []
+    for (let k = 0; k < stateLists.length; k++) {
+      let s = stateLists[k]
+      if (s.length == 1) continue // 单个状态不动
+      for (let x = 1; x < s.length; x++) {
+        rowsToDelete.push(this.states.indexOf(s[x])) // 这个数组包含了所有已被合并状态的下标
       }
     }
-    let count=-1
-    for(let i=0;i<this._states.length;i++){//构建新的状态转移矩阵
-      if(!rowsToDelete.includes(i)){
+    let count = -1
+    for (let i = 0; i < this._states.length; i++) {
+      // 构建新的状态转移矩阵
+      if (!rowsToDelete.includes(i)) {
         newTrans.push([])
         count++
-        //for(let j=0;j<this.transformAdjList.length;j++){//遍历原转移矩阵的行
-        for(let k=0;k<this.transformAdjList[i].length;k++){//遍历原转移矩阵的列
-          if(!rowsToDelete.includes(this.transformAdjList[i][k].target)){
+        // for(let j=0;j<this.transformAdjList.length;j++){//遍历原转移矩阵的行
+        for (let k = 0; k < this.transformAdjList[i].length; k++) {
+          // 遍历原转移矩阵的列
+          if (!rowsToDelete.includes(this.transformAdjList[i][k].target))
             newTrans[count].push(this.transformAdjList[i][k])
-          }
         }
-      }
-      else{
-        continue
-      }
+      } else continue
     }
-    for(let i=0;i<this.states.length;i++){//构建新的状态数组
-      if(!rowsToDelete.includes(i)){
-        newStates.push(this.states[i])
-      }
-    }
-    this._states=newStates
-    this._transformAdjList=newTrans
-    console.log(newTrans)
+    for (let i = 0; i < this.states.length; i++)
+      // 构建新的状态数组
+      if (!rowsToDelete.includes(i)) newStates.push(this.states[i])
+    this._states = newStates
+    this._transformAdjList = newTrans
   }
 
   /**

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/member-delimiter-style */
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 特殊Symnpl
+ * 特殊Symbol
  */
 exports.SpSymbol = {
     END: { type: 'sptoken', content: '[END]' },

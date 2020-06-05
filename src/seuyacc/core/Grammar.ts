@@ -9,7 +9,7 @@
 import { GrammarSymbol } from './LR1'
 
 /**
- * 特殊Symnpl
+ * 特殊Symbol
  */
 export const SpSymbol = {
   END: { type: 'sptoken', content: '[END]' } as GrammarSymbol,

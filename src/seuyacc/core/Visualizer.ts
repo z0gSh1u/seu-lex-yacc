@@ -116,7 +116,6 @@ export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, vie
         kernelItem = false
       }
     }
-    console.log(stateLines)
     let stateString = topPart
     stateLines.forEach(v => {
       stateString += v.leftPart + v.lookahead + '\n'
