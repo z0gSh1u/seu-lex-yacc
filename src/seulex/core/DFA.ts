@@ -66,9 +66,6 @@ export class DFA extends FiniteAutomata {
         else{
           for(let i=0;i<this.alphabet.length;i++){
             for(let j=0;j<s.length;j++){
-              /*let stateIndex=this.states.indexOf(s[j])
-              let trans=this.transformAdjList[i][stateIndex]
-              let nextState=this.states[trans.target]*/
               let index=(this.getTransforms(s[j]).find(x=>x.alpha==i) as Transform).target
               if(!s.includes(this.states[index])){
                 //经过状态转移达到的状态不包含在s里面,则拿出来放到容器里
@@ -84,8 +81,42 @@ export class DFA extends FiniteAutomata {
         stateLists.push(newSet)
       }
     }
-    console.log(stateLists)
+    console.log(this.transformAdjList)
     //写到这里，状态已经全拆完了，就差一个重构DFA工作了
+    let rowsToDelete: number[]=[]
+    let newTrans: Transform[][]=[]
+    let newStates: State[]=[]
+    for(let k=0;k<stateLists.length;k++){
+      let s=stateLists[k] 
+      if(s.length==1)continue//单个状态不动
+      for(let x=1;x<s.length;x++){
+        rowsToDelete.push(this.states.indexOf(s[x]))//这个数组包含了所有已被合并状态的下标
+      }
+    }
+    let count=-1
+    for(let i=0;i<this._states.length;i++){//构建新的状态转移矩阵
+      if(!rowsToDelete.includes(i)){
+        newTrans.push([])
+        count++
+        //for(let j=0;j<this.transformAdjList.length;j++){//遍历原转移矩阵的行
+        for(let k=0;k<this.transformAdjList[i].length;k++){//遍历原转移矩阵的列
+          if(!rowsToDelete.includes(this.transformAdjList[i][k].target)){
+            newTrans[count].push(this.transformAdjList[i][k])
+          }
+        }
+      }
+      else{
+        continue
+      }
+    }
+    for(let i=0;i<this.states.length;i++){//构建新的状态数组
+      if(!rowsToDelete.includes(i)){
+        newStates.push(this.states[i])
+      }
+    }
+    this._states=newStates
+    this._transformAdjList=newTrans
+    console.log(newTrans)
   }
  
   /**
