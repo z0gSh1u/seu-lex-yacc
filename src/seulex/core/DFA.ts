@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
+
 /**
  * DFA（确定有限状态自动机）
  * by Withod, Twileon & z0gSh1u
@@ -8,7 +9,6 @@
 import { FiniteAutomata, State, SpAlpha, getSpAlpha, Action, Transform } from './FA'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NFA } from './NFA'
-import { assert } from '../../utils'
 
 /**
  * 确定有限状态自动机
@@ -42,44 +42,47 @@ export class DFA extends FiniteAutomata {
     let that = this
     // 暂不考虑有any的情况（即有other）下的最小化，过于复杂
     if (this._alphabet.includes('[any]')) return
-    let stateLists: State[][]=[]//首先建造包含两个组的初始划分
-    let terminalStates: State[]=[...this.acceptStates]//接受状态组，直接拆好装进去
-    for(let i=0;i<terminalStates.length;i++){
+    let stateLists: State[][] = [] //首先建造包含两个组的初始划分
+    let terminalStates: State[] = [...this.acceptStates] //接受状态组，直接拆好装进去
+    for (let i = 0; i < terminalStates.length; i++) {
       stateLists.push([terminalStates[i]])
     }
-    let nonTerminalStates: State[]=[]//非接受状态组
-    let copyOfOriginalState: State[]=[...this._states]
-    for(let i=0;i<copyOfOriginalState.length;i++){
-      if(!this.acceptStates.includes(copyOfOriginalState[i]))
+    let nonTerminalStates: State[] = [] //非接受状态组
+    let copyOfOriginalState: State[] = [...this._states]
+    for (let i = 0; i < copyOfOriginalState.length; i++) {
+      if (!this.acceptStates.includes(copyOfOriginalState[i]))
         nonTerminalStates.push(copyOfOriginalState[i])
     }
     stateLists.push(nonTerminalStates)
     console.log(stateLists)
-    let flag=true
-    while(flag){//一次拆一个
-      flag=false
-      let newSet=[]//容器
-      for(let k=0;k<stateLists.length;k++){//找一个要拆的
-        let s=stateLists[k] 
-        let reals=s//需要实际拆的副本
-        if(s.length==1)continue//单个状态无法拆
-        else{
-          for(let i=0;i<this.alphabet.length;i++){
-            for(let j=0;j<s.length;j++){
+    let flag = true
+    while (flag) {
+      //一次拆一个
+      flag = false
+      let newSet = [] //容器
+      for (let k = 0; k < stateLists.length; k++) {
+        //找一个要拆的
+        let s = stateLists[k]
+        let reals = s //需要实际拆的副本
+        if (s.length == 1) continue
+        //单个状态无法拆
+        else {
+          for (let i = 0; i < this.alphabet.length; i++) {
+            for (let j = 0; j < s.length; j++) {
               /*let stateIndex=this.states.indexOf(s[j])
               let trans=this.transformAdjList[i][stateIndex]
               let nextState=this.states[trans.target]*/
-              let index=(this.getTransforms(s[j]).find(x=>x.alpha==i) as Transform).target
-              if(!s.includes(this.states[index])){
+              let index = (this.getTransforms(s[j]).find(x => x.alpha == i) as Transform).target
+              if (!s.includes(this.states[index])) {
                 //经过状态转移达到的状态不包含在s里面,则拿出来放到容器里
                 newSet.push(s[j])
-                reals.splice(j,1)
-                flag=true
+                reals.splice(j, 1)
+                flag = true
               }
-            } 
-          } 
+            }
+          }
         }
-        stateLists.splice(k,1)
+        stateLists.splice(k, 1)
         stateLists.push(reals)
         stateLists.push(newSet)
       }
@@ -87,7 +90,7 @@ export class DFA extends FiniteAutomata {
     console.log(stateLists)
     //写到这里，状态已经全拆完了，就差一个重构DFA工作了
   }
- 
+
   /**
    * 使用子集构造法由NFA构造此DFA
    * @param nfa 子集构造法所使用的NFA

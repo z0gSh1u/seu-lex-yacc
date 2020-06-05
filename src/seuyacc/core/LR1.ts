@@ -20,6 +20,7 @@ import {
   YaccParserOperator,
 } from './Grammar'
 import { assert, cookString, ASCII_MIN, ASCII_MAX } from '../../utils'
+import { ProgressBar } from '../../../enhance/progressbar'
 
 export type GrammarSymbol = {
   type: 'ascii' | 'token' | 'nonterminal' | 'sptoken'
@@ -31,6 +32,7 @@ export type ACTIONTableCell = {
   data: number // state or producer
 }
 
+type GOTOCacheKey = { i: number; a: number } // i：dfaStates下标，a：字母下标
 export class LR1Analyzer {
   private _symbols: GrammarSymbol[]
   private _operators: LR1Operator[]
@@ -41,6 +43,8 @@ export class LR1Analyzer {
   private _GOTOTable!: number[][]
   private _ACTIONReverseLookup!: number[]
   private _GOTOReverseLookup!: number[]
+  // 求过的GOTO记录一下，不然下辈子都跑不出来
+  private GOTOCache: Map<GOTOCacheKey, LR1State>
 
   constructor(yaccParser: YaccParser) {
     this._symbols = []
@@ -50,10 +54,13 @@ export class LR1Analyzer {
     this._GOTOTable = []
     this._ACTIONReverseLookup = []
     this._GOTOReverseLookup = []
+    this.GOTOCache = new Map<GOTOCacheKey, LR1State>()
     this._distributeId(yaccParser)
     this._convertProducer(yaccParser.producers)
     this._convertOperator(yaccParser.operatorDecl)
+    console.log('[ _constructLR1DFA, this might take a long time... ]')
     this._constructLR1DFA()
+    console.log('[ _constructACTIONGOTOTable, this might take a long time... ]')
     this._constructACTIONGOTOTable()
   }
 
@@ -84,8 +91,8 @@ export class LR1Analyzer {
       let id = decl.literal
         ? this._getSymbolId({ type: 'ascii', content: decl.literal })
         : decl.tokenName
-          ? this._getSymbolId({ type: 'token', content: decl.tokenName })
-          : -1
+        ? this._getSymbolId({ type: 'token', content: decl.tokenName })
+        : -1
       assert(id != -1, 'Operator declaration not found. This should never occur.')
       this._operators.push(new LR1Operator(id, decl.assoc, decl.precedence))
     }
@@ -159,13 +166,14 @@ export class LR1Analyzer {
     let ret: number[] = []
     if (!this._symbolTypeIs(symbols[0], 'nonterminal')) ret.push(symbols[0])
     else {
-      if (!nonterminalRec.includes(symbols[0])){
+      if (!nonterminalRec.includes(symbols[0])) {
         nonterminalRec.push(symbols[0])
         this._producersOf(symbols[0]).forEach(producer => {
           this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
             if (!ret.includes(symbol)) ret.push(symbol)
           })
-      })}
+        })
+      }
     }
     if (ret.includes(this._getSymbolId(SpSymbol.EPSILON))) {
       this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
@@ -275,8 +283,8 @@ export class LR1Analyzer {
     while (stack.length) {
       let I = dfa.states[stack.pop() as number] // for C中的每个项集I
       for (let X = 0; X < this._symbols.length; X++) {
-        //for 每个文法符号X
-        let gotoIX = this.GOTO(I, X)
+        // for 每个文法符号X
+        let gotoIX = this._GOTO(I, X)
         if (gotoIX.items.length === 0) continue // gotoIX要非空
         const sameStateCheck = dfa.states.findIndex(x => LR1State.same(x, gotoIX)) // 存在一致状态要处理
         if (sameStateCheck !== -1) {
@@ -296,7 +304,7 @@ export class LR1Analyzer {
    * 求取GOTO(I, X)
    * 见龙书算法4.53
    */
-  private GOTO(I: LR1State, X: number) {
+  private _GOTO(I: LR1State, X: number) {
     let J = new LR1State([])
     for (let item of I.items) {
       // for I中的每一个项
@@ -306,6 +314,23 @@ export class LR1Analyzer {
       }
     }
     return this.CLOSURE(J)
+  }
+
+  /**
+   * 缓存包装版本的GOTO
+   * @param i 状态下标
+   * @param a 符号下标
+   */
+  private GOTO(i: number, a: number) {
+    let cached = this.GOTOCache.get({ i, a })
+    let goto: LR1State
+    if (!cached) {
+      goto = this._GOTO(this._dfa.states[i], a)
+      this.GOTOCache.set({ i, a }, goto)
+    } else {
+      goto = cached
+    }
+    return goto
   }
 
   /**
@@ -341,8 +366,8 @@ export class LR1Analyzer {
             this._producers.indexOf(extendProducer),
             lookahead
           )
-          if (I.items.some(item => LR1Item.same(item, newItem))) continue // 重复的情况不再添加，避免出现一样的Item
-          allItemsOfI.push(newItem) // 继续扩展
+          if (res.items.some(item => LR1Item.same(item, newItem))) continue // 重复的情况不再添加，避免出现一样的Item
+          !allItemsOfI.includes(newItem) && allItemsOfI.push(newItem) // 继续扩展
           res.addItem(newItem)
         }
       }
@@ -383,17 +408,18 @@ export class LR1Analyzer {
     // ===== 填充ACTIONTable =====
     // ===========================
     let lookup = Array.prototype.indexOf.bind(this._ACTIONReverseLookup)
+    let pb = new ProgressBar()
+
     // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
     for (let i = 0; i < dfaStates.length; i++) {
+      pb.render({ completed: i, total: dfaStates.length })
       // 处理移进的情况
       // ① [A->α`aβ, b], GOTO(Ii, a) = Ij, ACTION[i, a] = shift(j)
       for (let item of dfaStates[i].items) {
         if (item.dotAtLast()) continue // 没有aβ
         let a = this._producers[item.producer].rhs[item.dotPosition]
-
-        console.log(this._producers[item.producer].rhs, item.dotPosition)
         if (this._symbolTypeIs(a, 'nonterminal')) continue
-        let goto = this.GOTO(dfaStates[i], a)
+        let goto = this.GOTO(i, a)
         for (let j = 0; j < dfaStates.length; j++)
           if (LR1State.same(goto, dfaStates[j]))
             this._ACTIONTable[i][lookup(a)] = { type: 'shift', data: j }
@@ -455,14 +481,12 @@ export class LR1Analyzer {
     // ===========================
     // ====== 填充GOTOTable ======
     // ===========================
-    console.log(this._GOTOTable)
     lookup = Array.prototype.indexOf.bind(this._GOTOReverseLookup)
     for (let i = 0; i < dfaStates.length; i++)
       for (let A = 0; A < this._symbols.length; A++)
         for (let j = 0; j < dfaStates.length; j++) {
-          if (LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j])) {
+          if (LR1State.same(this.GOTO(i, A), dfaStates[j])) {
             this._GOTOTable[i][lookup(A)] = j
-            console.log('Setting: ', i, A, j)
           }
         }
   }

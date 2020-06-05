@@ -21,6 +21,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const childProcess = __importStar(require("child_process"));
+/**
+ * 可视化LR1分析表（ACTIONGOTOTable）
+ */
 function visualizeACTIONGOTOTable(lr1Analyzer, viewNow = true) {
     let ACTIONHead = [];
     for (let i of lr1Analyzer.ACTIONReverseLookup)

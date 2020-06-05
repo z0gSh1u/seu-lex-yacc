@@ -1,11 +1,11 @@
 "use strict";
 /* eslint-disable @typescript-eslint/no-use-before-define */
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * DFA（确定有限状态自动机）
  * by Withod, Twileon & z0gSh1u
  * 2020-05 @ https://github.com/Withod/seu-lex-yacc
  */
-Object.defineProperty(exports, "__esModule", { value: true });
 const FA_1 = require("./FA");
 /**
  * 确定有限状态自动机
@@ -50,14 +50,17 @@ class DFA extends FA_1.FiniteAutomata {
         stateLists.push(nonTerminalStates);
         console.log(stateLists);
         let flag = true;
-        while (flag) { //一次拆一个
+        while (flag) {
+            //一次拆一个
             flag = false;
             let newSet = []; //容器
-            for (let k = 0; k < stateLists.length; k++) { //找一个要拆的
+            for (let k = 0; k < stateLists.length; k++) {
+                //找一个要拆的
                 let s = stateLists[k];
                 let reals = s; //需要实际拆的副本
                 if (s.length == 1)
-                    continue; //单个状态无法拆
+                    continue;
+                //单个状态无法拆
                 else {
                     for (let i = 0; i < this.alphabet.length; i++) {
                         for (let j = 0; j < s.length; j++) {
