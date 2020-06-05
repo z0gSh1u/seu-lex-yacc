@@ -108,23 +108,25 @@ class LR1Analyzer {
     /**
      * 求取FIRST集
      */
-    FIRST(symbols) {
+    FIRST(symbols, nonterminalRec = []) {
         if (!symbols.length)
             return [this._getSymbolId(Grammar_1.SpSymbol.EPSILON)];
         let ret = [];
         if (!this._symbolTypeIs(symbols[0], 'nonterminal'))
             ret.push(symbols[0]);
         else {
-            // TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
-            this._producersOf(symbols[0]).forEach(producer => {
-                this.FIRST(producer.rhs).forEach(symbol => {
-                    if (!ret.includes(symbol))
-                        ret.push(symbol);
+            if (!nonterminalRec.includes(symbols[0])) {
+                nonterminalRec.push(symbols[0]);
+                this._producersOf(symbols[0]).forEach(producer => {
+                    this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
+                        if (!ret.includes(symbol))
+                            ret.push(symbol);
+                    });
                 });
-            });
+            }
         }
         if (ret.includes(this._getSymbolId(Grammar_1.SpSymbol.EPSILON))) {
-            this.FIRST(symbols.slice(1)).forEach(symbol => {
+            this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
                 if (!ret.includes(symbol))
                     ret.push(symbol);
             });
