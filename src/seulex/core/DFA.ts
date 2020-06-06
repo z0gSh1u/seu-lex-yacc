@@ -9,6 +9,7 @@ import { FiniteAutomata, State, SpAlpha, getSpAlpha, Action, Transform } from '.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NFA } from './NFA'
 import { assert } from '../../utils'
+import { map } from 'd3'
 
 /**
  * 确定有限状态自动机
@@ -53,36 +54,161 @@ export class DFA extends FiniteAutomata {
       if(!this.acceptStates.includes(copyOfOriginalState[i]))
         nonTerminalStates.push(copyOfOriginalState[i])
     }
-    stateLists.push(nonTerminalStates)
+    if(nonTerminalStates.length!=0){stateLists.push(nonTerminalStates)}
+
     console.log(stateLists)
+
+    /*
+    //新分法开始的地方
     let flag=true
+    let newStateLists=[]//存放已经完成划分状态集的暂用容器
     while(flag){//一次拆一个
       flag=false
-      let newSet=[]//容器
-      for(let k=0;k<stateLists.length;k++){//找一个要拆的
+      let newSet:State[]=[]//装被拆出去状态的容器
+      let sMove:number[]=[]
+      let spiltNumber=0
+      for(let k=0;k<stateLists.length;k++){   //[[],[],[]...k[]]
         let s=stateLists[k] 
-        let reals=s//需要实际拆的副本
-        if(s.length==1)continue//单个状态无法拆
+
+        if(s.length<=1)continue
         else{
-          for(let i=0;i<this.alphabet.length;i++){
-            for(let j=0;j<s.length;j++){
-              let index=(this.getTransforms(s[j]).find(x=>x.alpha==i) as Transform).target
-              if(!s.includes(this.states[index])){
-                //经过状态转移达到的状态不包含在s里面,则拿出来放到容器里
-                newSet.push(s[j])
-                reals.splice(j,1)
-                flag=true
+          for(let i=0;i<s.length;i++){      //[[0,1,2...i],[],[]]
+            let standard=[]//用作比较的、这一组第一个状态某条边指向的组的当前组号
+            for(let j=0;j<this.alphabet.length;j++){
+              let oldNum=-1
+              if(this.getTransforms(s[i])[j])oldNum=this.getTransforms(s[i])[j].target//这一组某个状态某条边指向的状态的旧状态号
+              let tempState=this.states[oldNum]////这一组某个状态某条边指向的状态本身
+              let tempNum=-1//这一组某个状态某条边指向的组的当前组号
+              for(let m=0;m<stateLists.length;m++){
+                if(stateLists[m].includes(tempState)){
+                  tempNum=m
+                  break
+                }
               }
-            } 
-          } 
+              if(i==0)standard.push(tempNum)
+              else{
+                if(standard[j]==tempNum)continue
+                else{
+                  newSet.push(s[i])
+                  sMove.push(i)
+                  flag=true
+                }
+              }
+              if(flag)break
+            }
+          }
+          if(flag){
+            spiltNumber=k
+            break
+          }
         }
-        stateLists.splice(k,1)
-        stateLists.push(reals)
-        stateLists.push(newSet)
+      }
+      
+      stateLists[spiltNumber]=stateLists[spiltNumber].filter(x=>!sMove.includes(stateLists[spiltNumber].indexOf(x)))
+      console.log(stateLists[spiltNumber])
+      stateLists.push(newSet)
+    }
+    //新分法结束的地方
+    */
+
+    //原分法开始的地方
+    let flag=true
+    let newStateLists=[]//存放已经完成划分状态集的暂用容器
+    while(flag){//一次拆一个
+      flag=false
+      let newSet:State[]=[]//装被拆出去状态的容器  
+      for(let k=0;k<stateLists.length;k++){//找一个要拆的，外层循环是statelists当中每一个state[]
+        let s=stateLists[k] 
+        let reals=s//为了保证循环顺利进行，我们用reals复制s，拆reals不会影响s的循环
+        if(s.length<=1){
+          newStateLists.push(s)
+          stateLists.splice(k,1)
+          flag=true
+          break
+        }//单个状态无法拆,直接提出来
+        else{//这里剩下的都是至少包含两个状态的数组
+          for(let i=1;i<s.length;i++){//中层循环是当前选中的这个state[]中每一个state
+            let standard=s[0]//把每个数组的第一个状态作为参照
+            let tr1=this.getTransforms(standard)
+            let tr2=this.getTransforms(s[i])
+            if(!this.sameTransform(tr1,tr2)){
+              //经过状态转移达到的状态不在同一组,则拿出来放到容器里
+              newSet.push(s[i])
+              reals.splice(i,1)
+              flag=true
+            }
+          }
+          //至此这个state[]已经拆完了，我们把确定在一组的reals提出来，把装着所有拆出来状态的数组回炉重造
+          stateLists.splice(k,1)
+          newStateLists.push(reals)
+          if(newSet.length>0)stateLists.push(newSet)
+          break
+        }
+      }
+      
+    }
+    for(let i=0;i<newStateLists.length;i++){
+      stateLists.push(newStateLists[i])
+    }
+    console.log(stateLists)
+    //原分法结束的地方
+
+
+    //写到这里，状态已经全拆完了，就差一个重构DFA工作了
+    let reducedStates:number[]=[]
+    let oldNewMap=new Map<number,number>()//新旧状态映射表
+    for(let i=0;i<stateLists.length;i++){//把需要删除的状态找出来
+      for(let j=0;j<stateLists[i].length;j++){
+        if(stateLists[i].length==1){
+          oldNewMap.set(this.states.indexOf(stateLists[i][j]),i)
+        }
+        else{
+          if(j>0){
+            reducedStates.push(this.states.indexOf(stateLists[i][j]))
+          }
+            let indexOld=this.states.indexOf(stateLists[i][j])
+            oldNewMap.set(indexOld,i)//新旧状态映射表
+        }
+      }
+      /*if(stateLists[i].length>1){
+        let count=-1
+        for(let j=0;j<stateLists[i].length;j++){
+          if(stateLists[i][j]==this.startStates[0]){
+            count=j
+          }
+        }
+        if(count!=-1){//这个数组里有初始状态,则删掉所有其他的状态
+          for(let j=0;j<stateLists[i].length;j++){
+            if(j!=count){
+              reducedStates.push(this.states.indexOf(stateLists[i][j]))
+              let indexOld=this.states.indexOf(stateLists[i][j])
+              oldNewMap.set(indexOld,0)//新旧状态映射表
+            }
+          }
+        }
+        else{//这个数组里没有初始状态，则删掉除第一个以外的所有状态
+          for(let j=1;j<stateLists[i].length;j++){
+            reducedStates.push(this.states.indexOf(stateLists[i][j]))
+            let indexOld=this.states.indexOf(stateLists[i][j])
+            let indexNew=this.states.indexOf(stateLists[i][0])
+            oldNewMap.set(indexOld,indexNew)//新旧状态映射表
+          }
+        }
+      }*/
+    }
+    console.log(reducedStates)
+    let newStates=this.states.filter(x=>!reducedStates.includes(this.states.indexOf(x)))//删掉多余状态
+    let newTrans=this.transformAdjList.filter(x=>!reducedStates.includes(this.transformAdjList.indexOf(x)))//删掉转移矩阵中多余状态对应的行
+    for(let i=0;i<newTrans.length;i++){//将转移矩阵中所有target为旧状态的更新
+      for(let j=0;j<newTrans[i].length;j++){
+        let temp=newTrans[i][j].target
+        newTrans[i][j].target=oldNewMap.get(temp) as number 
       }
     }
-    console.log(this.transformAdjList)
-    //写到这里，状态已经全拆完了，就差一个重构DFA工作了
+    this._states=newStates
+    this._transformAdjList=newTrans
+    //console.log(this)
+    /*
     let rowsToDelete: number[]=[]
     let newTrans: Transform[][]=[]
     let newStates: State[]=[]
@@ -98,8 +224,7 @@ export class DFA extends FiniteAutomata {
       if(!rowsToDelete.includes(i)){
         newTrans.push([])
         count++
-        //for(let j=0;j<this.transformAdjList.length;j++){//遍历原转移矩阵的行
-        for(let k=0;k<this.transformAdjList[i].length;k++){//遍历原转移矩阵的列
+        for(let k=0;k<this.transformAdjList[i].length;k++){//遍历原转移矩阵的行列
           if(!rowsToDelete.includes(this.transformAdjList[i][k].target)){
             newTrans[count].push(this.transformAdjList[i][k])
           }
@@ -116,9 +241,20 @@ export class DFA extends FiniteAutomata {
     }
     this._states=newStates
     this._transformAdjList=newTrans
-    console.log(newTrans)
+    //console.log(newTrans)
+    */
   }
  
+  sameTransform(tr1:Transform[],tr2:Transform[]){
+    return(
+      tr1.every(i1=>
+        tr2.some(i2=>i1.alpha==i2.alpha && i1.target==i2.target)
+      ) &&
+      tr2.every(i1=>
+        tr1.some(i2=>i1.alpha==i2.alpha && i1.target==i2.target)
+      )
+    )
+  }
   /**
    * 使用子集构造法由NFA构造此DFA
    * @param nfa 子集构造法所使用的NFA

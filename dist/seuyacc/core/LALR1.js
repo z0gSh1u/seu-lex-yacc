@@ -26,14 +26,14 @@ function lrdfa_to_lalrdfa(lr1) {
     LALRStates.length = coreArr.length;
     for (let i = 0; i < coreArr.length; i++) {
         /*
-        这里假设我们已经合并完了同心项，左边一列是合并后（前）的项集，
-        右边一列是用索引表示的、每个项集在项集族对应的数组下标
-        因为用的是索引，所以左右能一一对应
-        LALR.states(∪ of LR.states)------coreArray.second
-        J0(I0)---------------------------[0]
-        J1(I1 ∪ I2 ∪ I4)----------------[1,2,4]
-        J2(I3 ∪ I5)---------------------[3,5]
-        */
+          这里假设我们已经合并完了同心项，左边一列是合并后（前）的项集，
+          右边一列是用索引表示的、每个项集在项集族对应的数组下标
+          因为用的是索引，所以左右能一一对应
+          LALR.states(∪ of LR.states)------coreArray.second
+          J0(I0)---------------------------[0]
+          J1(I1 ∪ I2 ∪ I4)----------------[1,2,4]
+          J2(I3 ∪ I5)---------------------[3,5]
+          */
         for (let j = 0; j < lr1.dfa.states.length; j++) { //相同核的状态取并集
             if (coreArr[i].second.includes(j)) {
                 LALRStates[i].items.concat(lr1.dfa.states[j].items.filter(x => !LALRStates[i].items.includes(x)));

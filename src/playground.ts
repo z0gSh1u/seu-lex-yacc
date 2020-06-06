@@ -10,9 +10,10 @@ import { visualizeGOTOGraph, visualizeACTIONGOTOTable } from './seuyacc/core/Vis
 let yp = new YaccParser('example\\YaccTest2.y')
 let lr1 = new LR1Analyzer(yp)
 let dfa = lr1.dfa*/
-let DFA88 = DFA.fromNFA(NFA.fromRegex(new Regex('(a|b)*a(a|b)')))
+//let DFA88 = DFA.fromNFA(NFA.fromRegex(new Regex('([a-c])?(b|d)*e?f+ghi')))
+let DFA88 = DFA.fromNFA(NFA.fromRegex(new Regex('(a*|b*)*')))
 DFA88.minimize()
-//console.log(DFA88.states)
+console.log(DFA88.test('ab'))
 visualizeFA(DFA88)
 /*console.dir(dfa, { maxArrayLength: null, depth: null })
 visualizeGOTOGraph(dfa, lr1)

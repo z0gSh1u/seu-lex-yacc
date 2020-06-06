@@ -47,21 +47,33 @@ class DFA extends FA_1.FiniteAutomata {
             if (!this.acceptStates.includes(copyOfOriginalState[i]))
                 nonTerminalStates.push(copyOfOriginalState[i]);
         }
-        stateLists.push(nonTerminalStates);
+        console.log(nonTerminalStates);
+        if (nonTerminalStates.length != 0) {
+            stateLists.push(nonTerminalStates);
+        }
         console.log(stateLists);
         let flag = true;
-        while (flag) { //一次拆一个
+        let newStateLists = []; //存放已经完成划分状态集的暂用容器
+        while (flag && stateLists.length != 0) { //一次拆一个
+            console.log('wtf');
             flag = false;
-            let newSet = []; //容器
             for (let k = 0; k < stateLists.length; k++) { //找一个要拆的
+                let newSet = []; //容器
                 let s = stateLists[k];
                 let reals = s; //需要实际拆的副本
-                if (s.length == 1)
-                    continue; //单个状态无法拆
+                if (s.length <= 1) {
+                    newStateLists.push(s);
+                    stateLists.splice(k, 1);
+                    flag = true;
+                    break;
+                } //单个状态无法拆,直接提出来
                 else {
                     for (let i = 0; i < this.alphabet.length; i++) {
                         for (let j = 0; j < s.length; j++) {
-                            let index = this.getTransforms(s[j]).find(x => x.alpha == i).target;
+                            let found = this.getTransforms(s[j]).find(x => x.alpha == i);
+                            if (!found)
+                                continue;
+                            let index = found.target;
                             if (!s.includes(this.states[index])) {
                                 //经过状态转移达到的状态不包含在s里面,则拿出来放到容器里
                                 newSet.push(s[j]);
@@ -70,13 +82,17 @@ class DFA extends FA_1.FiniteAutomata {
                             }
                         }
                     }
+                    stateLists.splice(k, 1);
+                    newStateLists.push(reals); //这个时候的s(reals)已经不能再分了，放入暂用容器中
+                    stateLists.push(newSet);
+                    break;
                 }
-                stateLists.splice(k, 1);
-                stateLists.push(reals);
-                stateLists.push(newSet);
             }
         }
-        console.log(this.transformAdjList);
+        for (let i = 0; i < newStateLists.length; i++) {
+            stateLists.push(newStateLists[i]);
+        }
+        //console.log(this.transformAdjList)
         //写到这里，状态已经全拆完了，就差一个重构DFA工作了
         let rowsToDelete = [];
         let newTrans = [];
@@ -112,7 +128,7 @@ class DFA extends FA_1.FiniteAutomata {
         }
         this._states = newStates;
         this._transformAdjList = newTrans;
-        console.log(newTrans);
+        //console.log(newTrans)
     }
     /**
      * 使用子集构造法由NFA构造此DFA

@@ -8,21 +8,11 @@ window._seulex_shape = 'circle'; let data = {
     {
       "key": "1",
       "label": "1",
-      "color": "#FFFFFF"
+      "color": "#00DB00"
     },
     {
       "key": "2",
       "label": "2",
-      "color": "#FFFFFF"
-    },
-    {
-      "key": "3",
-      "label": "3",
-      "color": "#00DB00"
-    },
-    {
-      "key": "4",
-      "label": "4",
       "color": "#00DB00"
     }
   ],
@@ -41,13 +31,13 @@ window._seulex_shape = 'circle'; let data = {
     },
     {
       "source": "1",
-      "target": "3",
+      "target": "1",
       "name": "1_0",
       "label": "a"
     },
     {
       "source": "1",
-      "target": "4",
+      "target": "2",
       "name": "1_1",
       "label": "b"
     },
@@ -61,30 +51,6 @@ window._seulex_shape = 'circle'; let data = {
       "source": "2",
       "target": "2",
       "name": "2_1",
-      "label": "b"
-    },
-    {
-      "source": "3",
-      "target": "3",
-      "name": "3_0",
-      "label": "a"
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "name": "3_1",
-      "label": "b"
-    },
-    {
-      "source": "4",
-      "target": "1",
-      "name": "4_0",
-      "label": "a"
-    },
-    {
-      "source": "4",
-      "target": "2",
-      "name": "4_1",
       "label": "b"
     }
   ]
