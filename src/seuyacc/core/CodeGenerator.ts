@@ -345,7 +345,7 @@ function genYaccParse(analyzer: LR1Analyzer) {
  * 生成语法分析器
  */
 export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
-  fs.writeFileSync(path.resolve('./', 'example/yy.tab.h'), generateYTABH(analyzer))
+  fs.writeFileSync(path.resolve('./', 'yy.tab.h'), generateYTABH(analyzer))
 
   let finalCode = `  
   // ===========================================

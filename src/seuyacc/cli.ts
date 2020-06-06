@@ -39,7 +39,7 @@ if (args._.length === 0) {
     console.error(e)
   }
   // 输出c文件
-  fs.writeFileSync(path.resolve('./', 'example/yy.seuyacc.c'), finalCode)
+  fs.writeFileSync(path.resolve('./', 'yy.seuyacc.c'), finalCode)
 }
 stdoutPrint(`[ All work done! ]\n`)
 const tok = new Date().getTime()

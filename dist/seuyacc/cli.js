@@ -43,7 +43,7 @@ else {
         console.error(e);
     }
     // 输出c文件
-    fs_1.default.writeFileSync(path_1.default.resolve('./', 'example/yy.seuyacc.c'), finalCode);
+    fs_1.default.writeFileSync(path_1.default.resolve('./', 'yy.seuyacc.c'), finalCode);
 }
 utils_1.stdoutPrint(`[ All work done! ]\n`);
 const tok = new Date().getTime();
