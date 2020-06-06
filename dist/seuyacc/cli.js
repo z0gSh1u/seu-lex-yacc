@@ -29,13 +29,14 @@ else if (args._.length !== 1) {
 else {
     utils_1.stdoutPrint(`[ Running... ]\n`);
     // 构建LR1并生成代码
-    let finalCode = '';
+    let finalCode = '', finalTABH = '';
     try {
         utils_1.stdoutPrint(`[ Parsing .y file... ]\n`);
         let yaccParser = new YaccParser_1.YaccParser(path_1.default.resolve('./', args._[0]));
         utils_1.stdoutPrint(`[ Building LR1... ]\n`);
         let lr1 = new LR1_1.LR1Analyzer(yaccParser);
         utils_1.stdoutPrint(`[ Generating code... ]\n`);
+        finalTABH = CodeGenerator_1.generateYTABH(lr1);
         finalCode = CodeGenerator_1.generateYTABC(yaccParser, lr1);
         utils_1.stdoutPrint(`[ Main work done! Start post-processing... ]\n`);
     }
@@ -43,6 +44,7 @@ else {
         console.error(e);
     }
     // 输出c文件
+    fs_1.default.writeFileSync(path_1.default.resolve('./', 'yy.tab.h'), finalTABH);
     fs_1.default.writeFileSync(path_1.default.resolve('./', 'yy.seuyacc.c'), finalCode);
 }
 utils_1.stdoutPrint(`[ All work done! ]\n`);

@@ -1,104 +1,148 @@
 window._seulex_data = {
   "ACTIONHead": [
-    "')'",
-    "','",
+    "MINUS",
+    "PLUS",
+    "MULTIPLY",
+    "DIVIDE",
+    "NUMBER",
     "SP_END"
   ],
   "GOTOHead": [
-    "S",
-    "L",
-    "S'"
+    "expr",
+    "expr'"
   ],
   "ACTIONTable": [
     [
       "",
       "",
+      "",
+      "",
+      "s1",
       ""
     ],
     [
+      "r(expr -> NUMBER)",
+      "r(expr -> NUMBER)",
+      "r(expr -> NUMBER)",
+      "r(expr -> NUMBER)",
       "",
-      "",
-      ""
+      "r(expr -> NUMBER)"
     ],
     [
-      "r(S -> a)",
-      "r(S -> a)",
-      "r(S -> a)"
-    ],
-    [
-      "",
+      "s3",
+      "s4",
+      "s5",
+      "s6",
       "",
       "acc"
     ],
     [
-      "r(L -> S)",
-      "r(L -> S)",
+      "",
+      "",
+      "",
+      "",
+      "s1",
       ""
     ],
     [
+      "",
+      "",
+      "",
+      "",
+      "s1",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "s1",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "s1",
+      ""
+    ],
+    [
+      "r(expr -> expr DIVIDE expr)",
+      "r(expr -> expr DIVIDE expr)",
+      "r(expr -> expr DIVIDE expr)",
+      "r(expr -> expr DIVIDE expr)",
+      "",
+      "r(expr -> expr DIVIDE expr)"
+    ],
+    [
+      "r(expr -> expr MULTIPLY expr)",
+      "r(expr -> expr MULTIPLY expr)",
+      "r(expr -> expr MULTIPLY expr)",
+      "r(expr -> expr MULTIPLY expr)",
+      "",
+      "r(expr -> expr MULTIPLY expr)"
+    ],
+    [
+      "r(expr -> expr PLUS expr)",
+      "r(expr -> expr PLUS expr)",
+      "s5",
       "s6",
-      "s7",
-      ""
-    ],
-    [
-      "r(S -> '(' L ')')",
-      "r(S -> '(' L ')')",
-      "r(S -> '(' L ')')"
-    ],
-    [
       "",
-      "",
-      ""
+      "r(expr -> expr PLUS expr)"
     ],
     [
-      "r(L -> L ',' S)",
-      "r(L -> L ',' S)",
-      ""
+      "r(expr -> expr MINUS expr)",
+      "r(expr -> expr MINUS expr)",
+      "s5",
+      "s6",
+      "",
+      "r(expr -> expr MINUS expr)"
     ]
   ],
   "GOTOTable": [
     [
-      3,
-      "",
+      2,
       ""
     ],
     [
-      4,
-      5,
-      ""
-    ],
-    [
-      "",
       "",
       ""
     ],
     [
       "",
-      "",
       ""
     ],
     [
-      "",
-      "",
+      10,
       ""
     ],
     [
-      "",
-      "",
-      ""
-    ],
-    [
-      "",
-      "",
+      9,
       ""
     ],
     [
       8,
+      ""
+    ],
+    [
+      7,
+      ""
+    ],
+    [
       "",
       ""
     ],
     [
       "",
+      ""
+    ],
+    [
+      "",
+      ""
+    ],
+    [
       "",
       ""
     ]

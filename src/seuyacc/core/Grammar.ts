@@ -57,7 +57,7 @@ export class YaccParserProducer {
 
 /**
  *              LR1DFA
- *  LR1ItemSet
+ *  LR1State
  *  _________
  * |         |
  * | LR1Item |

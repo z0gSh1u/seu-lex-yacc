@@ -4,3 +4,5 @@ package-lock.json
 /**/*.exe
 /**/*.o
 /**/yy.seulex.c
+/**/yy.seuyacc.c
+/**/yy.tab.h

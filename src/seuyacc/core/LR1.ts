@@ -417,6 +417,11 @@ export class LR1Analyzer {
     let pb = new ProgressBar()
     // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
     for (let i = 0; i < dfaStates.length; i++) {
+      if (i == dfaStates.length - 1) {
+        for (let pro of dfaStates[i].items) {
+          console.log(this.formatPrintProducer(pro.rawProducer))
+        }
+      }
       pb.render({ completed: i, total: dfaStates.length })
       // 处理移进的情况
       // ① [A->α`aβ, b], GOTO(Ii, a) = Ij, ACTION[i, a] = shift(j)
