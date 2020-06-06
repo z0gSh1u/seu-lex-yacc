@@ -48,26 +48,279 @@ export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
   `
   finalCode += generateYTABH(yaccParser)
   finalCode += genPresetContent()
+  finalCode += genTable(analyzer)
+  finalCode += genDealWithFunction(analyzer)
+  finalCode += genYaccParse(analyzer)
+  finalCode += genMain()
+}
+
+function genMain() {
+  return `
+  int main(int argc, char** argv) {
+    yyin = fopen(argv[1], "r");
+    if (yyparse() == 0) printf("yyparse succeed!");
+    else printf("oh no, yyparse failed!");
+    fclose(yyin);
+    return 0;
+  }
+  `
+}
+
+function genYaccParse(analyzer: LR1Analyzer) {
+  return `
+  int yyparse() {
+    if (yyout == NULL) yyout = stdout;
+    int token;
+    stateStackPush(${analyzer.dfa.startStateId});
+    while (token != YACC_ACCEPT && token = yylex()) {
+      do {
+        token = dealWith(token);
+      } while (token > 0);
+    }
+    if (token == YACC_ACCEPT) return 0;
+    else return 1;
+  }
+  `
+}
+
+function genDealWithFunction(analyzer: LR1Analyzer) {
+  let code =  `
+  int dealWith(int symbol) {
+    if (stateStackSize < 1) throw(ArrayLowerBoundExceeded);
+    int state = stateStack[stateStackSize - 1];
+    TableCell cell = table[state][symbol];
+    switch(cell.action) {
+      case Action.ERROR:
+        throw(SyntaxError);
+      case Action.ACCEPT:
+        return YACC_ACCEPT;
+      case Action.GOTO:
+        stateStackPush(cell.target);
+        return YACC_NOTHING;
+      case Action.SHIFT:
+        stateStackPush(cell.target);
+        if (curAttr != yytext) delete curAttr;
+        curAttr = yytext;
+        updateSymbolAttr();
+        return YACC_NOTHING;
+      case Action.REDUCE:
+        switch (cell.target) {
+          `
+  for (let index in analyzer.producers) {
+    let producer = analyzer.producers[index]
+    code += `case ${index}:
+      if (curAttr != yytext) delete curAttr;
+      curAttr = new char[1024]();
+      ${actionCodeModified(producer.action, producer.rhs.length)}
+      stateStackPop(${producer.rhs.length});
+      updateSymbolAttr(${producer.rhs.length});
+      return ${producer.lhs};
+    `
+  }
+  code += `
+        }
+    }
+    return -1;
+  }
+  `
+  return code
+}
+
+function actionCodeModified(action: string, producerLen: number) {
+  let bslash = false,
+    inSQuot = false,
+    inDQuot = false,
+    dollar = false,
+    buffer = "",
+    ret = ""
+  action.split('').forEach(c => {
+    if (dollar) {
+      if (c == '$') ret +='curAttr', dollar = false
+      else if (c >= '0' && c <= '9') buffer += c
+      else {
+        let num = parseInt(buffer)
+        if (num < 1 || num > producerLen) ret += '$' + buffer
+        else ret += `symbolAttr[symbolAttrSize-${producerLen-num+1}]`
+        ret += c
+        dollar = false
+        buffer = ""
+      }
+    } else {
+      if (!inSQuot && !inDQuot && !dollar && c == '$') dollar = true
+      else if (!inDQuot && !bslash && c == '\'') inSQuot = !inSQuot
+      else if (!inSQuot && !bslash && c == '\"') inDQuot = !inDQuot
+      else if (c == '\\') bslash = !bslash
+      else bslash = false
+      if (c != '$') ret += c
+    }
+  })
+  return ret
+}
+
+function genTable(analyzer: LR1Analyzer) {
+  let code = `
+  enum Action {
+    GOTO = 1,
+    SHIFT = 2,
+    REDUCE = 3,
+    ACCEPT = 4,
+    ERROR = 0
+  };
+  struct TableCell {
+    Action action = ERROR;
+    int target = 0;
+    TableCell(Action action, int target) {
+      this->action = action;
+      this->target = target;
+    }
+  };
+  TableCell table[${analyzer.dfa.states.length}][${analyzer.symbols.length}] = {`
+  for (let state in analyzer.dfa.states) {
+    let nonCnt = 0
+    let nonnonCnt = 0
+    for (let symbol in analyzer.symbols) {
+      let action = `ERROR`
+      let target = 0
+      if (analyzer.symbols[symbol].type == 'nonterminal') {
+        action = `GOTO`
+        target = analyzer.GOTOTable[state][nonCnt++]
+      } else {
+        switch (analyzer.ACTIONTable[state][nonnonCnt].type) {
+          case 'shift':
+            action = `SHIFT`
+            target = analyzer.ACTIONTable[state][nonnonCnt].data
+            break
+          case 'reduce':
+            action = `REDUCE`
+            target = analyzer.ACTIONTable[state][nonnonCnt].data
+            break
+          case 'acc':
+            action = `ACCEPT`
+            break
+          default:
+            action  = `ERROR`
+        }
+        nonnonCnt++
+      }
+      code += `TableCell(Action.${action}, ${target}),`
+    }
+  }
+  code = code.substr(0, code.length - 1)
+  code += `};
+  `
+  return code
 }
 
 function genPresetContent() {
   return `
   #include <stdio.h>
   #include <stdlib.h>
+  #include <string.h>
   #define STACK_LIMIT 1000
   #define SYMBOL_CHART_LIMIT 1000
-  #define SYMBOL_REC_LIMIT 1000
-  struct SymbolChartCell {
-    char *name;
-    char *value;
-  };
+  #define SYMBOL_ATTR_LIMIT 1000
+  #define YACC_NOTHING -1
+  #define YACC_ACCEPT -42
+  ${genExceptions()}
+  ${genExtern()}
   int stateStack[STACK_LIMIT];
   int stateStackSize = 0;
-  char *symbolRec[SYMBOL_REC_LIMIT];
-  int symbolRecSize = 0;
-  SymbolChartCell symbolChart[SYMBOL_CHART_LIMIT];
-  int symbolChartSize = 0;
+  char *symbolAttr[SYMBOL_REC_LIMIT];
+  int symbolAttrSize = 0;
+  char *curAttr = new char[1024]();
+  FILE *yyout = NULL;
+  ${genSymbolChartClass()}
+  SymbolChart symbolChart();
+  ${genFunctions()}
   `
 }
 
+function genSymbolChartClass() {
+  return `
+  class SymbolChart {
+    public:
+      const int SIZE_LIMIT = 1000;
+      int getSymbolNum() {
+        return this->symbolNum;
+      }
+      char *getSymbol(char *name) {
+        for (int i = 0; i < this->symbolNum; i++) {
+          if (strcmp(name, this->name[i]) == 0)
+            return this->value[i];
+        }
+        return NULL;
+      }
+      void createSymbol(char *name, char *value = "") {
+        if (symbolNum >= this->SIZE_LIMIT) throw(ArrayUpperBoundExceeded);
+        if (this->getSymbol(name) != NULL) throw(SomethingRedefined);
+        this->name[this->symbolNum] = new char[strlen(name)];
+        this->value[this->symbolNum] = new char[strlen(value)];
+        strcpy(this->name[this->symbolNum], name);
+        strcpy(this->value[this->symbolNum], value);
+        symbolNum++;
+      }
+    private:
+      int symbolNum = 0;
+      char *name[SIZE_LIMIT];
+      char *value[SIZE_LIMIT];
+    };
+  `
+}
 
+function genExtern() {
+  return `
+  extern File *yyin;
+  extern char yytext[];
+  extern int yylex();
+  `
+}
+
+function genFunctions() {
+  return `
+  void updateSymbolAttr(int popNum = 0) {
+    while (popNum--) {
+      if (symbolAttrSize == 0) throw(ArrayLowerBoundExceeded);
+      delete symbolAttr[--symbolAttrSize];
+    }
+    if (symbolAttrSize >= SYMBOL_ATTR_LIMIT) throw(ArrayUpperBoundExceeded);
+    symbolAttr[symbolAttrSize] = new char[strlen(curAttr)];
+    strcpy(symbolAttr[symbolAttrSize++], curAttr);
+  }
+  int stateStackPop(int popNum) {
+    while (popNum--) {
+      if (stateStackSize == 0) throw(ArrayLowerBoundExceeded);
+      stateStackSize--;
+    }
+    if (stateStackSize == 0) return YACC_NOTHING;
+    else return stateStack[stateStackSize - 1];
+  }
+  void stateStackPush(int state) {
+    if (stateStackSize >= STATE_STACK_LIMIT) throw(ArrayUpperBoundExceeded);
+    stateStack[stateStackSize++] = state;
+  }
+  char *variable(char *name) {
+    return symbolChart.getSymbol(name);
+  }
+  `
+}
+
+function genExceptions() {
+  return `
+  void ArrayUpperBoundExceeded(void) {
+    printf("数组数据溢出！");
+  }
+  void ArrayLowerBoundExceeded(void) {
+    printf("试图删除或读取空数组中的数据！");
+  }
+  void SomethingRedefined(void) {
+    printf("有符号被重复定义！");
+  }
+  void SyntaxError(void) {
+    printf("存在语法错误！");
+  }
+  void throw(void (*func)(void)) {
+    atexit(func);
+    exit(EXIT_FAILURE);
+  }
+  `
+}

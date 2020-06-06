@@ -93,13 +93,13 @@ export class LR1Producer {
 /**
  * LR1项目
  * A->a, $就是一条项目
- * 将多个展望的的，拆分成不同的项目，每个项目只有一个展望符号
+ * 将多个展望符的，拆分成不同的项目，每个项目只有一个展望符号
  */
 export class LR1Item {
   private _producer: number // 在LR1Analyzer._producers中的下标
   private _rawProducer: LR1Producer // 历史遗留产物
   private _dotPosition: number // producer.rhs的点号位置，规定0号位为最左（所有符号之前）位置
-  private _lookahead: number // 展望符（非终结符）
+  private _lookahead: number // 展望符（终结符）
   get producer() {
     return this._producer
   }
