@@ -49,6 +49,7 @@
   char *symbolAttr[SYMBOL_ATTR_LIMIT];
   int symbolAttrSize = 0;
   char *curAttr = NULL;
+  FILE *treeout = NULL;
   
   struct SymbolChart {
     int symbolNum;
@@ -73,14 +74,36 @@
   }
   
   
+  struct Node {
+    char *yytext;
+    struct Node *children[SYMBOL_CHART_LIMIT];
+    int childNum;
+  }*nodes[SYMBOL_CHART_LIMIT];
+  int nodeNum = 0;
+  void reduceNode(int num) {
+    struct Node *newNode = (struct Node *)malloc(sizeof(struct Node));
+    newNode->childNum = num;
+    newNode->yytext = (char *)malloc(sizeof(char) * strlen(curAttr));
+    strcpy(newNode->yytext, curAttr);
+    for (int i = 1; i <= num; i++) {
+      newNode->children[num-i] = nodes[nodeNum-i];
+      nodes[nodeNum-i] = NULL;
+    }
+    nodeNum = nodeNum - num;
+    nodes[nodeNum++] = newNode;
+  }
+  
+  
   void updateSymbolAttr(int popNum) {
+    char *temp = (char *)malloc(sizeof(char) * strlen(curAttr));
+    strcpy(temp, curAttr);
     while (popNum--) {
       if (symbolAttrSize == 0) throw(ArrayLowerBoundExceeded);
       free(symbolAttr[--symbolAttrSize]);
     }
     if (symbolAttrSize >= SYMBOL_ATTR_LIMIT) throw(ArrayUpperBoundExceeded);
-    symbolAttr[symbolAttrSize] = (char *)malloc(strlen(curAttr) * sizeof(char));
-    strcpy(symbolAttr[symbolAttrSize++], curAttr);
+    symbolAttr[symbolAttrSize] = (char *)malloc(strlen(temp) * sizeof(char));
+    strcpy(symbolAttr[symbolAttrSize++], temp);
   }
   int stateStackPop(int popNum) {
     while (popNum--) {
@@ -121,6 +144,11 @@
         if (debugMode) printf("Shift to state %d\n", cell.target);
         if (curAttr != yytext) free(curAttr);
         curAttr = yytext;
+        nodes[nodeNum] = (struct Node *)malloc(sizeof(struct Node));
+        nodes[nodeNum]->yytext = (char *)malloc(sizeof(char) * strlen(curAttr));
+        strcpy(nodes[nodeNum]->yytext, curAttr);
+        nodes[nodeNum]->childNum = 0;
+        nodeNum++;
         updateSymbolAttr(0);
         return YACC_NOTHING;
       case 3:
@@ -131,6 +159,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       out("%s", "r(expr+expr)"); itoa(atoi(symbolAttr[symbolAttrSize-3]) + atoi(symbolAttr[symbolAttrSize-1]), curAttr, 10);
       stateStackPop(3);
+      reduceNode(3);
       updateSymbolAttr(3);
       dealWith(137);
       return symbol;
@@ -139,6 +168,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       out("%s", "r(expr-expr)"); itoa(atoi(symbolAttr[symbolAttrSize-3]) - atoi(symbolAttr[symbolAttrSize-1]), curAttr, 10);
       stateStackPop(3);
+      reduceNode(3);
       updateSymbolAttr(3);
       dealWith(137);
       return symbol;
@@ -147,6 +177,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       out("%s", "r(expr*expr)"); itoa(atoi(symbolAttr[symbolAttrSize-3]) * atoi(symbolAttr[symbolAttrSize-1]), curAttr, 10);
       stateStackPop(3);
+      reduceNode(3);
       updateSymbolAttr(3);
       dealWith(137);
       return symbol;
@@ -155,6 +186,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       out("%s", "r(expr/expr)"); itoa(atoi(symbolAttr[symbolAttrSize-3]) / atoi(symbolAttr[symbolAttrSize-1]), curAttr, 10);
       stateStackPop(3);
+      reduceNode(3);
       updateSymbolAttr(3);
       dealWith(137);
       return symbol;
@@ -163,6 +195,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       
       stateStackPop(3);
+      reduceNode(3);
       updateSymbolAttr(3);
       dealWith(137);
       return symbol;
@@ -171,6 +204,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       curAttr = symbolAttr[symbolAttrSize-1]; /* default operation in fact */
       stateStackPop(1);
+      reduceNode(1);
       updateSymbolAttr(1);
       dealWith(137);
       return symbol;
@@ -179,6 +213,7 @@
       curAttr = (char *)malloc(1024 * sizeof(char));
       curAttr = symbolAttr[symbolAttrSize-1];
       stateStackPop(1);
+      reduceNode(1);
       updateSymbolAttr(1);
       dealWith(140);
       return symbol;
@@ -188,6 +223,24 @@
         return symbol;
     }
     return YACC_NOTHING;
+  }
+  
+  void printTree(struct Node *curNode, int depth) {
+    if (curNode == NULL) return;
+    for (int i = 0; i < depth * 2; i++)
+      fprintf(treeout, "%c", ' ');
+    fprintf(treeout, "%s", curNode->yytext);
+    if (curNode->childNum < 1) return;
+    fprintf(treeout, "{\n");
+    for (int i = 0;i < curNode->childNum; i++) {
+      printTree(curNode->children[i], depth+1);
+      if (i+1 < curNode->childNum)
+        fprintf(treeout, ",");
+      fprintf(treeout, "\n");
+    }
+    for (int i = 0; i < depth * 2; i++)
+      fprintf(treeout, "%c", ' ');
+    fprintf(treeout, "}");
   }
   
   int yyparse() {
@@ -206,7 +259,12 @@
       } while (token >= 0);
     }
     strcpy(yytext, curAttr);
-    if (token == YACC_ACCEPT) return 0;
+    if (token == YACC_ACCEPT) {
+      treeout = fopen("yacc.tree", "w");
+      printTree(nodes[0], 0);
+      fclose(treeout);
+      return 0;
+    }
     else return 1;
   }
   
