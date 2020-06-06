@@ -95,13 +95,15 @@
   
   
   void updateSymbolAttr(int popNum) {
+    char *temp = (char *)malloc(sizeof(char) * strlen(curAttr));
+    strcpy(temp, curAttr);
     while (popNum--) {
       if (symbolAttrSize == 0) throw(ArrayLowerBoundExceeded);
       free(symbolAttr[--symbolAttrSize]);
     }
     if (symbolAttrSize >= SYMBOL_ATTR_LIMIT) throw(ArrayUpperBoundExceeded);
-    symbolAttr[symbolAttrSize] = (char *)malloc(strlen(curAttr) * sizeof(char));
-    strcpy(symbolAttr[symbolAttrSize++], curAttr);
+    symbolAttr[symbolAttrSize] = (char *)malloc(strlen(temp) * sizeof(char));
+    strcpy(symbolAttr[symbolAttrSize++], temp);
   }
   int stateStackPop(int popNum) {
     while (popNum--) {
