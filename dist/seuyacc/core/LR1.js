@@ -360,6 +360,7 @@ class LR1Analyzer {
         // ===========================
         let lookup = Array.prototype.indexOf.bind(this._ACTIONReverseLookup);
         let pb = new progressbar_1.ProgressBar();
+        let shiftcount = 0, conflictcount = 0;
         // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
         for (let i = 0; i < dfaStates.length; i++) {
             pb.render({ completed: i, total: dfaStates.length });
@@ -373,8 +374,10 @@ class LR1Analyzer {
                     continue;
                 let goto = this.GOTO(dfaStates[i], a);
                 for (let j = 0; j < dfaStates.length; j++)
-                    if (Grammar_1.LR1State.same(goto, dfaStates[j]))
+                    if (Grammar_1.LR1State.same(goto, dfaStates[j])) {
                         this._ACTIONTable[i][lookup(a)] = { type: 'shift', data: j };
+                        shiftcount++;
+                    }
             }
             // 处理规约的情况
             // ② [A->α`, a], A!=S', ACTION[i, a] = reduce(A->α)
@@ -387,6 +390,7 @@ class LR1Analyzer {
                     continue; // 展望非终结符的归GOTO表管
                 let shouldReplace = false;
                 if (this._ACTIONTable[i][lookup(item.lookahead)].type === 'shift') {
+                    conflictcount++;
                     // 处理移进-规约冲突
                     let reduceOperator = this._operators.find(x => x.symbolId == item.lookahead); // 展望符的优先级就是规约的优先级
                     let reducePrecedence = reduceOperator === null || reduceOperator === void 0 ? void 0 : reduceOperator.precedence;
@@ -439,11 +443,10 @@ class LR1Analyzer {
         lookup = Array.prototype.indexOf.bind(this._GOTOReverseLookup);
         for (let i = 0; i < dfaStates.length; i++)
             for (let A = 0; A < this._symbols.length; A++)
-                for (let j = 0; j < dfaStates.length; j++) {
-                    if (Grammar_1.LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j])) {
+                for (let j = 0; j < dfaStates.length; j++)
+                    if (Grammar_1.LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j]))
                         this._GOTOTable[i][lookup(A)] = j;
-                    }
-                }
+        console.log("\nshift==", shiftcount, "confl", conflictcount);
     }
 }
 exports.LR1Analyzer = LR1Analyzer;

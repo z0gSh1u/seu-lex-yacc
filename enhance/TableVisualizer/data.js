@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 window._seulex_data = {
   "ACTIONHead": [
     "')'",
@@ -382,3 +383,5 @@ window._seulex_data = {
     ]
   ]
 }
+=======
+>>>>>>> 263cd431cfa4baf1366b42d3324de177e77b3fa5

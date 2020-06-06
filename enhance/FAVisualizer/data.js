@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 window._seulex_shape = 'rect'; let data = {
   "nodes": [
     {
@@ -608,3 +609,5 @@ window._seulex_shape = 'rect'; let data = {
     }
   ]
 }
+=======
+>>>>>>> 263cd431cfa4baf1366b42d3324de177e77b3fa5
