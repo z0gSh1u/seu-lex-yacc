@@ -17,15 +17,12 @@ title #{letter}+
 
 %%
 
-{title} { 
-  yylval = strdup(yytext + 2); return (TITLE); 
+{title} { dosomething; doelse; }
+[a-zA-Z_] { 
+  dosomething; doelse; 
 }
-a+b? {
-  return 0;
-}
-(\r|\n) {
-  return 233;
-}
+a+b? return 0;
+(\r|\n) ;
 
 %%
 

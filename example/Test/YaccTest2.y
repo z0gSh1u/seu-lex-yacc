@@ -16,7 +16,6 @@ L
   | S
   ;
 
-
 %%
 #include <stdio.h>
 

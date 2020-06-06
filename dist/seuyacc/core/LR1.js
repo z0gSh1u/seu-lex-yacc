@@ -5,8 +5,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Grammar_1 = require("./Grammar");
 const utils_1 = require("../../utils");
+const progressbar_1 = require("../../../enhance/progressbar");
+const LALR_1 = require("./LALR");
 class LR1Analyzer {
-    constructor(yaccParser) {
+    constructor(yaccParser, useLALR = false) {
         this._symbols = [];
         this._producers = [];
         this._operators = [];
@@ -14,11 +16,19 @@ class LR1Analyzer {
         this._GOTOTable = [];
         this._ACTIONReverseLookup = [];
         this._GOTOReverseLookup = [];
+        this.GOTOCache = new Map();
         this._distributeId(yaccParser);
+        console.log(yaccParser);
         this._convertProducer(yaccParser.producers);
         this._convertOperator(yaccParser.operatorDecl);
+        console.log('\n[ constructLR1DFA or LALRDFA, this might take a long time... ]');
         this._constructLR1DFA();
+        if (useLALR) {
+            this._dfa = LALR_1.LR1DFAtoLALRDFA(this);
+        }
+        console.log('\n[ constructACTIONGOTOTable, this might take a long time... ]');
         this._constructACTIONGOTOTable();
+        console.log('\n');
     }
     get symbols() {
         return this._symbols;
@@ -108,23 +118,25 @@ class LR1Analyzer {
     /**
      * 求取FIRST集
      */
-    FIRST(symbols) {
+    FIRST(symbols, nonterminalRec = []) {
         if (!symbols.length)
             return [this._getSymbolId(Grammar_1.SpSymbol.EPSILON)];
         let ret = [];
         if (!this._symbolTypeIs(symbols[0], 'nonterminal'))
             ret.push(symbols[0]);
         else {
-            // TODO: 在存在直接或间接左递归的情况下会进入死循环，需要解决办法
-            this._producersOf(symbols[0]).forEach(producer => {
-                this.FIRST(producer.rhs).forEach(symbol => {
-                    if (!ret.includes(symbol))
-                        ret.push(symbol);
+            if (!nonterminalRec.includes(symbols[0])) {
+                nonterminalRec.push(symbols[0]);
+                this._producersOf(symbols[0]).forEach(producer => {
+                    this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
+                        if (!ret.includes(symbol))
+                            ret.push(symbol);
+                    });
                 });
-            });
+            }
         }
         if (ret.includes(this._getSymbolId(Grammar_1.SpSymbol.EPSILON))) {
-            this.FIRST(symbols.slice(1)).forEach(symbol => {
+            this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
                 if (!ret.includes(symbol))
                     ret.push(symbol);
             });
@@ -134,7 +146,10 @@ class LR1Analyzer {
     /**
      * 求取FOLLOW集
      */
-    FOLLOW(nonterminal) {
+    FOLLOW(nonterminal, nonterminalRec = []) {
+        if (nonterminalRec.includes(nonterminal))
+            return [];
+        nonterminalRec.push(nonterminal);
         let ret = [];
         let epsilon = this._getSymbolId(Grammar_1.SpSymbol.EPSILON);
         if (nonterminal == this._startSymbol)
@@ -147,7 +162,7 @@ class LR1Analyzer {
                         if (symbol != epsilon && !ret.includes(symbol))
                             ret.push(symbol);
                     });
-                    if (first.includes(epsilon) && nonterminal != producer.lhs) {
+                    if (first.includes(epsilon)) {
                         this.FOLLOW(producer.lhs).forEach(symbol => {
                             if (!ret.includes(symbol))
                                 ret.push(symbol);
@@ -179,7 +194,7 @@ class LR1Analyzer {
             for (let [index, right] of stringProducer.rhs.entries()) {
                 let rhs = [], PATTERN = new RegExp(/(' '|[^ ]+)/g), char;
                 while ((char = PATTERN.exec(right))) {
-                    let tmp = char[0], id;
+                    let tmp = char[0].trim(), id;
                     if (/'.+'/.test(char[0])) {
                         tmp = char[0].substring(1, char[0].length - 1);
                         if (tmp[0] == '\\')
@@ -203,7 +218,7 @@ class LR1Analyzer {
         while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
             newStartSymbolContent += "'";
         this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent });
-        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], this._producersOf(this._startSymbol)[0].action));
+        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], "$$ = $1;"));
         this._startSymbol = this._symbols.length - 1;
         let initProducer = this._producersOf(this._startSymbol)[0];
         let I0 = this.CLOSURE(new Grammar_1.LR1State([
@@ -213,11 +228,16 @@ class LR1Analyzer {
         let dfa = new Grammar_1.LR1DFA(0);
         dfa.addState(I0);
         let stack = [0];
+        let pb = new progressbar_1.ProgressBar();
         while (stack.length) {
             let I = dfa.states[stack.pop()]; // for C中的每个项集I
             for (let X = 0; X < this._symbols.length; X++) {
-                //for 每个文法符号X
+                // for 每个文法符号X
                 let gotoIX = this.GOTO(I, X);
+                pb.render({
+                    completed: this.GOTOCache.size,
+                    total: dfa.states.length * this.symbols.length,
+                });
                 if (gotoIX.items.length === 0)
                     continue; // gotoIX要非空
                 const sameStateCheck = dfa.states.findIndex(x => Grammar_1.LR1State.same(x, gotoIX)); // 存在一致状态要处理
@@ -238,7 +258,7 @@ class LR1Analyzer {
      * 求取GOTO(I, X)
      * 见龙书算法4.53
      */
-    GOTO(I, X) {
+    _GOTO(I, X) {
         let J = new Grammar_1.LR1State([]);
         for (let item of I.items) {
             // for I中的每一个项
@@ -249,6 +269,23 @@ class LR1Analyzer {
             }
         }
         return this.CLOSURE(J);
+    }
+    /**
+     * 缓存包装版本的GOTO
+     * @param i 状态
+     * @param a 符号下标
+     */
+    GOTO(i, a) {
+        let cached = this.GOTOCache.get({ i, a });
+        let goto;
+        if (!cached) {
+            goto = this._GOTO(i, a);
+            this.GOTOCache.set({ i, a }, goto);
+        }
+        else {
+            goto = cached;
+        }
+        return goto;
     }
     /**
      * 求取CLOSURE(I)（I为某状态）
@@ -279,9 +316,9 @@ class LR1Analyzer {
                 // for FIRST(βa)中的每个终结符号b
                 for (let lookahead of newLookaheads) {
                     let newItem = new Grammar_1.LR1Item(extendProducer, this._producers.indexOf(extendProducer), lookahead);
-                    if (I.items.some(item => Grammar_1.LR1Item.same(item, newItem)))
+                    if (res.items.some(item => Grammar_1.LR1Item.same(item, newItem)))
                         continue; // 重复的情况不再添加，避免出现一样的Item
-                    allItemsOfI.push(newItem); // 继续扩展
+                    !allItemsOfI.includes(newItem) && allItemsOfI.push(newItem); // 继续扩展
                     res.addItem(newItem);
                 }
             }
@@ -289,7 +326,7 @@ class LR1Analyzer {
         return res;
     }
     /**
-     * 生成LR1语法分析表
+     * 生成语法分析表
      * 见龙书算法4.56
      */
     _constructACTIONGOTOTable() {
@@ -322,15 +359,16 @@ class LR1Analyzer {
         // ===== 填充ACTIONTable =====
         // ===========================
         let lookup = Array.prototype.indexOf.bind(this._ACTIONReverseLookup);
+        let pb = new progressbar_1.ProgressBar();
         // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
         for (let i = 0; i < dfaStates.length; i++) {
+            pb.render({ completed: i, total: dfaStates.length });
             // 处理移进的情况
             // ① [A->α`aβ, b], GOTO(Ii, a) = Ij, ACTION[i, a] = shift(j)
             for (let item of dfaStates[i].items) {
                 if (item.dotAtLast())
                     continue; // 没有aβ
                 let a = this._producers[item.producer].rhs[item.dotPosition];
-                console.log(this._producers[item.producer].rhs, item.dotPosition);
                 if (this._symbolTypeIs(a, 'nonterminal'))
                     continue;
                 let goto = this.GOTO(dfaStates[i], a);
@@ -398,14 +436,12 @@ class LR1Analyzer {
         // ===========================
         // ====== 填充GOTOTable ======
         // ===========================
-        console.log(this._GOTOTable);
         lookup = Array.prototype.indexOf.bind(this._GOTOReverseLookup);
         for (let i = 0; i < dfaStates.length; i++)
             for (let A = 0; A < this._symbols.length; A++)
                 for (let j = 0; j < dfaStates.length; j++) {
                     if (Grammar_1.LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j])) {
                         this._GOTOTable[i][lookup(A)] = j;
-                        console.log('Setting: ', i, A, j);
                     }
                 }
     }

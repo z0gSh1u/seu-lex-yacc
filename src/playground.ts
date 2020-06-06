@@ -6,7 +6,7 @@ import { LR1Analyzer } from './seuyacc/core/LR1'
 import { visualizeGOTOGraph, visualizeACTIONGOTOTable } from './seuyacc/core/Visualizer'
 
 let tik = new Date().getTime()
-let yp = new YaccParser('example\\YaccTest2.y')
+let yp = new YaccParser('example\\Calculator\\Yacc.y')
 let lr1 = new LR1Analyzer(yp)
 let dfa = lr1.dfa
 console.dir(dfa, { maxArrayLength: null, depth: null })

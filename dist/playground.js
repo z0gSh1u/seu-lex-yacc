@@ -4,7 +4,7 @@ const YaccParser_1 = require("./seuyacc/core/YaccParser");
 const LR1_1 = require("./seuyacc/core/LR1");
 const Visualizer_1 = require("./seuyacc/core/Visualizer");
 let tik = new Date().getTime();
-let yp = new YaccParser_1.YaccParser('example\\YaccTest2.y');
+let yp = new YaccParser_1.YaccParser('example\\Calculator\\Yacc.y');
 let lr1 = new LR1_1.LR1Analyzer(yp);
 let dfa = lr1.dfa;
 console.dir(dfa, { maxArrayLength: null, depth: null });

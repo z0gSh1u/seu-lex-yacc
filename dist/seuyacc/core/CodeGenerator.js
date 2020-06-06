@@ -1,13 +1,21 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+/* eslint-disable @typescript-eslint/no-use-before-define */
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const Grammar_1 = require("./Grammar");
 /**
  * 生成Token编号供Lex使用
  */
-function generateYTABH(yaccParser) {
+function generateYTABH(analyzer) {
     function _generateTokenId() {
         let res = ``;
-        for (let i = 0; i < yaccParser.tokenDecl.length; i++)
-            res += `#define ${yaccParser.tokenDecl[i]} ${i + 1}\n`;
+        for (let i = 0; i < analyzer.symbols.length; i++)
+            if (analyzer.symbols[i].type == 'sptoken' || analyzer.symbols[i].type == 'token')
+                res += `#define ${analyzer.symbols[i].content} ${i}\n`;
         return res;
     }
     let res = `
@@ -19,17 +27,281 @@ function generateYTABH(yaccParser) {
     return res;
 }
 exports.generateYTABH = generateYTABH;
+function genPresetContent(analyzer) {
+    return `
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #define STACK_LIMIT 1000
+  #define SYMBOL_CHART_LIMIT 10000
+  #define SYMBOL_ATTR_LIMIT 10000
+  #define STATE_STACK_LIMIT 10000
+  #define YACC_NOTHING -1
+  #define YACC_ACCEPT -42
+  ${genExceptions()}
+  ${genExtern()}
+  int stateStack[STACK_LIMIT];
+  int stateStackSize = 0;
+  int debugMode = 1;
+  int EOFIndex = ${analyzer._getSymbolId(Grammar_1.SpSymbol.END)};
+  char *symbolAttr[SYMBOL_ATTR_LIMIT];
+  int symbolAttrSize = 0;
+  char *curAttr = NULL;
+  ${genSymbolChartClass()}
+  ${genFunctions()}
+  `;
+}
+function genExceptions() {
+    return `
+  void ArrayUpperBoundExceeded(void) {
+    printf("Array upper bound exceeded!");
+  }
+  void ArrayLowerBoundExceeded(void) {
+    printf("Array lower bound exceeded!");
+  }
+  void SomethingRedefined(void) {
+    printf("Something redefined!");
+  }
+  void SyntaxError(void) {
+    printf("Syntax error!");
+  }
+  void throw(void (*func)(void)) {
+    atexit(func);
+    exit(EXIT_FAILURE);
+  }
+  `;
+}
+function genExtern() {
+    return `
+  extern FILE *yyin;
+  extern char yytext[];
+  extern int yylex();
+  extern FILE *yyout;
+  `;
+}
+function genSymbolChartClass() {
+    return `
+  struct SymbolChart {
+    int symbolNum;
+    char *name[SYMBOL_CHART_LIMIT];
+    char *value[SYMBOL_CHART_LIMIT];
+  }symbolChart = {.symbolNum = 0};
+  char *variable(char *name) {
+    for (int i = 0; i < symbolChart.symbolNum; i++) {
+      if (strcmp(name, symbolChart.name[i]) == 0)
+        return symbolChart.value[i];
+    }
+    return NULL;
+  }
+  void createVariable(char *name, char *value) {
+    if (symbolChart.symbolNum >= SYMBOL_CHART_LIMIT) throw(ArrayUpperBoundExceeded);
+    if (variable(name) != NULL) throw(SomethingRedefined);
+    symbolChart.name[symbolChart.symbolNum] = (char *)malloc(strlen(name) * sizeof(char));
+    symbolChart.value[symbolChart.symbolNum] = (char *)malloc(strlen(value) * sizeof(char));
+    strcpy(symbolChart.name[symbolChart.symbolNum], name);
+    strcpy(symbolChart.value[symbolChart.symbolNum], value);
+    symbolChart.symbolNum++;
+  }
+  `;
+}
+function genFunctions() {
+    return `
+  void updateSymbolAttr(int popNum) {
+    while (popNum--) {
+      if (symbolAttrSize == 0) throw(ArrayLowerBoundExceeded);
+      free(symbolAttr[--symbolAttrSize]);
+    }
+    if (symbolAttrSize >= SYMBOL_ATTR_LIMIT) throw(ArrayUpperBoundExceeded);
+    symbolAttr[symbolAttrSize] = (char *)malloc(strlen(curAttr) * sizeof(char));
+    strcpy(symbolAttr[symbolAttrSize++], curAttr);
+  }
+  int stateStackPop(int popNum) {
+    while (popNum--) {
+      if (stateStackSize == 0) throw(ArrayLowerBoundExceeded);
+      stateStackSize--;
+    }
+    if (stateStackSize == 0) return YACC_NOTHING;
+    else return stateStack[stateStackSize - 1];
+  }
+  void stateStackPush(int state) {
+    if (stateStackSize >= STATE_STACK_LIMIT) throw(ArrayUpperBoundExceeded);
+    stateStack[stateStackSize++] = state;
+  }
+  `;
+}
+function genTable(analyzer) {
+    let code = `
+  struct TableCell {
+    int action;
+    int target;
+  };
+  struct TableCell table[${analyzer.dfa.states.length}][${analyzer.symbols.length}] = {`;
+    for (let state = 0; state < analyzer.dfa.states.length; state++) {
+        let nonCnt = 0;
+        let nonnonCnt = 0;
+        for (let symbol = 0; symbol < analyzer.symbols.length; symbol++) {
+            let action = -1;
+            let target = 0;
+            if (analyzer.symbols[symbol].type == 'nonterminal') {
+                action = 1;
+                target = analyzer.GOTOTable[state][nonCnt++];
+            }
+            else {
+                switch (analyzer.ACTIONTable[state][nonnonCnt].type) {
+                    case 'shift':
+                        action = 2;
+                        target = analyzer.ACTIONTable[state][nonnonCnt].data;
+                        break;
+                    case 'reduce':
+                        action = 3;
+                        target = analyzer.ACTIONTable[state][nonnonCnt].data;
+                        break;
+                    case 'acc':
+                        action = 4;
+                        break;
+                    default:
+                        action = 0;
+                }
+                nonnonCnt++;
+            }
+            code += `(struct TableCell){${action}, ${target}},`;
+        }
+    }
+    code = code.substr(0, code.length - 1);
+    code += `};
+  `;
+    return code;
+}
+function genDealWithFunction(analyzer) {
+    let code = `
+  int dealWith(int symbol) {
+    if (stateStackSize < 1) throw(ArrayLowerBoundExceeded);
+    if (debugMode) printf("Received symbol no.%d\\n", symbol);
+    int state = stateStack[stateStackSize - 1];
+    struct TableCell cell = table[state][symbol];
+    switch(cell.action) {
+      case 0:
+        throw(SyntaxError);
+      case 4:
+        return YACC_ACCEPT;
+      case 1:
+        if (debugMode) printf("Go to state %d\\n", cell.target);
+        stateStackPush(cell.target);
+        return YACC_NOTHING;
+      case 2:
+        stateStackPush(cell.target);
+        if (debugMode) printf("Shift to state %d\\n", cell.target);
+        if (curAttr != yytext) free(curAttr);
+        curAttr = yytext;
+        updateSymbolAttr(0);
+        return YACC_NOTHING;
+      case 3:
+        if (debugMode) printf("Reduce by producer %d\\n", cell.target);
+        switch (cell.target) {
+          `;
+    for (let index in analyzer.producers) {
+        let producer = analyzer.producers[index];
+        code += `case ${index}:
+      if (curAttr != yytext) free(curAttr);
+      curAttr = (char *)malloc(1024 * sizeof(char));
+      ${actionCodeModified(producer.action, producer.rhs.length)}
+      stateStackPop(${producer.rhs.length});
+      updateSymbolAttr(${producer.rhs.length});
+      dealWith(${producer.lhs});
+      return symbol;
+    `;
+    }
+    code += `
+        }
+      default:
+        return symbol;
+    }
+    return YACC_NOTHING;
+  }
+  `;
+    return code;
+}
+function actionCodeModified(action, producerLen) {
+    let bslash = false, inSQuot = false, inDQuot = false, dollar = false, buffer = "", ret = "";
+    action.split('').forEach(c => {
+        if (dollar) {
+            if (c == '$')
+                ret += 'curAttr', dollar = false;
+            else if (c.charCodeAt(0) >= '0'.charCodeAt(0) && c.charCodeAt(0) <= '9'.charCodeAt(0))
+                buffer += c;
+            else {
+                let num = parseInt(buffer);
+                if (num < 1 || num > producerLen)
+                    ret += '$' + buffer;
+                else
+                    ret += `symbolAttr[symbolAttrSize-${producerLen - num + 1}]`;
+                ret += c;
+                dollar = false;
+                buffer = "";
+            }
+        }
+        else {
+            if (!inSQuot && !inDQuot && !dollar && c == '$')
+                dollar = true;
+            else if (!inDQuot && !bslash && c == '\'')
+                inSQuot = !inSQuot;
+            else if (!inSQuot && !bslash && c == '\"')
+                inDQuot = !inDQuot;
+            else if (c == '\\')
+                bslash = !bslash;
+            else
+                bslash = false;
+            if (c != '$')
+                ret += c;
+        }
+    });
+    return ret;
+}
+function genYaccParse(analyzer) {
+    return `
+  int yyparse() {
+    if (yyout == NULL) yyout = stdout;
+    int token;
+    stateStackPush(${analyzer.dfa.startStateId});
+    while (token != YACC_ACCEPT && (token = yylex())) {
+      do {
+        token = dealWith(token);
+      } while (token >= 0);
+    }
+    if (token == 0) {
+      token = EOFIndex;
+      do {
+        token = dealWith(token);
+      } while (token >= 0);
+    }
+    strcpy(yytext, curAttr);
+    if (token == YACC_ACCEPT) return 0;
+    else return 1;
+  }
+  `;
+}
 /**
  * 生成语法分析器
  */
 function generateYTABC(yaccParser, analyzer) {
-    function _generateStructs() {
-        return `
-    struct _seulex_stack {
-      struct _seulex_node* head;
-      int size;
-    }
-    `;
-    }
+    fs_1.default.writeFileSync(path_1.default.resolve('./', 'example/yy.tab.h'), generateYTABH(analyzer));
+    let finalCode = `  
+  // ===========================================
+  // |  YTABC generated by seuyacc             |
+  // |  Visit github.com/z0gSh1u/seu-lex-yacc  |
+  // ===========================================
+  #define DEBUG_MODE 0
+  // * ============== copyPart ================
+  `;
+    finalCode += yaccParser.copyPart; // 用户之间复制部分
+    finalCode += `
+  // * ========== seuyacc generation ============
+  `;
+    finalCode += genPresetContent(analyzer);
+    finalCode += genTable(analyzer);
+    finalCode += genDealWithFunction(analyzer);
+    finalCode += genYaccParse(analyzer);
+    finalCode += yaccParser.userCodePart;
+    return finalCode;
 }
 exports.generateYTABC = generateYTABC;

@@ -20,6 +20,8 @@ import {
   YaccParserOperator,
 } from './Grammar'
 import { assert, cookString, ASCII_MIN, ASCII_MAX } from '../../utils'
+import { ProgressBar } from '../../../enhance/progressbar'
+import { LR1DFAtoLALRDFA } from './LALR'
 
 export type GrammarSymbol = {
   type: 'ascii' | 'token' | 'nonterminal' | 'sptoken'
@@ -31,6 +33,7 @@ export type ACTIONTableCell = {
   data: number // state or producer
 }
 
+type GOTOCacheKey = { i: LR1State; a: number } // i：dfaStates，a：字母下标
 export class LR1Analyzer {
   private _symbols: GrammarSymbol[]
   private _operators: LR1Operator[]
@@ -41,8 +44,10 @@ export class LR1Analyzer {
   private _GOTOTable!: number[][]
   private _ACTIONReverseLookup!: number[]
   private _GOTOReverseLookup!: number[]
+  // 求过的GOTO记录一下，不然下辈子都跑不出来
+  private GOTOCache: Map<GOTOCacheKey, LR1State>
 
-  constructor(yaccParser: YaccParser) {
+  constructor(yaccParser: YaccParser, useLALR = false) {
     this._symbols = []
     this._producers = []
     this._operators = []
@@ -50,11 +55,19 @@ export class LR1Analyzer {
     this._GOTOTable = []
     this._ACTIONReverseLookup = []
     this._GOTOReverseLookup = []
+    this.GOTOCache = new Map<GOTOCacheKey, LR1State>()
     this._distributeId(yaccParser)
+    console.log(yaccParser)
     this._convertProducer(yaccParser.producers)
     this._convertOperator(yaccParser.operatorDecl)
+    console.log('\n[ constructLR1DFA or LALRDFA, this might take a long time... ]')
     this._constructLR1DFA()
+    if (useLALR) {
+      this._dfa = LR1DFAtoLALRDFA(this)
+    }
+    console.log('\n[ constructACTIONGOTOTable, this might take a long time... ]')
     this._constructACTIONGOTOTable()
+    console.log('\n')
   }
 
   get symbols() {
@@ -84,8 +97,8 @@ export class LR1Analyzer {
       let id = decl.literal
         ? this._getSymbolId({ type: 'ascii', content: decl.literal })
         : decl.tokenName
-          ? this._getSymbolId({ type: 'token', content: decl.tokenName })
-          : -1
+        ? this._getSymbolId({ type: 'token', content: decl.tokenName })
+        : -1
       assert(id != -1, 'Operator declaration not found. This should never occur.')
       this._operators.push(new LR1Operator(id, decl.assoc, decl.precedence))
     }
@@ -159,13 +172,14 @@ export class LR1Analyzer {
     let ret: number[] = []
     if (!this._symbolTypeIs(symbols[0], 'nonterminal')) ret.push(symbols[0])
     else {
-      if (!nonterminalRec.includes(symbols[0])){
+      if (!nonterminalRec.includes(symbols[0])) {
         nonterminalRec.push(symbols[0])
         this._producersOf(symbols[0]).forEach(producer => {
           this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
             if (!ret.includes(symbol)) ret.push(symbol)
           })
-      })}
+        })
+      }
     }
     if (ret.includes(this._getSymbolId(SpSymbol.EPSILON))) {
       this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
@@ -224,7 +238,7 @@ export class LR1Analyzer {
           PATTERN = new RegExp(/(' '|[^ ]+)/g),
           char
         while ((char = PATTERN.exec(right))) {
-          let tmp = char[0],
+          let tmp = char[0].trim(),
             id
           if (/'.+'/.test(char[0])) {
             tmp = char[0].substring(1, char[0].length - 1)
@@ -256,7 +270,7 @@ export class LR1Analyzer {
       new LR1Producer(
         this._symbols.length - 1,
         [this._startSymbol],
-        this._producersOf(this._startSymbol)[0].action
+        "$$ = $1;"
       )
     )
     this._startSymbol = this._symbols.length - 1
@@ -274,11 +288,16 @@ export class LR1Analyzer {
     let dfa = new LR1DFA(0)
     dfa.addState(I0)
     let stack = [0]
+    let pb = new ProgressBar()
     while (stack.length) {
       let I = dfa.states[stack.pop() as number] // for C中的每个项集I
       for (let X = 0; X < this._symbols.length; X++) {
-        //for 每个文法符号X
+        // for 每个文法符号X
         let gotoIX = this.GOTO(I, X)
+        pb.render({
+          completed: this.GOTOCache.size,
+          total: dfa.states.length * this.symbols.length,
+        })
         if (gotoIX.items.length === 0) continue // gotoIX要非空
         const sameStateCheck = dfa.states.findIndex(x => LR1State.same(x, gotoIX)) // 存在一致状态要处理
         if (sameStateCheck !== -1) {
@@ -298,7 +317,7 @@ export class LR1Analyzer {
    * 求取GOTO(I, X)
    * 见龙书算法4.53
    */
-  private GOTO(I: LR1State, X: number) {
+  private _GOTO(I: LR1State, X: number) {
     let J = new LR1State([])
     for (let item of I.items) {
       // for I中的每一个项
@@ -308,6 +327,23 @@ export class LR1Analyzer {
       }
     }
     return this.CLOSURE(J)
+  }
+
+  /**
+   * 缓存包装版本的GOTO
+   * @param i 状态
+   * @param a 符号下标
+   */
+  private GOTO(i: LR1State, a: number) {
+    let cached = this.GOTOCache.get({ i, a })
+    let goto: LR1State
+    if (!cached) {
+      goto = this._GOTO(i, a)
+      this.GOTOCache.set({ i, a }, goto)
+    } else {
+      goto = cached
+    }
+    return goto
   }
 
   /**
@@ -344,7 +380,7 @@ export class LR1Analyzer {
             lookahead
           )
           if (res.items.some(item => LR1Item.same(item, newItem))) continue // 重复的情况不再添加，避免出现一样的Item
-          allItemsOfI.push(newItem) // 继续扩展
+          !allItemsOfI.includes(newItem) && allItemsOfI.push(newItem) // 继续扩展
           res.addItem(newItem)
         }
       }
@@ -353,7 +389,7 @@ export class LR1Analyzer {
   }
 
   /**
-   * 生成LR1语法分析表
+   * 生成语法分析表
    * 见龙书算法4.56
    */
   _constructACTIONGOTOTable() {
@@ -385,15 +421,15 @@ export class LR1Analyzer {
     // ===== 填充ACTIONTable =====
     // ===========================
     let lookup = Array.prototype.indexOf.bind(this._ACTIONReverseLookup)
+    let pb = new ProgressBar()
     // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
     for (let i = 0; i < dfaStates.length; i++) {
+      pb.render({ completed: i, total: dfaStates.length })
       // 处理移进的情况
       // ① [A->α`aβ, b], GOTO(Ii, a) = Ij, ACTION[i, a] = shift(j)
       for (let item of dfaStates[i].items) {
         if (item.dotAtLast()) continue // 没有aβ
         let a = this._producers[item.producer].rhs[item.dotPosition]
-
-        console.log(this._producers[item.producer].rhs, item.dotPosition)
         if (this._symbolTypeIs(a, 'nonterminal')) continue
         let goto = this.GOTO(dfaStates[i], a)
         for (let j = 0; j < dfaStates.length; j++)
@@ -457,14 +493,12 @@ export class LR1Analyzer {
     // ===========================
     // ====== 填充GOTOTable ======
     // ===========================
-    console.log(this._GOTOTable)
     lookup = Array.prototype.indexOf.bind(this._GOTOReverseLookup)
     for (let i = 0; i < dfaStates.length; i++)
       for (let A = 0; A < this._symbols.length; A++)
         for (let j = 0; j < dfaStates.length; j++) {
           if (LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j])) {
             this._GOTOTable[i][lookup(A)] = j
-            console.log('Setting: ', i, A, j)
           }
         }
   }

@@ -254,7 +254,6 @@ export class Regex {
             parts.push(`\\`, `${raw[i][j]}`, '[dot]')
           else if (raw[i][j].trim() === '')
             // 处理纯空格
-            // TODO: \t\r\n反应不正确
             parts.push(...Array(raw[i][j].length).fill('[ws]'), '[dot]')
           else parts.push(raw[i][j], '[dot]')
         }

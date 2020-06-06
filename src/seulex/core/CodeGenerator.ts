@@ -50,6 +50,7 @@ function genPresetContent() {
   return `
   #include <stdio.h>
   #include <stdlib.h>
+  #include <string.h>
   #define ECHO fprintf(yyout,"%s\\n",yytext);
   int yylineno = 1, yyleng = 0;
   FILE *yyin = NULL, *yyout = NULL;
@@ -109,7 +110,7 @@ function genYYLESSYYMORE() {
       int delta = strlen(yytext) - n;
       fseek(yyin, -delta, SEEK_CUR);
       FILE *yyinCopy = yyin;
-      while (delta--) fgetc(yyinCopy) == '\n' && yylineno--;
+      while (delta--) fgetc(yyinCopy) == '\\n' && yylineno--;
     }
     void yymore() {
       char old[1024];

@@ -2,11 +2,11 @@
 /* eslint-disable @typescript-eslint/member-delimiter-style */
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * 特殊Symnpl
+ * 特殊Symbol
  */
 exports.SpSymbol = {
-    END: { type: 'sptoken', content: '[END]' },
-    EPSILON: { type: 'sptoken', content: '[EPSILON]' },
+    END: { type: 'sptoken', content: 'SP_END' },
+    EPSILON: { type: 'sptoken', content: 'SP_EPSILON' },
 };
 /**
  * YaccParser读出的产生式
@@ -64,7 +64,7 @@ exports.LR1Producer = LR1Producer;
 /**
  * LR1项目
  * A->a, $就是一条项目
- * 将多个展望的的，拆分成不同的项目，每个项目只有一个展望符号
+ * 将多个展望符的，拆分成不同的项目，每个项目只有一个展望符号
  */
 class LR1Item {
     constructor(rawProducer, producer, lookahead, dotPosition = 0) {
@@ -114,6 +114,9 @@ class LR1State {
     addItem(item) {
         this._items.push(item);
     }
+    forceSetItems(items) {
+        this._items = [...items];
+    }
     static copy(state) {
         return new LR1State(state._items.map(x => LR1Item.copy(x)));
     }
@@ -134,6 +137,9 @@ class LR1DFA {
     }
     get startStateId() {
         return this._startStateId;
+    }
+    set startStateId(val) {
+        this._startStateId = val;
     }
     get states() {
         return this._states;

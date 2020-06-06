@@ -14,6 +14,9 @@ import * as childProcess from 'child_process'
 import { LR1DFA } from './Grammar'
 import { LR1Analyzer } from './LR1'
 
+/**
+ * 可视化LR1分析表（ACTIONGOTOTable）
+ */
 export function visualizeACTIONGOTOTable(lr1Analyzer: LR1Analyzer, viewNow = true) {
   let ACTIONHead = []
   for (let i of lr1Analyzer.ACTIONReverseLookup) ACTIONHead.push(lr1Analyzer.getSymbolString(i))
@@ -113,7 +116,6 @@ export function visualizeGOTOGraph(lr1dfa: LR1DFA, lr1Analyzer: LR1Analyzer, vie
         kernelItem = false
       }
     }
-    console.log(stateLines)
     let stateString = topPart
     stateLines.forEach(v => {
       stateString += v.leftPart + v.lookahead + '\n'
