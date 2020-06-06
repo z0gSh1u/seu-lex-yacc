@@ -155,6 +155,9 @@ export class LR1State {
   addItem(item: LR1Item) {
     this._items.push(item)
   }
+  forceSetItems(items: LR1Item[]) {
+    this._items = [...items]
+  }
   static copy(state: LR1State) {
     return new LR1State(state._items.map(x => LR1Item.copy(x)))
   }
@@ -175,6 +178,9 @@ export class LR1DFA {
   private _adjList: { to: number; alpha: number }[][]
   get startStateId() {
     return this._startStateId
+  }
+  set startStateId(val: number) {
+    this._startStateId = val
   }
   get states() {
     return this._states

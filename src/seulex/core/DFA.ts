@@ -53,7 +53,6 @@ export class DFA extends FiniteAutomata {
     stateLists.push(nonTerminalStates)
     let flag = true
     while (flag) {
-      console.log("flag is true")
       // 一次拆一个
       flag = false
       let newSet = [] //容器
@@ -61,7 +60,7 @@ export class DFA extends FiniteAutomata {
         // 找一个要拆的
         let s = stateLists[k]
         let reals = s // 需要实际拆的副本
-        if (s.length == 1) continue
+        if (s.length <= 1) continue
         // 单个状态无法拆
         else {
           for (let i = 0; i < this.alphabet.length; i++) {
@@ -83,7 +82,6 @@ export class DFA extends FiniteAutomata {
         stateLists.push(newSet)
       }
     }
-    console.log("im here")
     // 写到这里，状态已经全拆完了，就差一个重构DFA工作了
     let rowsToDelete: number[] = []
     let newTrans: Transform[][] = []

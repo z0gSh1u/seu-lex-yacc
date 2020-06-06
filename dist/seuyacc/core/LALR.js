@@ -6,64 +6,49 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const Grammar_1 = require("./Grammar");
-/**
- * 将LR1DFA转换为LALRDFA
- */
 function LR1DFAtoLALRDFA(lr1) {
     // {核的内容，包含这个核的状态号的数组}
+    // 计算同心集
     let coreArr = [];
-    for (let i = 0; i < lr1.dfa.states.length; i++) {
-        let LRstate = lr1.dfa.states[i];
-        let core = LRstate.items[0];
-        let isHad = false; // 检查这个核是不是已有了
-        for (let j = 0; j < coreArr.length; j++) {
-            if (coreArr[j].first == core) {
-                isHad = true;
-                coreArr[j].second.push(i); // 把这个核的状态号合并
+    const dfaStates = lr1.dfa.states;
+    // 判断core相同，不看lookahead
+    function sameCore(core1, core2) {
+        return (core1.every(i1 => core2.some(i2 => i1.producer == i2.producer && i1.dotPosition == i2.dotPosition)) &&
+            core2.every(i1 => core1.some(i2 => i1.producer == i2.producer && i1.dotPosition == i2.dotPosition)));
+    }
+    for (let i = 0; i < dfaStates.length; i++) {
+        let core = [...dfaStates[i].items];
+        let checker = coreArr.findIndex(x => sameCore(x.core, core));
+        if (checker != -1) {
+            // 存在同核心状态，直接加入
+            coreArr[checker].states.push(i);
+            // 注意合并lookahead
+            for (let item of core) {
+                if (!coreArr[checker].core.some(it => Grammar_1.LR1Item.same(it, item)))
+                    coreArr[checker].core.push(item);
             }
         }
-        if (!isHad) {
-            // 这种核的还没遇到过，那么就新建一个这种核的索引
-            let newArr = { first: core, second: [i] };
-            coreArr.push(newArr);
+        else {
+            coreArr.push({ core, states: [i] });
         }
     }
     // LALR构建
-    let LALR = new Grammar_1.LR1DFA(lr1.dfa.startStateId);
-    let LALRStates = [];
-    LALRStates.length = coreArr.length;
+    let LALRDFA = new Grammar_1.LR1DFA(-1); // 开始状态号后面分配
+    let old2new = new Map(); // 旧状态 - 新状态下标对应，用于重构边
     for (let i = 0; i < coreArr.length; i++) {
-        /*
-            这里假设我们已经合并完了同心项，左边一列是合并后（前）的项集，
-            右边一列是用索引表示的、每个项集在项集族对应的数组下标
-            因为用的是索引，所以左右能一一对应
-            LALR.states(∪ of LR.states)------CoreArray.second
-            J0(I0)---------------------------[0]
-            J1(I1 ∪ I2 ∪ I4)----------------[1,2,4]
-            J2(I3 ∪ I5)---------------------[3,5]
-        */
-        for (let j = 0; j < lr1.dfa.states.length; j++) {
-            // 相同核的状态取并集
-            if (coreArr[i].second.includes(j)) {
-                LALRStates[i].items.concat(lr1.dfa.states[j].items.filter(x => !LALRStates[i].items.includes(x)));
-            }
-        }
-        LALR.addState(LALRStates[i]);
-        for (let k = 0; k < lr1.dfa.adjList[i].length; k++) {
-            //构建新的adjust矩阵
-            if (lr1.dfa.adjList[i][k] != null) {
-                let tempTo = lr1.dfa.adjList[i][k].to;
-                let tempAlpha = lr1.dfa.adjList[i][k].alpha;
-                for (let x = 0; x < coreArr.length; x++) {
-                    if (coreArr[x].second.includes(tempTo)) {
-                        let newTo = x;
-                        LALR.link(i, newTo, tempAlpha);
-                        break;
-                    }
-                }
-            }
-        }
+        let newState = new Grammar_1.LR1State(coreArr[i].core);
+        for (let j of coreArr[i].states)
+            old2new.set(j, i);
+        LALRDFA.addState(newState);
     }
-    return LALR;
+    for (let i = 0; i < LALRDFA.states.length; i++) {
+        let representativeOldState = coreArr[i].states[0]; // 选取第一个对应状态作为代表
+        let oldEdges = lr1.dfa.adjList[representativeOldState]; // 采纳它的边
+        for (let edge of oldEdges)
+            LALRDFA.link(old2new.get(representativeOldState), old2new.get(edge.to), edge.alpha);
+    }
+    // 修正起始状态号
+    LALRDFA.startStateId = old2new.get(lr1.dfa.startStateId);
+    return LALRDFA;
 }
 exports.LR1DFAtoLALRDFA = LR1DFAtoLALRDFA;

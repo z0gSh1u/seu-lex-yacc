@@ -114,6 +114,9 @@ class LR1State {
     addItem(item) {
         this._items.push(item);
     }
+    forceSetItems(items) {
+        this._items = [...items];
+    }
     static copy(state) {
         return new LR1State(state._items.map(x => LR1Item.copy(x)));
     }
@@ -134,6 +137,9 @@ class LR1DFA {
     }
     get startStateId() {
         return this._startStateId;
+    }
+    set startStateId(val) {
+        this._startStateId = val;
     }
     get states() {
         return this._states;

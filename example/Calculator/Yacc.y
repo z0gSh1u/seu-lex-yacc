@@ -1,20 +1,21 @@
 %{
-#include <stdlib.h>
-#define out(fmt, ...) fprintf(yyout, fmt, ##__VA_ARGS__)
+	#include <stdlib.h>
+	#define out(fmt, ...) fprintf(yyout, fmt, ##__VA_ARGS__)
 %}
 
 %token SHARP MINUS PLUS MULTIPLY DIVIDE LPAREN RPAREN NUMBER UNKNOWN
 %left '+' '-'
 %left '*' '/'
-%start E
+%start expr
 
 %%
 
-E	: E '+' E	{ out("%s", "r(E+E)"); $$ = itoa(atoi($1) + atoi($3)); }
-	| E MINUS E	{ out("%s", "r(E-E)"); $$ = itoa(atoi($1) - atoi($3)); }
-	| E '*' E	{ out("%s", "r(E*E)"); $$ = itoa(atoi($1) * atoi($3)); }
-	| E DIVIDE E	{ out("%s", "r(E/E)"); $$ = itoa(atoi($1) / atoi($3)); }
-	| LPAREN E ')'
+expr
+  : expr '+' expr	{ out("%s", "r(expr+expr)"); $$ = itoa(atoi($1) + atoi($3)); }
+	| expr MINUS expr	{ out("%s", "r(expr-expr)"); $$ = itoa(atoi($1) - atoi($3)); }
+	| expr '*' expr	{ out("%s", "r(expr*expr)"); $$ = itoa(atoi($1) * atoi($3)); }
+	| expr DIVIDE expr	{ out("%s", "r(expr/expr)"); $$ = itoa(atoi($1) / atoi($3)); }
+	| LPAREN expr ')'
 	| NUMBER  { $$ = $1; /* default operation in fact */ }
 	;
 

@@ -15,7 +15,7 @@ exports.PATTERN_INSIDEQUOTE_NOTSLASH = /(?=[^\\]|^)(\"[^\"]*[^\\]\")/g;
 // 非转义[]定义的的range，$0为带大括号匹配结果
 exports.PATTERN_RANGE_NOTSLASH = /(?=[^\\]|^)\[(([^\[\]]+)[^\\])\]/g;
 // ========= yacc用到的正则 =========
-exports.PATTERN_BLOCK_PRODUCER = /(\w+)\n\s+:(\s+(.+?)({[\s\S]*?})?\n)(\s+\|\s+(.+?)({[\s\S]*?})?\n)*\s+;/g;
+exports.PATTERN_BLOCK_PRODUCER = /(\w+)\s*\n\s+:(\s+(.+?)({[\s\S]*?})?\n)(\s+\|\s+(.+?)({[\s\S]*?})?\n)*\s+;/g;
 // $1为LHS，$3为首个RHS，$4为动作代码（带大括号）
 exports.PATTERN_INITIAL_PRODUCER = /(\w+)\n\s+:(\s+(.+?)({[\s\S]*?})?\n)/g;
 // $2为RHS，$3为动作代码（带大括号）

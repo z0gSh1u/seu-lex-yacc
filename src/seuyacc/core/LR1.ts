@@ -21,6 +21,7 @@ import {
 } from './Grammar'
 import { assert, cookString, ASCII_MIN, ASCII_MAX } from '../../utils'
 import { ProgressBar } from '../../../enhance/progressbar'
+import { LR1DFAtoLALRDFA } from './LALR'
 
 export type GrammarSymbol = {
   type: 'ascii' | 'token' | 'nonterminal' | 'sptoken'
@@ -46,7 +47,7 @@ export class LR1Analyzer {
   // 求过的GOTO记录一下，不然下辈子都跑不出来
   private GOTOCache: Map<GOTOCacheKey, LR1State>
 
-  constructor(yaccParser: YaccParser) {
+  constructor(yaccParser: YaccParser, useLALR = false) {
     this._symbols = []
     this._producers = []
     this._operators = []
@@ -56,12 +57,17 @@ export class LR1Analyzer {
     this._GOTOReverseLookup = []
     this.GOTOCache = new Map<GOTOCacheKey, LR1State>()
     this._distributeId(yaccParser)
+    console.log(yaccParser)
     this._convertProducer(yaccParser.producers)
     this._convertOperator(yaccParser.operatorDecl)
-    console.log('\n[ _constructLR1DFA, this might take a long time... ]\n')
+    console.log('\n[ constructLR1DFA or LALRDFA, this might take a long time... ]')
     this._constructLR1DFA()
-    console.log('\n[ _constructACTIONGOTOTable, this might take a long time... ]\n')
+    if (useLALR) {
+      this._dfa = LR1DFAtoLALRDFA(this)
+    }
+    console.log('\n[ constructACTIONGOTOTable, this might take a long time... ]')
     this._constructACTIONGOTOTable()
+    console.log('\n')
   }
 
   get symbols() {
@@ -69,9 +75,6 @@ export class LR1Analyzer {
   }
   get dfa() {
     return this._dfa
-  }
-  set dfa(v: LR1DFA) {
-    this._dfa = v
   }
   get producers() {
     return this._producers
@@ -233,7 +236,7 @@ export class LR1Analyzer {
           PATTERN = new RegExp(/(' '|[^ ]+)/g),
           char
         while ((char = PATTERN.exec(right))) {
-          let tmp = char[0],
+          let tmp = char[0].trim(),
             id
           if (/'.+'/.test(char[0])) {
             tmp = char[0].substring(1, char[0].length - 1)
@@ -384,7 +387,7 @@ export class LR1Analyzer {
   }
 
   /**
-   * 生成LR1语法分析表
+   * 生成语法分析表
    * 见龙书算法4.56
    */
   _constructACTIONGOTOTable() {
@@ -417,7 +420,6 @@ export class LR1Analyzer {
     // ===========================
     let lookup = Array.prototype.indexOf.bind(this._ACTIONReverseLookup)
     let pb = new ProgressBar()
-
     // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
     for (let i = 0; i < dfaStates.length; i++) {
       pb.render({ completed: i, total: dfaStates.length })
