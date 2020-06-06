@@ -1,5 +1,5 @@
 %{
-
+  #include "yy.tab.h"
 %}
 D			[0-9]
 %%

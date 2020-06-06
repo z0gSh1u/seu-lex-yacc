@@ -106,9 +106,6 @@ export class YaccParser {
         case '%start':
           for (let i = 1; i < words.length; i++) {
             assert(!this._startSymbol.trim(), `Start symbol redefined: ${words[i]}`)
-            console.log(this._producerPart)
-            // console.log(this._startSymbol)
-            // console.log(this._nonTerminals)
             assert(this._nonTerminals.includes(words[i]), `Unknown start symbol: ${words[i]}`)
             this._startSymbol = words[i]
           }

@@ -16,8 +16,6 @@ const utils_1 = require("../utils");
 const YaccParser_1 = require("./core/YaccParser");
 const LR1_1 = require("./core/LR1");
 const CodeGenerator_1 = require("./core/CodeGenerator");
-const beautify_1 = require("../../enhance/beautify");
-const gcc_1 = require("../../enhance/gcc");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const args = require('minimist')(process.argv.slice(2));
 // args looks like { _: [ 'example/md.l' ], v: true }
@@ -44,12 +42,8 @@ else {
     catch (e) {
         console.error(e);
     }
-    // 后处理
-    args.p && (finalCode = beautify_1.beautifyCCode(finalCode));
     // 输出c文件
     fs_1.default.writeFileSync(path_1.default.resolve('./', 'example/yy.seuyacc.c'), finalCode);
-    // 调用GGC
-    args.c && gcc_1.callGCC(path_1.default.resolve('./', 'example/yy.seuyacc.c'), args.c.length ? args.c.toString() : '');
 }
 utils_1.stdoutPrint(`[ All work done! ]\n`);
 const tok = new Date().getTime();

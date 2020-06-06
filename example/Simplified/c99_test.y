@@ -5,8 +5,8 @@
 %token IDENTIFIER CONSTANT STRING_LITERAL
 %token INC_OP LE_OP EQ_OP NE_OP GT_OP LT_OP
 %token AND_OP OR_OP ADD_ASSIGN
-%token INT VOID TRUE FALSE
-%token IF CONTINUE BREAK RETURN
+%token INT FLOAT VOID TRUE FALSE
+%token IF CONTINUE BREAK RETURN ELSE WHILE
 
 %start program
 %%
@@ -56,17 +56,13 @@ stmts
 	| stmt
 	;
 
-block_stmt		
+block_stmt
   : '{' stmts '}'
 	;
 
-type		
-  : 'int'
-	| 'char'
-	| 'bool'
-	| 'float'
-	| 'double'
-	| 'void'
+type
+  : INT
+	| FLOAT
 	;
 
 expr
@@ -80,18 +76,18 @@ assign_expr
 	| IDENTIFIER ADD_ASSIGN expr
 	;
 
-arithmetic_expr	
+arithmetic_expr
   : arithmetic_expr '+' arithmetic_expr
 	| arithmetic_expr '-' arithmetic_expr
 	| arithmetic_expr '*' arithmetic_expr
 	| arithmetic_expr '/' arithmetic_expr
 	| '(' arithmetic_expr ')'
 	| IDENTIFIER
-	| NUMBER
+	| CONSTANT
 	| function_call
 	;
 
-logic_expr	
+logic_expr
 	: logic_expr AND_OP logic_expr
 	| logic_expr OR_OP logic_expr
 	| '!' logic_expr
@@ -106,7 +102,7 @@ logic_expr
 
 function_call
   : IDENTIFIER '(' argument_list ')'
-	| IDENTIFIER '(' ')'		
+	| IDENTIFIER '(' ')'
 	;
 
 argument_list

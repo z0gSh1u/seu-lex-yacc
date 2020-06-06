@@ -38,12 +38,8 @@ if (args._.length === 0) {
   } catch (e) {
     console.error(e)
   }
-  // 后处理
-  args.p && (finalCode = beautifyCCode(finalCode))
   // 输出c文件
   fs.writeFileSync(path.resolve('./', 'example/yy.seuyacc.c'), finalCode)
-  // 调用GGC
-  args.c && callGCC(path.resolve('./', 'example/yy.seuyacc.c'), args.c.length ? args.c.toString() : '')
 }
 stdoutPrint(`[ All work done! ]\n`)
 const tok = new Date().getTime()

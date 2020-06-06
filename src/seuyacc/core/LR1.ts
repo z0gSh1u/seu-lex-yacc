@@ -57,7 +57,6 @@ export class LR1Analyzer {
     this._GOTOReverseLookup = []
     this.GOTOCache = new Map<GOTOCacheKey, LR1State>()
     this._distributeId(yaccParser)
-    console.log(yaccParser)
     this._convertProducer(yaccParser.producers)
     this._convertOperator(yaccParser.operatorDecl)
     console.log('\n[ constructLR1DFA or LALRDFA, this might take a long time... ]')
@@ -266,13 +265,7 @@ export class LR1Analyzer {
     while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
       newStartSymbolContent += "'"
     this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent })
-    this._producers.push(
-      new LR1Producer(
-        this._symbols.length - 1,
-        [this._startSymbol],
-        "$$ = $1;"
-      )
-    )
+    this._producers.push(new LR1Producer(this._symbols.length - 1, [this._startSymbol], '$$ = $1;'))
     this._startSymbol = this._symbols.length - 1
     let initProducer = this._producersOf(this._startSymbol)[0]
     let I0 = this.CLOSURE(
@@ -422,8 +415,6 @@ export class LR1Analyzer {
     // ===========================
     let lookup = Array.prototype.indexOf.bind(this._ACTIONReverseLookup)
     let pb = new ProgressBar()
-    let shiftcount = 0,
-      conflictcount = 0
     // 在该过程中，我们强制处理了所有冲突，保证文法是LR(1)的
     for (let i = 0; i < dfaStates.length; i++) {
       pb.render({ completed: i, total: dfaStates.length })
@@ -437,7 +428,6 @@ export class LR1Analyzer {
         for (let j = 0; j < dfaStates.length; j++)
           if (LR1State.same(goto, dfaStates[j])) {
             this._ACTIONTable[i][lookup(a)] = { type: 'shift', data: j }
-            shiftcount++
           }
       }
       // 处理规约的情况
@@ -448,25 +438,34 @@ export class LR1Analyzer {
         if (this._symbolTypeIs(item.lookahead, 'nonterminal')) continue // 展望非终结符的归GOTO表管
         let shouldReplace = false
         if (this._ACTIONTable[i][lookup(item.lookahead)].type === 'shift') {
-          conflictcount++
           // 处理移进-规约冲突
-          let reduceOperator = this._operators.find(x => x.symbolId == item.lookahead) // 展望符的优先级就是规约的优先级
-          let reducePrecedence = reduceOperator?.precedence as number
-          let shiftOperator = this._operators.find(
-            x => x.symbolId == this._producers[item.producer].rhs[item.dotPosition - 1]
-          ) // 最后一个终结符的优先级就是移进的优先级
+          // 展望符的优先级就是移进的优先级
+          let shiftOperator = this._operators.find(x => x.symbolId == item.lookahead)
           let shiftPrecedence = shiftOperator?.precedence as number
-          if (reducePrecedence == -1 || shiftPrecedence == -1) {
+          // 最后一个终结符的优先级就是规约的优先级
+          let reduceOperator
+          for (let i = item.dotPosition - 1; i >= 0; i--) {
+            let symbol = this._producers[item.producer].rhs[i]
+            if (!this._symbolTypeIs(symbol, 'nonterminal')) {
+              reduceOperator = this._operators.find(x => x.symbolId == symbol)
+              break
+            }
+          }
+          let reducePrecedence = reduceOperator?.precedence as number
+          if (
+            !reduceOperator ||
+            !shiftOperator ||
+            reducePrecedence == -1 ||
+            shiftPrecedence == -1
+          ) {
             // 没有完整地定义优先级，就保持原有的移进
           } else {
-            if (reducePrecedence > shiftPrecedence) {
-              shouldReplace = true // 规约优先级更高，替换为规约
-            } else if (reducePrecedence == shiftPrecedence) {
-              // 相同优先级，遵循结合性
-              if (reduceOperator?.assoc === 'left') {
+            if (reducePrecedence == shiftPrecedence) {
+              if (reduceOperator.assoc == 'left')
                 // 同级的运算符必然具备相同的结合性（因为在.y同一行声明）
                 shouldReplace = true // 左结合就规约
-              }
+            } else if (reducePrecedence > shiftPrecedence) {
+              shouldReplace = true // 规约优先级更高，替换为规约
             }
           }
         } else if (this._ACTIONTable[i][lookup(item.lookahead)].type === 'reduce') {
@@ -504,6 +503,5 @@ export class LR1Analyzer {
         for (let j = 0; j < dfaStates.length; j++)
           if (LR1State.same(this.GOTO(dfaStates[i], A), dfaStates[j]))
             this._GOTOTable[i][lookup(A)] = j
-    console.log("\nshift==",shiftcount,"confl",conflictcount)
   }
 }
