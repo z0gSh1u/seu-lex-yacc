@@ -192,7 +192,9 @@ export class LR1Analyzer {
   /**
    * 求取FOLLOW集
    */
-  private FOLLOW(nonterminal: number): number[] {
+  private FOLLOW(nonterminal: number, nonterminalRec: number[] = []): number[] {
+    if (nonterminalRec.includes(nonterminal)) return []
+    nonterminalRec.push(nonterminal)
     let ret: number[] = []
     let epsilon = this._getSymbolId(SpSymbol.EPSILON)
     if (nonterminal == this._startSymbol) ret.push(this._getSymbolId(SpSymbol.END))
@@ -203,7 +205,7 @@ export class LR1Analyzer {
           first.forEach(symbol => {
             if (symbol != epsilon && !ret.includes(symbol)) ret.push(symbol)
           })
-          if (first.includes(epsilon) && nonterminal != producer.lhs) {
+          if (first.includes(epsilon)) {
             this.FOLLOW(producer.lhs).forEach(symbol => {
               if (!ret.includes(symbol)) ret.push(symbol)
             })
@@ -268,7 +270,7 @@ export class LR1Analyzer {
       new LR1Producer(
         this._symbols.length - 1,
         [this._startSymbol],
-        this._producersOf(this._startSymbol)[0].action
+        "$$ = $1;"
       )
     )
     this._startSymbol = this._symbols.length - 1

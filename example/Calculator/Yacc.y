@@ -4,17 +4,17 @@
 %}
 
 %token SHARP MINUS PLUS MULTIPLY DIVIDE LPAREN RPAREN NUMBER UNKNOWN
-%left '+' '-'
-%left '*' '/'
+%left PLUS MINUS
+%left MULTIPLY DIVIDE
 %start expr
 
 %%
 
 expr
-  : expr '+' expr	{ out("%s", "r(expr+expr)"); $$ = itoa(atoi($1) + atoi($3)); }
-	| expr MINUS expr	{ out("%s", "r(expr-expr)"); $$ = itoa(atoi($1) - atoi($3)); }
-	| expr '*' expr	{ out("%s", "r(expr*expr)"); $$ = itoa(atoi($1) * atoi($3)); }
-	| expr DIVIDE expr	{ out("%s", "r(expr/expr)"); $$ = itoa(atoi($1) / atoi($3)); }
+  : expr PLUS expr	{ out("%s", "r(expr+expr)"); itoa(atoi($1) + atoi($3), $$, 10); }
+	| expr MINUS expr	{ out("%s", "r(expr-expr)"); itoa(atoi($1) - atoi($3), $$, 10); }
+	| expr MULTIPLY expr	{ out("%s", "r(expr*expr)"); itoa(atoi($1) * atoi($3), $$, 10); }
+	| expr DIVIDE expr	{ out("%s", "r(expr/expr)"); itoa(atoi($1) / atoi($3), $$, 10); }
 	| LPAREN expr ')'
 	| NUMBER  { $$ = $1; /* default operation in fact */ }
 	;
@@ -28,9 +28,9 @@ int main(int argc, char** argv) {
 	// yyout = stdout;
 	int c;
 	// keep calling yyparse
-  while (c = yyparse()) {
-    if (c != 0) break;
-  }
+  c = yyparse();
+	if (c == 0) printf("result is %d", atoi(yytext));
+	else printf("oh no!");
   fclose(yyin);
   return 0;
 }

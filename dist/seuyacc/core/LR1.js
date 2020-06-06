@@ -146,7 +146,10 @@ class LR1Analyzer {
     /**
      * 求取FOLLOW集
      */
-    FOLLOW(nonterminal) {
+    FOLLOW(nonterminal, nonterminalRec = []) {
+        if (nonterminalRec.includes(nonterminal))
+            return [];
+        nonterminalRec.push(nonterminal);
         let ret = [];
         let epsilon = this._getSymbolId(Grammar_1.SpSymbol.EPSILON);
         if (nonterminal == this._startSymbol)
@@ -159,7 +162,7 @@ class LR1Analyzer {
                         if (symbol != epsilon && !ret.includes(symbol))
                             ret.push(symbol);
                     });
-                    if (first.includes(epsilon) && nonterminal != producer.lhs) {
+                    if (first.includes(epsilon)) {
                         this.FOLLOW(producer.lhs).forEach(symbol => {
                             if (!ret.includes(symbol))
                                 ret.push(symbol);
@@ -215,7 +218,7 @@ class LR1Analyzer {
         while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
             newStartSymbolContent += "'";
         this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent });
-        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], this._producersOf(this._startSymbol)[0].action));
+        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], "$$ = $1;"));
         this._startSymbol = this._symbols.length - 1;
         let initProducer = this._producersOf(this._startSymbol)[0];
         let I0 = this.CLOSURE(new Grammar_1.LR1State([
