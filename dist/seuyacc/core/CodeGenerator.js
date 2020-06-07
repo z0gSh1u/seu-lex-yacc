@@ -228,6 +228,7 @@ function genDealWithFunction(analyzer) {
         let producer = analyzer.producers[index];
         code += `case ${index}:
       curAttr = (char *)malloc(1024 * sizeof(char));
+      memset(curAttr, '\\0', sizeof(curAttr));
       ${actionCodeModified(producer.action, producer.rhs.length)}
       stateStackPop(${producer.rhs.length});
       reduceNode(${producer.rhs.length});

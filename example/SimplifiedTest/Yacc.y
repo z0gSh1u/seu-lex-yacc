@@ -36,8 +36,8 @@ func_declaration
 	;
 
 parameter_list
-  : type IDENTIFIER ',' parameter_list { out("Reduce@declaration->var_declaration"); }
-	| type IDENTIFIER { out("Reduce@declaration->var_declaration"); }
+  : type IDENTIFIER ',' parameter_list { out("Reduce@parameter_list->type IDENTIFIER ',' parameter_list"); }
+	| type IDENTIFIER { out("Reduce@parameter_list->type IDENTIFIER"); }
 	;
 
 stmt
@@ -51,46 +51,39 @@ stmt
 	| block_stmt { out("Reduce@stmt->block_stmt"); }
 	;
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 stmts
-  : stmt stmts { out("Reduce@stmt->block_stmt"); }
-	| stmt { out("Reduce@stmt->block_stmt"); }
+  : stmt stmts { out("Reduce@stmts->stmt stmts"); }
+	| stmt { out("Reduce@stmt->stmt"); }
 	;
 
 block_stmt
-  : LBRACE stmts RBRACE { out("Reduce@stmt->block_stmt"); }
-  | LBRACE RBRACE { out("Reduce@stmt->block_stmt"); }
+  : LBRACE stmts RBRACE { out("Reduce@block_stmt->LBRACE stmts RBRACE"); }
+  | LBRACE RBRACE { out("Reduce@block_stmt->LBRACE RBRACE"); }
 	;
 
 type
-  : INT { out("Reduce@stmt->block_stmt"); }
-	| FLOAT { out("Reduce@stmt->block_stmt"); }
+  : INT { out("Reduce@type->INT"); }
+	| FLOAT { out("Reduce@type->FLOAT"); }
 	;
 
 expr
-	: assign_expr { out("Reduce@stmt->block_stmt"); }
-	| arithmetic_expr { out("Reduce@stmt->block_stmt"); }
-	| logic_expr { out("Reduce@stmt->block_stmt"); }
+	: assign_expr { out("Reduce@expr->assign_expr"); }
+	| arithmetic_expr { out("Reduce@expr->arithmetic_expr"); }
+	| logic_expr { out("Reduce@expr->logic_expr"); }
 	;
 
 assign_expr
-<<<<<<< HEAD
-	: IDENTIFIER ASSIGN arithmetic_expr { out("Reduce@stmt->block_stmt"); }
-	| IDENTIFIER ADD_ASSIGN arithmetic_expr { out("Reduce@stmt->block_stmt"); }
-=======
-	: IDENTIFIER ASSIGN arithmetic_expr 
-	| IDENTIFIER ADD_ASSIGN arithmetic_expr
->>>>>>> 0d165b9d90bc1f779af20dcad853d84cf2dcafe2
+	: IDENTIFIER ASSIGN arithmetic_expr { out("Reduce@assign_expr->IDENTIFIER ASSIGN arithmetic_expr"); }
+	| IDENTIFIER ADD_ASSIGN arithmetic_expr { out("Reduce@assign_expr->IDENTIFIER ADD_ASSIGN arithmetic_expr"); }
 	;
 
 arithmetic_expr
-  : arithmetic_expr PLUS arithmetic_expr { out("Reduce@arithmetic_expr->block_stmt"); }
-	| arithmetic_expr MULTIPLY arithmetic_expr { out("Reduce@arithmetic_expr->block_stmt"); }
-	| LPAREN arithmetic_expr RPAREN { out("Reduce@arithmetic_expr->block_stmt"); }
-	| IDENTIFIER { out("Reduce@arithmetic_expr->block_stmt"); }
-	| CONSTANT { out("Reduce@arithmetic_expr->block_stmt"); }
-	| function_call { out("Reduce@arithmetic_expr->block_stmt"); }
+  : arithmetic_expr PLUS arithmetic_expr { out("Reduce@arithmetic_expr->arithmetic_expr PLUS arithmetic_expr"); }
+	| arithmetic_expr MULTIPLY arithmetic_expr { out("Reduce@arithmetic_expr->arithmetic_expr MULTIPLY arithmetic_expr"); }
+	| LPAREN arithmetic_expr RPAREN { out("Reduce@arithmetic_expr->LPAREN arithmetic_expr RPAREN"); }
+	| IDENTIFIER { out("Reduce@arithmetic_expr->IDENTIFIER"); }
+	| CONSTANT { out("Reduce@arithmetic_expr->CONSTANT"); }
+	| function_call { out("Reduce@arithmetic_expr->function_call"); }
 	;
 
 logic_expr
@@ -104,13 +97,13 @@ logic_expr
 	;
 
 function_call
-  : IDENTIFIER LPAREN argument_list RPAREN
-	| IDENTIFIER LPAREN RPAREN
+  : IDENTIFIER LPAREN argument_list RPAREN { out("Reduce@function_call->IDENTIFIER LPAREN argument_list RPAREN"); }
+	| IDENTIFIER LPAREN RPAREN { out("Reduce@function_call->IDENTIFIER LPAREN RPAREN"); }
 	;
 
 argument_list
-  : arithmetic_expr ',' argument_list
-	| arithmetic_expr
+  : arithmetic_expr ',' argument_list { out("Reduce@argument_list->arithmetic_expr ',' argument_list"); }
+	| arithmetic_expr { out("Reduce@argument_list->arithmetic_expr"); }
 	;
 
 %%

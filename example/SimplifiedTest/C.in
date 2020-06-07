@@ -1,1 +1,7 @@
 int a=2;
+if (a == 3) {
+  while (false) {
+    printf("Not inside.");
+  }
+  return something;
+}
