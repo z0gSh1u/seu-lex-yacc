@@ -138,7 +138,7 @@ function genFunctions() {
     strcpy(temp, curAttr);
     while (popNum--) {
       if (symbolAttrSize == 0) throw(ArrayLowerBoundExceeded);
-      free(symbolAttr[symbolAttrSize]);
+      free(symbolAttr[--symbolAttrSize]);
     }
     if (symbolAttrSize >= SYMBOL_ATTR_LIMIT) throw(ArrayUpperBoundExceeded);
     symbolAttr[symbolAttrSize] = (char *)malloc(strlen(temp) * sizeof(char));
