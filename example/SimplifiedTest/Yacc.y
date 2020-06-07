@@ -6,7 +6,7 @@
 %token INC_OP EQ_OP NE_OP ASSIGN PLUS MULTIPLY
 %token AND_OP OR_OP ADD_ASSIGN LBRACE RBRACE
 %token INT FLOAT VOID TRUE FALSE SEMICOLON COMMA LPAREN RPAREN
-%token IF RETURN ELSE WHILE
+%token IF RETURN ELSE WHILE WHITESPACE
 
 %start program
 %%
@@ -26,7 +26,7 @@ declaration
 	;
 
 var_declaration
-  : type IDENTIFIER SEMICOLON
+  : type IDENTIFIER SEMICOLON 
 	| type assign_expr SEMICOLON
 	;
 
@@ -73,7 +73,7 @@ expr
 	;
 
 assign_expr
-	: IDENTIFIER ASSIGN arithmetic_expr
+	: IDENTIFIER ASSIGN arithmetic_expr 
 	| IDENTIFIER ADD_ASSIGN arithmetic_expr
 	;
 

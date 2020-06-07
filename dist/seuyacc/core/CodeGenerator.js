@@ -37,7 +37,7 @@ function genPresetContent(analyzer) {
   ${genExtern()}
   int stateStack[STACK_LIMIT];
   int stateStackSize = 0;
-  int debugMode = 1;
+  int debugMode = 0;
   int EOFIndex = ${analyzer._getSymbolId(Grammar_1.SpSymbol.END)};
   char *symbolAttr[SYMBOL_ATTR_LIMIT];
   int symbolAttrSize = 0;

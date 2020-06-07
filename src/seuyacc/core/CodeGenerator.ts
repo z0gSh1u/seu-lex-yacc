@@ -45,7 +45,7 @@ function genPresetContent(analyzer: LR1Analyzer) {
   ${genExtern()}
   int stateStack[STACK_LIMIT];
   int stateStackSize = 0;
-  int debugMode = 1;
+  int debugMode = 0;
   int EOFIndex = ${analyzer._getSymbolId(SpSymbol.END)};
   char *symbolAttr[SYMBOL_ATTR_LIMIT];
   int symbolAttrSize = 0;
