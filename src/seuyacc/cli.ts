@@ -11,9 +11,7 @@ import path from 'path'
 import { stdoutPrint } from '../utils'
 import { YaccParser } from './core/YaccParser'
 import { LR1Analyzer } from './core/LR1'
-import { generateYTABC } from './core/CodeGenerator'
-import { beautifyCCode } from '../../enhance/beautify'
-import { callGCC } from '../../enhance/gcc'
+import { generateYTABC, generateYTABH } from './core/CodeGenerator'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const args = require('minimist')(process.argv.slice(2))
@@ -26,19 +24,22 @@ if (args._.length === 0) {
 } else {
   stdoutPrint(`[ Running... ]\n`)
   // 构建LR1并生成代码
-  let finalCode = ''
+  let finalCode = '',
+    finalTABH = ''
   try {
     stdoutPrint(`[ Parsing .y file... ]\n`)
     let yaccParser = new YaccParser(path.resolve('./', args._[0]))
     stdoutPrint(`[ Building LR1... ]\n`)
     let lr1 = new LR1Analyzer(yaccParser)
     stdoutPrint(`[ Generating code... ]\n`)
+    finalTABH = generateYTABH(lr1)
     finalCode = generateYTABC(yaccParser, lr1)
     stdoutPrint(`[ Main work done! Start post-processing... ]\n`)
   } catch (e) {
     console.error(e)
   }
   // 输出c文件
+  fs.writeFileSync(path.resolve('./', 'yy.tab.h'), finalTABH)
   fs.writeFileSync(path.resolve('./', 'yy.seuyacc.c'), finalCode)
 }
 stdoutPrint(`[ All work done! ]\n`)

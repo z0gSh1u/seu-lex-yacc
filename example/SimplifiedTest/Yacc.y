@@ -6,7 +6,7 @@
 %token INC_OP EQ_OP NE_OP ASSIGN PLUS MULTIPLY
 %token AND_OP OR_OP ADD_ASSIGN LBRACE RBRACE
 %token INT FLOAT VOID TRUE FALSE SEMICOLON COMMA LPAREN RPAREN
-%token IF RETURN ELSE WHILE
+%token IF RETURN ELSE WHILE WHITESPACE
 
 %start program
 %%
@@ -26,7 +26,7 @@ declaration
 	;
 
 var_declaration
-  : type IDENTIFIER SEMICOLON
+  : type IDENTIFIER SEMICOLON 
 	| type assign_expr SEMICOLON
 	;
 
@@ -58,6 +58,7 @@ stmts
 
 block_stmt
   : LBRACE stmts RBRACE
+  | LBRACE RBRACE
 	;
 
 type
@@ -72,7 +73,7 @@ expr
 	;
 
 assign_expr
-	: IDENTIFIER ASSIGN arithmetic_expr
+	: IDENTIFIER ASSIGN arithmetic_expr 
 	| IDENTIFIER ADD_ASSIGN arithmetic_expr
 	;
 
@@ -109,11 +110,20 @@ argument_list
 %%
 #include <stdio.h>
 
-extern char yytext[];
-extern int column;
+int main(int argc, char** argv) {
+  // redirect yyin
+  yyin = fopen(argv[1], "r");
+	// redirect yyout if you want, or stdout by default
+	// yyout = stdout;
+	int c;
+	// keep calling yyparse
+  c = yyparse();
+	if (c == 0) printf("Result is %s", yytext);
+	else printf("Oh no!");
+  fclose(yyin);
+  return 0;
+}
 
-void yyerror(char const *s)
-{
-	fflush(stdout);
-	printf("\n%*s\n%*s\n", column, "^", column, s);
+int yywrap() {
+  return 1;
 }

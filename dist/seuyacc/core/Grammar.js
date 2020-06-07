@@ -32,7 +32,7 @@ exports.YaccParserProducer = YaccParserProducer;
 // LR1阶段对各文法符号都进行了编号
 /**
  *              LR1DFA
- *  LR1ItemSet
+ *  LR1State
  *  _________
  * |         |
  * | LR1Item |
