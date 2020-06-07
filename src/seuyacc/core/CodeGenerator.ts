@@ -24,6 +24,7 @@ export function generateYTABH(analyzer: LR1Analyzer) {
   let res = `
   #ifndef Y_TAB_H_
   #define Y_TAB_H_
+  #define WHITESPACE -10
   ${_generateTokenId()}
   #endif
   `
@@ -35,11 +36,13 @@ function genPresetContent(analyzer: LR1Analyzer) {
   #include <stdio.h>
   #include <stdlib.h>
   #include <string.h>
+  #include "yy.tab.h"
   #define STACK_LIMIT 1000
   #define SYMBOL_CHART_LIMIT 10000
   #define SYMBOL_ATTR_LIMIT 10000
   #define STATE_STACK_LIMIT 10000
-  #define YACC_NOTHING -1
+  #define YACC_ERROR -1
+  #define YACC_NOTHING -2
   #define YACC_ACCEPT -42
   ${genExceptions()}
   ${genExtern()}
@@ -210,6 +213,7 @@ function genTable(analyzer: LR1Analyzer) {
 function genDealWithFunction(analyzer: LR1Analyzer) {
   let code = `
   int dealWith(int symbol) {
+    if (symbol == WHITESPACE) return YACC_NOTHING;
     if (stateStackSize < 1) throw(ArrayLowerBoundExceeded);
     if (debugMode) printf("Received symbol no.%d\\n", symbol);
     int state = stateStack[stateStackSize - 1];
@@ -322,7 +326,7 @@ function genYaccParse(analyzer: LR1Analyzer) {
     if (yyout == NULL) yyout = stdout;
     int token;
     stateStackPush(${analyzer.dfa.startStateId});
-    while (token != YACC_ACCEPT && (token = yylex())) {
+    while (token != YACC_ACCEPT && (token = yylex()) && token != YACC_ERROR) {
       do {
         token = dealWith(token);
       } while (token >= 0);
@@ -334,6 +338,7 @@ function genYaccParse(analyzer: LR1Analyzer) {
       } while (token >= 0);
     }
     strcpy(yytext, curAttr);
+    if (token == YACC_ERROR) return 1;
     if (token == YACC_ACCEPT) {
       treeout = fopen("yacc.tree", "w");
       printTree(nodes[0], 0);
