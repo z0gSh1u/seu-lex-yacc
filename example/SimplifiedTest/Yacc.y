@@ -75,8 +75,13 @@ expr
 	;
 
 assign_expr
+<<<<<<< HEAD
 	: IDENTIFIER ASSIGN arithmetic_expr { out("Reduce@stmt->block_stmt"); }
 	| IDENTIFIER ADD_ASSIGN arithmetic_expr { out("Reduce@stmt->block_stmt"); }
+=======
+	: IDENTIFIER ASSIGN arithmetic_expr 
+	| IDENTIFIER ADD_ASSIGN arithmetic_expr
+>>>>>>> 0d165b9d90bc1f779af20dcad853d84cf2dcafe2
 	;
 
 arithmetic_expr
