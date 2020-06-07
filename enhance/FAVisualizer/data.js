@@ -1,241 +1,159 @@
-window._seulex_shape = 'rect'; let data = {
+window._seulex_shape = 'circle'; let data = {
   "nodes": [
     {
-      "key": "K0",
-      "label": "I0\n=======\nexpr' -> ●expr  § SP_END\n-------\n\nexpr -> ●expr PLUS expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> ●expr MINUS expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> ●expr MULTIPLY expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> ●expr DIVIDE expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> ●NUMBER  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS",
+      "key": "0",
+      "label": "0",
+      "color": "#46A3FF"
+    },
+    {
+      "key": "1",
+      "label": "1",
       "color": "#FFFFFF"
     },
     {
-      "key": "K1",
-      "label": "I1\n=======\nexpr -> NUMBER● § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------",
-      "color": "#FFFFFF"
+      "key": "2",
+      "label": "2",
+      "color": "#00DB00"
     },
     {
-      "key": "K2",
-      "label": "I2\n=======\nexpr' -> expr● § SP_END\n-------\n\nexpr -> expr ●PLUS expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> expr ●MINUS expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> expr ●MULTIPLY expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\nexpr -> expr ●DIVIDE expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS",
-      "color": "#FFFFFF"
+      "key": "3",
+      "label": "3",
+      "color": "#00DB00"
     },
     {
-      "key": "K3",
-      "label": "I3\n=======\nexpr -> expr MINUS ●expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> ●expr PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●NUMBER  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
+      "key": "4",
+      "label": "4",
+      "color": "#00DB00"
     },
     {
-      "key": "K4",
-      "label": "I4\n=======\nexpr -> expr PLUS ●expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> ●expr PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●NUMBER  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
+      "key": "5",
+      "label": "5",
+      "color": "#00DB00"
     },
     {
-      "key": "K5",
-      "label": "I5\n=======\nexpr -> expr MULTIPLY ●expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> ●expr PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●NUMBER  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
+      "key": "6",
+      "label": "6",
+      "color": "#00DB00"
     },
     {
-      "key": "K6",
-      "label": "I6\n=======\nexpr -> expr DIVIDE ●expr  § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> ●expr PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●expr DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> ●NUMBER  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
+      "key": "7",
+      "label": "7",
+      "color": "#00DB00"
     },
     {
-      "key": "K7",
-      "label": "I7\n=======\nexpr -> expr DIVIDE expr● § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> expr ●PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
-    },
-    {
-      "key": "K8",
-      "label": "I8\n=======\nexpr -> expr MULTIPLY expr● § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> expr ●PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
-    },
-    {
-      "key": "K9",
-      "label": "I9\n=======\nexpr -> expr PLUS expr● § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> expr ●PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
-    },
-    {
-      "key": "K10",
-      "label": "I10\n=======\nexpr -> expr MINUS expr● § SP_END/DIVIDE/MULTIPLY/MINUS/PLUS\n-------\n\nexpr -> expr ●PLUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MINUS expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●MULTIPLY expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END\nexpr -> expr ●DIVIDE expr  § PLUS/DIVIDE/MULTIPLY/MINUS/SP_END",
-      "color": "#FFFFFF"
+      "key": "8",
+      "label": "8",
+      "color": "#00DB00"
     }
   ],
   "edges": [
     {
-      "source": "K0",
-      "target": "K1",
-      "name": "K0_1",
-      "label": "NUMBER"
+      "source": "0",
+      "target": "8",
+      "name": "0_0",
+      "label": "a"
     },
     {
-      "source": "K0",
-      "target": "K2",
-      "name": "K0_2",
-      "label": "expr"
+      "source": "0",
+      "target": "7",
+      "name": "0_1",
+      "label": "b"
     },
     {
-      "source": "K2",
-      "target": "K3",
-      "name": "K2_3",
-      "label": "MINUS"
+      "source": "1",
+      "target": "9",
+      "name": "1_0",
+      "label": "a"
     },
     {
-      "source": "K2",
-      "target": "K4",
-      "name": "K2_4",
-      "label": "PLUS"
+      "source": "1",
+      "target": "7",
+      "name": "1_1",
+      "label": "b"
     },
     {
-      "source": "K2",
-      "target": "K5",
-      "name": "K2_5",
-      "label": "MULTIPLY"
+      "source": "2",
+      "target": "1",
+      "name": "2_0",
+      "label": "a"
     },
     {
-      "source": "K2",
-      "target": "K6",
-      "name": "K2_6",
-      "label": "DIVIDE"
+      "source": "2",
+      "target": "2",
+      "name": "2_1",
+      "label": "b"
     },
     {
-      "source": "K3",
-      "target": "K1",
-      "name": "K3_1",
-      "label": "NUMBER"
+      "source": "3",
+      "target": "3",
+      "name": "3_0",
+      "label": "a"
     },
     {
-      "source": "K3",
-      "target": "K10",
-      "name": "K3_10",
-      "label": "expr"
+      "source": "3",
+      "target": "2",
+      "name": "3_1",
+      "label": "b"
     },
     {
-      "source": "K4",
-      "target": "K1",
-      "name": "K4_1",
-      "label": "NUMBER"
+      "source": "4",
+      "target": "1",
+      "name": "4_0",
+      "label": "a"
     },
     {
-      "source": "K4",
-      "target": "K9",
-      "name": "K4_9",
-      "label": "expr"
+      "source": "4",
+      "target": "2",
+      "name": "4_1",
+      "label": "b"
     },
     {
-      "source": "K5",
-      "target": "K1",
-      "name": "K5_1",
-      "label": "NUMBER"
+      "source": "5",
+      "target": "4",
+      "name": "5_0",
+      "label": "a"
     },
     {
-      "source": "K5",
-      "target": "K8",
-      "name": "K5_8",
-      "label": "expr"
+      "source": "5",
+      "target": "2",
+      "name": "5_1",
+      "label": "b"
     },
     {
-      "source": "K6",
-      "target": "K1",
-      "name": "K6_1",
-      "label": "NUMBER"
+      "source": "6",
+      "target": "5",
+      "name": "6_0",
+      "label": "a"
     },
     {
-      "source": "K6",
-      "target": "K7",
-      "name": "K6_7",
-      "label": "expr"
+      "source": "6",
+      "target": "2",
+      "name": "6_1",
+      "label": "b"
     },
     {
-      "source": "K7",
-      "target": "K3",
-      "name": "K7_3",
-      "label": "MINUS"
+      "source": "7",
+      "target": "5",
+      "name": "7_0",
+      "label": "a"
     },
     {
-      "source": "K7",
-      "target": "K4",
-      "name": "K7_4",
-      "label": "PLUS"
+      "source": "7",
+      "target": "6",
+      "name": "7_1",
+      "label": "b"
     },
     {
-      "source": "K7",
-      "target": "K5",
-      "name": "K7_5",
-      "label": "MULTIPLY"
+      "source": "8",
+      "target": "1",
+      "name": "8_0",
+      "label": "a"
     },
     {
-      "source": "K7",
-      "target": "K6",
-      "name": "K7_6",
-      "label": "DIVIDE"
-    },
-    {
-      "source": "K8",
-      "target": "K3",
-      "name": "K8_3",
-      "label": "MINUS"
-    },
-    {
-      "source": "K8",
-      "target": "K4",
-      "name": "K8_4",
-      "label": "PLUS"
-    },
-    {
-      "source": "K8",
-      "target": "K5",
-      "name": "K8_5",
-      "label": "MULTIPLY"
-    },
-    {
-      "source": "K8",
-      "target": "K6",
-      "name": "K8_6",
-      "label": "DIVIDE"
-    },
-    {
-      "source": "K9",
-      "target": "K3",
-      "name": "K9_3",
-      "label": "MINUS"
-    },
-    {
-      "source": "K9",
-      "target": "K4",
-      "name": "K9_4",
-      "label": "PLUS"
-    },
-    {
-      "source": "K9",
-      "target": "K5",
-      "name": "K9_5",
-      "label": "MULTIPLY"
-    },
-    {
-      "source": "K9",
-      "target": "K6",
-      "name": "K9_6",
-      "label": "DIVIDE"
-    },
-    {
-      "source": "K10",
-      "target": "K3",
-      "name": "K10_3",
-      "label": "MINUS"
-    },
-    {
-      "source": "K10",
-      "target": "K4",
-      "name": "K10_4",
-      "label": "PLUS"
-    },
-    {
-      "source": "K10",
-      "target": "K5",
-      "name": "K10_5",
-      "label": "MULTIPLY"
-    },
-    {
-      "source": "K10",
-      "target": "K6",
-      "name": "K10_6",
-      "label": "DIVIDE"
+      "source": "8",
+      "target": "2",
+      "name": "8_1",
+      "label": "b"
     }
   ]
 }
