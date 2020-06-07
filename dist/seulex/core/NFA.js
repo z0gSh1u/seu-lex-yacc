@@ -384,7 +384,7 @@ class NFA extends FA_1.FiniteAutomata {
                 case '.': // 任意字符点（不再是连接符了）
                     stack.push(NFA.atom(FA_1.SpAlpha.ANY));
                     break;
-                case '[space]': // 空格
+                case '[ws]': // 空格
                     stack.push(NFA.atom(' '));
                     break;
                 default:
