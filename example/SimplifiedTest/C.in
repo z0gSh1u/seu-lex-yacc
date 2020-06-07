@@ -1,7 +1,7 @@
-int a=2;
-if (a == 3) {
-  while (false) {
-    printf("Not inside.");
+int main() {
+  if (a == 2) {
+    printf("hello world!");
   }
-  return something;
+  int b = 233;
+  return c;
 }
