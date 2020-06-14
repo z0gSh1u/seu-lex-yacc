@@ -38,3 +38,21 @@ L			[a-zA-Z_]
 .         { return (WHITESPACE); }
 
 %%
+
+int main(int argc, char** argv) {
+  // redirect yyin
+  yyin = fopen(argv[1], "r");
+	// redirect yyout if you want, or stdout by default
+	// yyout = stdout;
+	int c;
+	// keep calling yylex
+  while (c = yylex()) {
+    printf("TokenID: %d || yytext: %s\n", c, yytext);
+  }
+  fclose(yyin);
+  return 0;
+}
+
+int yywrap() {
+  return 1;
+}

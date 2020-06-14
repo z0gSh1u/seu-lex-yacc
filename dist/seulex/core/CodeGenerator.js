@@ -43,7 +43,6 @@ function genPresetContent() {
   #include <stdio.h>
   #include <stdlib.h>
   #include <string.h>
-  #include "yy.tab.h"
   #define ECHO fprintf(yyout,"%s\\n",yytext);
   int yylineno = 1, yyleng = 0;
   FILE *yyin = NULL, *yyout = NULL;
@@ -169,7 +168,7 @@ function genYYLEX() {
           ${genSwitchAction()}
         }
       } else return -1; // error
-      return 0;
+      return 0; // FIXME!
     }
   `;
 }
