@@ -206,7 +206,7 @@ function genDealWithFunction(analyzer) {
     struct TableCell cell = table[state][symbol];
     switch(cell.action) {
       case 0:
-        throw(SyntaxError);
+        return YACC_NOTHING;
       case 4:
         return YACC_ACCEPT;
       case 1:
