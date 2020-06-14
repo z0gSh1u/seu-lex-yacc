@@ -36,7 +36,7 @@ func_declaration
 	;
 
 parameter_list
-  : type IDENTIFIER ',' parameter_list { out("Reduce@parameter_list->type IDENTIFIER ',' parameter_list"); }
+  : type IDENTIFIER COMMA parameter_list { out("Reduce@parameter_list->type IDENTIFIER COMMA parameter_list"); }
 	| type IDENTIFIER { out("Reduce@parameter_list->type IDENTIFIER"); }
 	;
 
@@ -53,7 +53,7 @@ stmt
 
 stmts
   : stmt stmts { out("Reduce@stmts->stmt stmts"); }
-	| stmt { out("Reduce@stmt->stmt"); }
+	| stmt { out("Reduce@stmts->stmt"); }
 	;
 
 block_stmt
@@ -83,6 +83,7 @@ arithmetic_expr
 	| LPAREN arithmetic_expr RPAREN { out("Reduce@arithmetic_expr->LPAREN arithmetic_expr RPAREN"); }
 	| IDENTIFIER { out("Reduce@arithmetic_expr->IDENTIFIER"); }
 	| CONSTANT { out("Reduce@arithmetic_expr->CONSTANT"); }
+	| STRING_LITERAL { out("Reduce@arithmetic_expr->STRING_LITERAL"); }
 	| function_call { out("Reduce@arithmetic_expr->function_call"); }
 	;
 
@@ -102,7 +103,7 @@ function_call
 	;
 
 argument_list
-  : arithmetic_expr ',' argument_list { out("Reduce@argument_list->arithmetic_expr ',' argument_list"); }
+  : arithmetic_expr COMMA argument_list { out("Reduce@argument_list->arithmetic_expr COMMA argument_list"); }
 	| arithmetic_expr { out("Reduce@argument_list->arithmetic_expr"); }
 	;
 

@@ -36,7 +36,7 @@ func_declaration
 	;
 
 parameter_list
-  : type IDENTIFIER ',' parameter_list
+  : type IDENTIFIER COMMA parameter_list
 	| type IDENTIFIER
 	;
 
@@ -102,7 +102,7 @@ function_call
 	;
 
 argument_list
-  : arithmetic_expr ',' argument_list
+  : arithmetic_expr COMMA argument_list
 	| arithmetic_expr
 	;
 

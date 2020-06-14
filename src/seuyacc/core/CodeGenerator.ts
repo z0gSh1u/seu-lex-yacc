@@ -363,7 +363,7 @@ export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
   #define DEBUG_MODE 0
   // * ============== copyPart ================
   `
-  finalCode += yaccParser.copyPart // 用户之间复制部分
+  finalCode += yaccParser.copyPart // 用户直接复制部分
   finalCode += `
   // * ========== seuyacc generation ============
   `
@@ -372,6 +372,6 @@ export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
   finalCode += genDealWithFunction(analyzer)
   finalCode += genPrintTree()
   finalCode += genYaccParse(analyzer)
-  finalCode += yaccParser.userCodePart
+  finalCode += yaccParser.userCodePart // 用户代码部分
   return finalCode
 }
