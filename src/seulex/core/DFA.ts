@@ -40,8 +40,8 @@ export class DFA extends FiniteAutomata {
   minimize() {
     // 暂不考虑有any的情况（即有other）下的最小化，过于复杂
     if (this._alphabet.includes('[any]')) return
-    let stateLists: State[][] = [] // 首先建造包含两个组的初始划分
-    let terminalStates: State[] = [...this.acceptStates] // 接受状态组，直接拆好装进去
+    let stateLists: State[][] = [] //首先建造包含两个组的初始划分
+    let terminalStates: State[] = [...this.acceptStates] //接受状态组，直接拆好装进去
     for (let i = 0; i < terminalStates.length; i++) {
       stateLists.push([terminalStates[i]])
     }
@@ -54,38 +54,37 @@ export class DFA extends FiniteAutomata {
     if (nonTerminalStates.length != 0) {
       stateLists.push(nonTerminalStates)
     }
-    // 原分法开始的地方
     let flag = true
-    let newStateLists = [] // 存放已经完成划分状态集的暂用容器
+    let newStateLists = [] //存放已经完成划分状态集的暂用容器
     while (flag) {
-      // 一次拆一个
+      //一次拆一个
       flag = false
       let newSet: State[] = [] //装被拆出去状态的容器
       for (let k = 0; k < stateLists.length; k++) {
-        // 找一个要拆的，外层循环是statelists当中每一个state[]
+        //找一个要拆的，外层循环是statelists当中每一个state[]
         let s = stateLists[k]
-        let reals = [...s] // 为了保证循环顺利进行，我们用reals复制s，拆reals不会影响s的循环
+        let reals = s //为了保证循环顺利进行，我们用reals复制s，拆reals不会影响s的循环
         if (s.length <= 1) {
           newStateLists.push(s)
           stateLists.splice(k, 1)
           flag = true
           break
-        } // 单个状态无法拆,直接提出来
+        } //单个状态无法拆,直接提出来
         else {
-          // 这里剩下的都是至少包含两个状态的数组
+          //这里剩下的都是至少包含两个状态的数组
           for (let i = 1; i < s.length; i++) {
-            // 中层循环是当前选中的这个state[]中每一个state
+            //中层循环是当前选中的这个state[]中每一个state
             let standard = s[0] //把每个数组的第一个状态作为参照
             let tr1 = this.getTransforms(standard)
             let tr2 = this.getTransforms(s[i])
             if (!this.sameTransform(tr1, tr2)) {
-              // 经过状态转移达到的状态不在同一组,则拿出来放到容器里
+              //经过状态转移达到的状态不在同一组,则拿出来放到容器里
               newSet.push(s[i])
               reals.splice(i, 1)
               flag = true
             }
           }
-          // 至此这个state[]已经拆完了，我们把确定在一组的reals提出来，把装着所有拆出来状态的数组回炉重造
+          //至此这个state[]已经拆完了，我们把确定在一组的reals提出来，把装着所有拆出来状态的数组回炉重造
           stateLists.splice(k, 1)
           newStateLists.push(reals)
           if (newSet.length > 0) stateLists.push(newSet)
@@ -96,11 +95,11 @@ export class DFA extends FiniteAutomata {
     for (let i = 0; i < newStateLists.length; i++) {
       stateLists.push(newStateLists[i])
     }
-    // 写到这里，状态已经全拆完了，就差一个重构DFA工作了
+    //写到这里，状态已经全拆完了，就差一个重构DFA工作了
     let reducedStates: number[] = []
     let oldNewMap = new Map<number, number>() //新旧状态映射表
     for (let i = 0; i < stateLists.length; i++) {
-      // 把需要删除的状态找出来
+      //把需要删除的状态找出来
       for (let j = 0; j < stateLists[i].length; j++) {
         if (stateLists[i].length == 1) {
           oldNewMap.set(this.states.indexOf(stateLists[i][j]), i)
@@ -109,16 +108,16 @@ export class DFA extends FiniteAutomata {
             reducedStates.push(this.states.indexOf(stateLists[i][j]))
           }
           let indexOld = this.states.indexOf(stateLists[i][j])
-          oldNewMap.set(indexOld, i) // 新旧状态映射表
+          oldNewMap.set(indexOld, i) //新旧状态映射表
         }
       }
     }
-    let newStates = this.states.filter(x => !reducedStates.includes(this.states.indexOf(x))) // 删掉多余状态
+    let newStates = this.states.filter(x => !reducedStates.includes(this.states.indexOf(x))) //删掉多余状态
     let newTrans = this.transformAdjList.filter(
       x => !reducedStates.includes(this.transformAdjList.indexOf(x))
-    ) // 删掉转移矩阵中多余状态对应的行
+    ) //删掉转移矩阵中多余状态对应的行
     for (let i = 0; i < newTrans.length; i++) {
-      // 将转移矩阵中所有target为旧状态的更新
+      //将转移矩阵中所有target为旧状态的更新
       for (let j = 0; j < newTrans[i].length; j++) {
         let temp = newTrans[i][j].target
         newTrans[i][j].target = oldNewMap.get(temp) as number

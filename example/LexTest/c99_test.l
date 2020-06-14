@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
 	int c;
 	// keep calling yylex
   while (c = yylex()) {
-    //if (c == (WHITESPACE)) continue;
+    if (c == (WHITESPACE)) continue;
     out("Token: %15s  ||  yytext: %15s\n", TokenName[c], yytext);
     // ECHO; // printf yytext
   }
