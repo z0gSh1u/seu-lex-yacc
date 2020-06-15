@@ -370,7 +370,7 @@ function generateYTABC(yaccParser, analyzer) {
   #define DEBUG_MODE 0
   // * ============== copyPart ================
   `;
-    finalCode += yaccParser.copyPart; // 用户之间复制部分
+    finalCode += yaccParser.copyPart; // 用户直接复制部分
     finalCode += `
   // * ========== seuyacc generation ============
   `;
@@ -379,7 +379,7 @@ function generateYTABC(yaccParser, analyzer) {
     finalCode += genDealWithFunction(analyzer);
     finalCode += genPrintTree();
     finalCode += genYaccParse(analyzer);
-    finalCode += yaccParser.userCodePart;
+    finalCode += yaccParser.userCodePart; // 用户代码部分
     return finalCode;
 }
 exports.generateYTABC = generateYTABC;
