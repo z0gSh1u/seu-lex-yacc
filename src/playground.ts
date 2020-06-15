@@ -8,7 +8,7 @@ import { visualizeGOTOGraph, visualizeACTIONGOTOTable } from './seuyacc/core/Vis
 
 let tik = new Date().getTime()
 
-let yp = new YaccParser('F:\\seulexyacc\\example\\Calculator\\Yacc.y')
+let yp = new YaccParser('./example/SimplifiedTest/Yacc.y')
 let lr1 = new LR1Analyzer(yp)
 let dfa = lr1.dfa
 visualizeGOTOGraph(dfa, lr1)

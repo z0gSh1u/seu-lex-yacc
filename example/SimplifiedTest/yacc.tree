@@ -1,35 +1,35 @@
-{
-  {
-    {
-      {
-        {
+program {
+  declarations {
+    declaration {
+      func_declaration {
+        type {
           int
         },
         main,
         (,
         ),
-        {
+        block_stmt {
           {,
-          {
-            {
+          stmts {
+            stmt {
               if,
               (,
-              {
-                {
+              logic_expr {
+                arithmetic_expr {
                   a
                 },
                 ==,
-                {
+                arithmetic_expr {
                   2
                 }
               },
               ),
-              {
-                {
+              stmt {
+                block_stmt {
                   {,
-                  {
-                    {
-                      {
+                  stmts {
+                    stmt {
+                      function_call {
                         printf,
                         (,
                         {
@@ -46,26 +46,26 @@
                 }
               }
             },
-            {
-              {
-                {
-                  {
+            stmts {
+              stmt {
+                var_declaration {
+                  type {
                     int
                   },
-                  {
+                  assign_expr {
                     b,
                     =,
-                    {
+                    arithmetic_expr {
                       233
                     }
                   },
                   ;
                 }
               },
-              {
-                {
+              stmts {
+                stmt {
                   return,
-                  {
+                  arithmetic_expr {
                     c
                   },
                   ;

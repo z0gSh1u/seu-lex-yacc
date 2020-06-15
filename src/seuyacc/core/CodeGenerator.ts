@@ -53,7 +53,9 @@ function genPresetContent(analyzer: LR1Analyzer) {
   char *symbolAttr[SYMBOL_ATTR_LIMIT];
   int symbolAttrSize = 0;
   char *curAttr = NULL;
+  char *curToken = NULL;
   FILE *treeout = NULL;
+  int memoryAddrCnt = 0;
   ${genSymbolChartClass()}
   ${genNode()}
   ${genFunctions()}
@@ -95,23 +97,30 @@ function genSymbolChartClass() {
   struct SymbolChart {
     int symbolNum;
     char *name[SYMBOL_CHART_LIMIT];
+    char *type[SYMBOL_CHART_LIMIT];
     char *value[SYMBOL_CHART_LIMIT];
   }symbolChart = {.symbolNum = 0};
-  char *variable(char *name) {
+  char *value(char *name, char *type) {
     for (int i = 0; i < symbolChart.symbolNum; i++) {
-      if (strcmp(name, symbolChart.name[i]) == 0)
+      if (strcmp(name, symbolChart.name[i]) == 0 && strcmp(type, symbolChart.type[i]))
         return symbolChart.value[i];
     }
     return NULL;
   }
-  void createVariable(char *name, char *value) {
+  void createSymbol(char *name, char *type, int size) {
     if (symbolChart.symbolNum >= SYMBOL_CHART_LIMIT) throw(ArrayUpperBoundExceeded);
-    if (variable(name) != NULL) throw(SomethingRedefined);
+    if (value(name, type) != NULL) throw(SomethingRedefined);
+    char *addr = (char *)malloc(32 * sizeof(char));
+    itoa(memoryAddrCnt, addr, 10);
+    memoryAddrCnt += size;
     symbolChart.name[symbolChart.symbolNum] = (char *)malloc(strlen(name) * sizeof(char));
-    symbolChart.value[symbolChart.symbolNum] = (char *)malloc(strlen(value) * sizeof(char));
+    symbolChart.type[symbolChart.symbolNum] = (char *)malloc(strlen(type) * sizeof(char));
+    symbolChart.value[symbolChart.symbolNum] = (char *)malloc(strlen(addr) * sizeof(char));
     strcpy(symbolChart.name[symbolChart.symbolNum], name);
-    strcpy(symbolChart.value[symbolChart.symbolNum], value);
+    strcpy(symbolChart.type[symbolChart.symbolNum], type);
+    strcpy(symbolChart.value[symbolChart.symbolNum], addr);
     symbolChart.symbolNum++;
+    free(addr);
   }
   `
 }
@@ -119,16 +128,18 @@ function genSymbolChartClass() {
 function genNode() {
   return `
   struct Node {
-    char *yytext;
+    char *value;
     struct Node *children[SYMBOL_CHART_LIMIT];
     int childNum;
   }*nodes[SYMBOL_CHART_LIMIT];
   int nodeNum = 0;
   void reduceNode(int num) {
     struct Node *newNode = (struct Node *)malloc(sizeof(struct Node));
+    char *nonterminal = curToken;
+    if (nonterminal == NULL) nonterminal = curAttr;
     newNode->childNum = num;
-    newNode->yytext = (char *)malloc(sizeof(char) * strlen(curAttr));
-    strcpy(newNode->yytext, curAttr);
+    newNode->value = (char *)malloc(sizeof(char) * strlen(nonterminal));
+    strcpy(newNode->value, nonterminal);
     for (int i = 1; i <= num; i++) {
       newNode->children[num-i] = nodes[nodeNum-i];
       nodes[nodeNum-i] = NULL;
@@ -163,6 +174,14 @@ function genFunctions() {
   void stateStackPush(int state) {
     if (stateStackSize >= STATE_STACK_LIMIT) throw(ArrayUpperBoundExceeded);
     stateStack[stateStackSize++] = state;
+  }
+  void reduceTo(char *nonterminal) {
+    if (curToken != NULL) {
+      free(curToken);
+      curToken = NULL;
+    }
+    curToken = (char *)malloc(strlen(nonterminal) * sizeof(char));
+    strcpy(curToken, nonterminal);
   }
   `
 }
@@ -232,8 +251,8 @@ function genDealWithFunction(analyzer: LR1Analyzer) {
         if (debugMode) printf("Shift to state %d\\n", cell.target);
         curAttr = yytext;
         nodes[nodeNum] = (struct Node *)malloc(sizeof(struct Node));
-        nodes[nodeNum]->yytext = (char *)malloc(sizeof(char) * strlen(curAttr));
-        strcpy(nodes[nodeNum]->yytext, curAttr);
+        nodes[nodeNum]->value = (char *)malloc(sizeof(char) * strlen(curAttr));
+        strcpy(nodes[nodeNum]->value, curAttr);
         nodes[nodeNum]->childNum = 0;
         nodeNum++;
         updateSymbolAttr(0);
@@ -304,9 +323,9 @@ function genPrintTree() {
     if (curNode == NULL) return;
     for (int i = 0; i < depth * 2; i++)
       fprintf(treeout, "%c", ' ');
-    fprintf(treeout, "%s", curNode->yytext);
+    fprintf(treeout, "%s", curNode->value);
     if (curNode->childNum < 1) return;
-    fprintf(treeout, "{\\n");
+    fprintf(treeout, " {\\n");
     for (int i = 0;i < curNode->childNum; i++) {
       printTree(curNode->children[i], depth+1);
       if (i+1 < curNode->childNum)
@@ -329,6 +348,8 @@ function genYaccParse(analyzer: LR1Analyzer) {
     while (token != YACC_ACCEPT && (token = yylex()) && token != YACC_ERROR) {
       do {
         token = dealWith(token);
+        free(curToken);
+        curToken = NULL;
       } while (token >= 0);
     }
     if (token == 0) {
