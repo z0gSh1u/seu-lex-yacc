@@ -129,6 +129,7 @@ function genNode() {
   return `
   struct Node {
     char *value;
+    char *yytext;
     struct Node *children[SYMBOL_CHART_LIMIT];
     int childNum;
   }*nodes[SYMBOL_CHART_LIMIT];
@@ -139,7 +140,9 @@ function genNode() {
     if (nonterminal == NULL) nonterminal = curAttr;
     newNode->childNum = num;
     newNode->value = (char *)malloc(sizeof(char) * strlen(nonterminal));
+    newNode->yytext = (char *)malloc(sizeof(char) * strlen(curAttr));
     strcpy(newNode->value, nonterminal);
+    strcpy(newNode->yytext, curAttr);
     for (int i = 1; i <= num; i++) {
       newNode->children[num-i] = nodes[nodeNum-i];
       nodes[nodeNum-i] = NULL;
@@ -252,6 +255,7 @@ function genDealWithFunction(analyzer: LR1Analyzer) {
         curAttr = yytext;
         nodes[nodeNum] = (struct Node *)malloc(sizeof(struct Node));
         nodes[nodeNum]->value = (char *)malloc(sizeof(char) * strlen(curAttr));
+        nodes[nodeNum]->yytext = NULL;
         strcpy(nodes[nodeNum]->value, curAttr);
         nodes[nodeNum]->childNum = 0;
         nodeNum++;
@@ -322,8 +326,10 @@ function genPrintTree() {
   void printTree(struct Node *curNode, int depth) {
     if (curNode == NULL) return;
     for (int i = 0; i < depth * 2; i++)
-      fprintf(treeout, "%c", ' ');
+      fprintf(treeout, " ");
     fprintf(treeout, "%s", curNode->value);
+    if (curNode->yytext != NULL && strlen(curNode->yytext) > 0)
+      fprintf(treeout, " (%s)", curNode->yytext);
     if (curNode->childNum < 1) return;
     fprintf(treeout, " {\\n");
     for (int i = 0;i < curNode->childNum; i++) {
@@ -333,7 +339,7 @@ function genPrintTree() {
       fprintf(treeout, "\\n");
     }
     for (int i = 0; i < depth * 2; i++)
-      fprintf(treeout, "%c", ' ');
+      fprintf(treeout, " ");
     fprintf(treeout, "}");
   }
   `
@@ -384,7 +390,7 @@ export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
   #define DEBUG_MODE 0
   // * ============== copyPart ================
   `
-  finalCode += yaccParser.copyPart // 用户直接复制部分
+  finalCode += yaccParser.copyPart // 用户之间复制部分
   finalCode += `
   // * ========== seuyacc generation ============
   `
@@ -393,6 +399,6 @@ export function generateYTABC(yaccParser: YaccParser, analyzer: LR1Analyzer) {
   finalCode += genDealWithFunction(analyzer)
   finalCode += genPrintTree()
   finalCode += genYaccParse(analyzer)
-  finalCode += yaccParser.userCodePart // 用户代码部分
+  finalCode += yaccParser.userCodePart
   return finalCode
 }

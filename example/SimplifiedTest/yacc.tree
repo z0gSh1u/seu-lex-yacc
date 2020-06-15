@@ -32,8 +32,8 @@ program {
                       function_call {
                         printf,
                         (,
-                        {
-                          {
+                        argument_list {
+                          arithmetic_expr {
                             "hello world!"
                           }
                         },

@@ -1,27 +1,27 @@
-expr {
-  expr {
-    expr {
-      expr {
+expr (10) {
+  expr (9) {
+    expr (14) {
+      expr (2) {
         2
       },
       +,
-      expr {
-        expr {
+      expr (12) {
+        expr (3) {
           3
         },
         *,
-        expr {
+        expr (4) {
           4
         }
       }
     },
     -,
-    expr {
+    expr (5) {
       5
     }
   },
   +,
-  expr {
+  expr (1) {
     1
   }
 }

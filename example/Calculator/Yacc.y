@@ -13,8 +13,8 @@
 expr
   : expr PLUS expr	{ out("%s\n", "r(expr+expr)"); itoa(atoi($1) + atoi($3), $$, 10); printf("%s,%s,%s\n", $$, $1, $3); }
 	| expr MINUS expr	{ out("%s\n", "r(expr-expr)"); itoa(atoi($1) - atoi($3), $$, 10); printf("%s,%s,%s\n",  $$, $1, $3); }
-	| expr MULTIPLY expr	{ out("%s\n", "r(expr*expr)"); itoa(atoi($1) * atoi($3), $$, 10); printf("%s,%s,%s\n",  $$, $1, $3);}
-	| expr DIVIDE expr	{ out("%s\n", "r(expr/expr)"); itoa(atoi($1) / atoi($3), $$, 10); printf("%s,%s,%s\n",  $$, $1, $3);}
+	| expr MULTIPLY expr	{ out("%s\n", "r(expr*expr)"); itoa(atoi($1) * atoi($3), $$, 10); printf("%s,%s,%s\n",  $$, $1, $3); }
+	| expr DIVIDE expr	{ out("%s\n", "r(expr/expr)"); itoa(atoi($1) / atoi($3), $$, 10); printf("%s,%s,%s\n",  $$, $1, $3); }
 	| NUMBER  { $$ = $1; /* default operation in fact */ }
 	;
 
