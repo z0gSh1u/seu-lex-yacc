@@ -17,10 +17,13 @@ class LR1Analyzer {
         this._ACTIONReverseLookup = [];
         this._GOTOReverseLookup = [];
         this.GOTOCache = new Map();
+        this._first = [];
         this._distributeId(yaccParser);
         this._convertProducer(yaccParser.producers);
         this._convertOperator(yaccParser.operatorDecl);
+        this._epsilon = this._getSymbolId(Grammar_1.SpSymbol.EPSILON);
         console.log('\n[ constructLR1DFA or LALRDFA, this might take a long time... ]');
+        this._preCalFirst();
         this._constructLR1DFA();
         if (useLALR) {
             this._dfa = LALR_1.LR1DFAtoLALRDFA(this);
@@ -115,61 +118,59 @@ class LR1Analyzer {
         return lhs + ' -> ' + rhs;
     }
     /**
-     * 求取FIRST集
+     * 预先计算各符号的FIRST集
      */
-    FIRST(symbols, nonterminalRec = []) {
-        if (!symbols.length)
-            return [this._getSymbolId(Grammar_1.SpSymbol.EPSILON)];
-        let ret = [];
-        if (!this._symbolTypeIs(symbols[0], 'nonterminal'))
-            ret.push(symbols[0]);
-        else {
-            if (!nonterminalRec.includes(symbols[0])) {
-                nonterminalRec.push(symbols[0]);
-                this._producersOf(symbols[0]).forEach(producer => {
-                    this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
-                        if (!ret.includes(symbol))
-                            ret.push(symbol);
-                    });
+    _preCalFirst() {
+        let changed = true;
+        for (let index in this.symbols)
+            this._first.push(this._symbols[index].type == 'nonterminal' ? [] : [Number(index)]);
+        while (changed) {
+            changed = false;
+            for (let index in this._symbols) {
+                if (this._symbols[index].type != 'nonterminal')
+                    continue;
+                this._producersOf(Number(index)).forEach(producer => {
+                    let i = 0, hasEpsilon = false;
+                    do {
+                        hasEpsilon = false;
+                        if (i >= producer.rhs.length) {
+                            if (!this._first[index].includes(this._epsilon))
+                                this._first[index].push(this._epsilon), changed = true;
+                            break;
+                        }
+                        this._first[producer.rhs[i]].forEach(symbol => {
+                            if (!this._first[index].includes(symbol))
+                                this._first[index].push(symbol), changed = true;
+                            if (symbol == this._epsilon)
+                                hasEpsilon = true;
+                        });
+                    } while (i++, hasEpsilon);
                 });
             }
         }
-        if (ret.includes(this._getSymbolId(Grammar_1.SpSymbol.EPSILON))) {
-            this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
-                if (!ret.includes(symbol))
-                    ret.push(symbol);
-            });
-        }
-        return ret;
     }
     /**
-     * 求取FOLLOW集
+     * 求取FIRST集
      */
-    FOLLOW(nonterminal, nonterminalRec = []) {
-        if (nonterminalRec.includes(nonterminal))
-            return [];
-        nonterminalRec.push(nonterminal);
+    FIRST(symbols) {
         let ret = [];
-        let epsilon = this._getSymbolId(Grammar_1.SpSymbol.EPSILON);
-        if (nonterminal == this._startSymbol)
-            ret.push(this._getSymbolId(Grammar_1.SpSymbol.END));
-        for (let producer of this._producers) {
-            for (let i = 0; i < producer.rhs.length; i++) {
-                if (producer.rhs[i] == nonterminal) {
-                    let first = this.FIRST(producer.rhs.slice(i + 1));
-                    first.forEach(symbol => {
-                        if (symbol != epsilon && !ret.includes(symbol))
-                            ret.push(symbol);
-                    });
-                    if (first.includes(epsilon)) {
-                        this.FOLLOW(producer.lhs).forEach(symbol => {
-                            if (!ret.includes(symbol))
-                                ret.push(symbol);
-                        });
-                    }
-                }
+        let i = 0, hasEpsilon = false;
+        do {
+            hasEpsilon = false;
+            if (i >= symbols.length) {
+                ret.push(this._epsilon);
+                break;
             }
-        }
+            this._first[symbols[i]].forEach(symbol => {
+                if (symbol == this._epsilon) {
+                    hasEpsilon = true;
+                }
+                else {
+                    if (!ret.includes(symbol))
+                        ret.push(symbol);
+                }
+            });
+        } while (i++, hasEpsilon);
         return ret;
     }
     /**
@@ -207,7 +208,7 @@ class LR1Analyzer {
                     utils_1.assert(id != -1, `symbol not found in symbols. This error should never occur. symbol=${tmp}`);
                     rhs.push(id);
                 }
-                this._producers.push(new Grammar_1.LR1Producer(lhs, rhs, stringProducer.actions[index]));
+                this._producers.push(new Grammar_1.LR1Producer(lhs, rhs, `reduceTo("${stringProducer.lhs}"); \n${stringProducer.actions[index]}`));
             }
         }
     }
@@ -217,7 +218,7 @@ class LR1Analyzer {
         while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
             newStartSymbolContent += "'";
         this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent });
-        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], '$$ = $1;'));
+        this._producers.push(new Grammar_1.LR1Producer(this._symbols.length - 1, [this._startSymbol], `$$ = $1; reduceTo("${newStartSymbolContent}");`));
         this._startSymbol = this._symbols.length - 1;
         let initProducer = this._producersOf(this._startSymbol)[0];
         let I0 = this.CLOSURE(new Grammar_1.LR1State([

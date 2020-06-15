@@ -44,6 +44,8 @@ export class LR1Analyzer {
   private _GOTOTable!: number[][]
   private _ACTIONReverseLookup!: number[]
   private _GOTOReverseLookup!: number[]
+  private _first: number[][]
+  private _epsilon: number
   // 求过的GOTO记录一下，不然下辈子都跑不出来
   private GOTOCache: Map<GOTOCacheKey, LR1State>
 
@@ -56,10 +58,13 @@ export class LR1Analyzer {
     this._ACTIONReverseLookup = []
     this._GOTOReverseLookup = []
     this.GOTOCache = new Map<GOTOCacheKey, LR1State>()
+    this._first = []
     this._distributeId(yaccParser)
     this._convertProducer(yaccParser.producers)
     this._convertOperator(yaccParser.operatorDecl)
+    this._epsilon = this._getSymbolId(SpSymbol.EPSILON)
     console.log('\n[ constructLR1DFA or LALRDFA, this might take a long time... ]')
+    this._preCalFirst()
     this._constructLR1DFA()
     if (useLALR) {
       this._dfa = LR1DFAtoLALRDFA(this)
@@ -96,8 +101,8 @@ export class LR1Analyzer {
       let id = decl.literal
         ? this._getSymbolId({ type: 'ascii', content: decl.literal })
         : decl.tokenName
-        ? this._getSymbolId({ type: 'token', content: decl.tokenName })
-        : -1
+          ? this._getSymbolId({ type: 'token', content: decl.tokenName })
+          : -1
       assert(id != -1, 'Operator declaration not found. This should never occur.')
       this._operators.push(new LR1Operator(id, decl.assoc, decl.precedence))
     }
@@ -164,54 +169,58 @@ export class LR1Analyzer {
   }
 
   /**
-   * 求取FIRST集
+   * 预先计算各符号的FIRST集
    */
-  FIRST(symbols: number[], nonterminalRec: number[] = []): number[] {
-    if (!symbols.length) return [this._getSymbolId(SpSymbol.EPSILON)]
-    let ret: number[] = []
-    if (!this._symbolTypeIs(symbols[0], 'nonterminal')) ret.push(symbols[0])
-    else {
-      if (!nonterminalRec.includes(symbols[0])) {
-        nonterminalRec.push(symbols[0])
-        this._producersOf(symbols[0]).forEach(producer => {
-          this.FIRST(producer.rhs, nonterminalRec).forEach(symbol => {
-            if (!ret.includes(symbol)) ret.push(symbol)
-          })
+  _preCalFirst() {
+    let changed = true
+    for (let index in this.symbols) 
+      this._first.push(this._symbols[index].type == 'nonterminal' ? [] : [Number(index)])
+    while (changed) {
+      changed = false
+      for (let index in this._symbols) {
+        if (this._symbols[index].type != 'nonterminal') continue
+        this._producersOf(Number(index)).forEach(producer => {
+          let i = 0, hasEpsilon = false
+          do {
+            hasEpsilon = false
+            if (i >= producer.rhs.length) {
+              if (!this._first[index].includes(this._epsilon))
+                this._first[index].push(this._epsilon), changed = true
+              break
+            }
+            this._first[producer.rhs[i]].forEach(symbol => {
+              if (!this._first[index].includes(symbol))
+                this._first[index].push(symbol), changed = true
+              if (symbol == this._epsilon)
+                hasEpsilon = true
+            })
+          } while (i++, hasEpsilon)
         })
       }
     }
-    if (ret.includes(this._getSymbolId(SpSymbol.EPSILON))) {
-      this.FIRST(symbols.slice(1), nonterminalRec).forEach(symbol => {
-        if (!ret.includes(symbol)) ret.push(symbol)
-      })
-    }
-    return ret
   }
 
   /**
-   * 求取FOLLOW集
+   * 求取FIRST集
    */
-  private FOLLOW(nonterminal: number, nonterminalRec: number[] = []): number[] {
-    if (nonterminalRec.includes(nonterminal)) return []
-    nonterminalRec.push(nonterminal)
+  FIRST(symbols: number[]): number[] {
     let ret: number[] = []
-    let epsilon = this._getSymbolId(SpSymbol.EPSILON)
-    if (nonterminal == this._startSymbol) ret.push(this._getSymbolId(SpSymbol.END))
-    for (let producer of this._producers) {
-      for (let i = 0; i < producer.rhs.length; i++) {
-        if (producer.rhs[i] == nonterminal) {
-          let first = this.FIRST(producer.rhs.slice(i + 1))
-          first.forEach(symbol => {
-            if (symbol != epsilon && !ret.includes(symbol)) ret.push(symbol)
-          })
-          if (first.includes(epsilon)) {
-            this.FOLLOW(producer.lhs).forEach(symbol => {
-              if (!ret.includes(symbol)) ret.push(symbol)
-            })
-          }
-        }
+    let i = 0, hasEpsilon = false
+    do {
+      hasEpsilon = false
+      if (i >= symbols.length) {
+        ret.push(this._epsilon)
+        break
       }
-    }
+      this._first[symbols[i]].forEach(symbol => {
+        if (symbol == this._epsilon) {
+          hasEpsilon = true
+        } else {
+          if (!ret.includes(symbol))
+            ret.push(symbol)
+        }
+      })
+    } while (i++, hasEpsilon)
     return ret
   }
 
@@ -254,7 +263,7 @@ export class LR1Analyzer {
           )
           rhs.push(id)
         }
-        this._producers.push(new LR1Producer(lhs, rhs, stringProducer.actions[index]))
+        this._producers.push(new LR1Producer(lhs, rhs, `reduceTo("${stringProducer.lhs}"); \n${stringProducer.actions[index]}`))
       }
     }
   }
@@ -265,7 +274,7 @@ export class LR1Analyzer {
     while (this._symbols.some(symbol => symbol.content === newStartSymbolContent))
       newStartSymbolContent += "'"
     this._symbols.push({ type: 'nonterminal', content: newStartSymbolContent })
-    this._producers.push(new LR1Producer(this._symbols.length - 1, [this._startSymbol], '$$ = $1;'))
+    this._producers.push(new LR1Producer(this._symbols.length - 1, [this._startSymbol], `$$ = $1; reduceTo("${newStartSymbolContent}");`))
     this._startSymbol = this._symbols.length - 1
     let initProducer = this._producersOf(this._startSymbol)[0]
     let I0 = this.CLOSURE(
