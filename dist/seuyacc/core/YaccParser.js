@@ -109,6 +109,8 @@ class YaccParser {
                 rhs.push(m3[2]);
                 actions.push(m3[3] ? m3[3].substring(1, m3[3].length - 1).trim() : '');
             }
+            lhs = lhs.trim();
+            rhs = rhs.map(v => v.trim());
             this._producers.push(new Grammar_1.YaccParserProducer(lhs, rhs, actions));
         }
     }
