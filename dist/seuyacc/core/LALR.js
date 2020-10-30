@@ -1,6 +1,7 @@
 "use strict";
 /**
  * LALR相关
+ * // FIXME：有BUG
  * by Twielon
  * 2020-05 @ https://github.com/z0gSh1u/seu-lex-yacc
  */

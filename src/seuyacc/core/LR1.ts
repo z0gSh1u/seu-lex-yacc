@@ -382,7 +382,7 @@ export class LR1Analyzer {
             lookahead
           )
           if (res.items.some(item => LR1Item.same(item, newItem))) continue // 重复的情况不再添加，避免出现一样的Item
-          !allItemsOfI.includes(newItem) && allItemsOfI.push(newItem) // 继续扩展
+          allItemsOfI.every(item => !LR1Item.same(item, newItem)) && allItemsOfI.push(newItem) // 继续扩展
           res.addItem(newItem)
         }
       }

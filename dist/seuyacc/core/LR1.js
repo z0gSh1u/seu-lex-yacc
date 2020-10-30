@@ -318,7 +318,7 @@ class LR1Analyzer {
                     let newItem = new Grammar_1.LR1Item(extendProducer, this._producers.indexOf(extendProducer), lookahead);
                     if (res.items.some(item => Grammar_1.LR1Item.same(item, newItem)))
                         continue; // 重复的情况不再添加，避免出现一样的Item
-                    !allItemsOfI.includes(newItem) && allItemsOfI.push(newItem); // 继续扩展
+                    allItemsOfI.every(item => !Grammar_1.LR1Item.same(item, newItem)) && allItemsOfI.push(newItem); // 继续扩展
                     res.addItem(newItem);
                 }
             }

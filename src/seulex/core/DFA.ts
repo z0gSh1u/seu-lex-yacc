@@ -36,6 +36,7 @@ export class DFA extends FiniteAutomata {
   /**
    * 原地最小化当前DFA。如果alphabet包含[any]则不处理
    * 龙书 算法3.39
+   * // FIXME：有BUG
    */
   minimize() {
     // 暂不考虑有any的情况（即有other）下的最小化，过于复杂
