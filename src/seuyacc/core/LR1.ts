@@ -109,6 +109,17 @@ export class LR1Analyzer {
   }
 
   /**
+   * 在state下接收到symbol能到达的目标状态
+   */
+  private _getNext(state: LR1State, symbol: GrammarSymbol) {
+    const alpha = this._getSymbolId(symbol)
+    const target = this._dfa.adjList[this._dfa.states.findIndex(v => LR1State.same(v, state))].find(
+      v => v.alpha == alpha
+    )!.to
+    return target
+  }
+
+  /**
    * 为文法符号（终结符、非终结符、特殊符号）分配编号
    * @test pass
    */
@@ -438,11 +449,10 @@ export class LR1Analyzer {
         if (item.dotAtLast()) continue // 没有aβ
         let a = this._producers[item.producer].rhs[item.dotPosition]
         if (this._symbolTypeIs(a, 'nonterminal')) continue
-        let goto = this.GOTO(dfaStates[i], a)
+        let goto = this._dfa.states[this._getNext(dfaStates[i], this.symbols[a])]
         for (let j = 0; j < dfaStates.length; j++)
-          if (LR1State.same(goto, dfaStates[j])) {
+          if (LR1State.same(goto, dfaStates[j])) 
             this._ACTIONTable[i][lookup(a)] = { type: 'shift', data: j }
-          }
       }
       // 处理规约的情况
       // ② [A->α`, a], A!=S', ACTION[i, a] = reduce(A->α)
