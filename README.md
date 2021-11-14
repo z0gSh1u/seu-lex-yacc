@@ -4,7 +4,7 @@
 SEU-LEX-YACC 是东南大学计算机学院的《编译原理课程设计》，主要包括 seulex 和 seuyacc 两部分。
 
 <p align="center">
-  <img src="./doc/Introduction.png" width="60%">
+  <img src="./doc/Introduction.png" width="80%">
 </p>
 
 ## seulex
